@@ -32,9 +32,9 @@ describe('AdocServer', () => {
     expect((await json(`${server.url}/api/plugins/TODO/documents`)).documents[0].key).toBe('TODO-gui');
     const empty = await fetch(`${server.url}/api/messages`, post({ comments: [{ target: { level: 'workspace' }, text: '  ' }] }));
     expect(empty.status).toBe(400);
-    await json(`${server.url}/api/messages`, post({ comments: [{ target: { level: 'document', key: 'TODO-gui' }, text: 'more detail' }] }));
+    await json(`${server.url}/api/messages`, post({ target: { level: 'document', key: 'TODO-gui' }, text: 'more detail' }));
     const { messages } = await json(`${server.url}/api/messages/wait?timeout=1000`);
-    expect(messages[0].formatted).toBe('[adoc message 1] comment\ncomments:\n  - target: TODO-gui\n    text: more detail\n');
+    expect(messages[0].formatted).toBe('[adoc message 1] comment · TODO-gui\nmore detail\n');
     expect((await json(`${server.url}/api/messages`)).messages).toEqual([]);
   });
 

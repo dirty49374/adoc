@@ -45,6 +45,8 @@ const targetSchema = z.discriminatedUnion('level', [
 ]);
 
 const commentSchema = z.object({
+  target: targetSchema.optional(),
+  text: z.string().optional(),
   comments: z
     .array(
       z.object({
@@ -54,8 +56,8 @@ const commentSchema = z.object({
         source: z.string().optional(),
       }),
     )
-    .min(1, 'a comment message needs at least one comment'),
-});
+    .default([]),
+}).refine((m) => (m.text?.trim() && m.target) || m.comments.length > 0, 'a comment message needs text with a target, or at least one comment');
 
 const actionSchema = z.object({
   key: z.string(),
@@ -425,7 +427,7 @@ export class AdocServer {
     if (path === '/api/messages' && method === 'POST') {
       const parsed = commentSchema.safeParse(await readBody(request));
       if (!parsed.success) return sendJson(response, 400, { error: parsed.error.issues.map((i) => i.message).join('; ') });
-      const problem = parsed.data.comments.map((c) => validTarget(c.target, ws)).find(Boolean);
+      const problem = [parsed.data.target, ...parsed.data.comments.map((c) => c.target)].map((t) => t && validTarget(t, ws)).find(Boolean);
       if (problem) return sendJson(response, 400, { error: problem });
       const comments: UserComment[] = parsed.data.comments.map((c) => {
         const comment: UserComment = { target: c.target, text: c.text };
@@ -433,7 +435,12 @@ export class AdocServer {
         if (c.source) comment.source = c.source;
         return comment;
       });
-      const message = this.queue.add({ kind: 'comment', comments });
+      const input: Parameters<MessageQueue['add']>[0] = { kind: 'comment', comments };
+      if (parsed.data.text?.trim() && parsed.data.target) {
+        input.target = parsed.data.target;
+        input.text = parsed.data.text;
+      }
+      const message = this.queue.add(input);
       return sendJson(response, 201, { message: publicMessage(message) });
     }
     if (path === '/api/messages/wait' && method === 'GET') {

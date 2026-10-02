@@ -10,14 +10,10 @@ export function PendingMessageList({ messages }: { messages: PublicMessage[] }) 
           <div className="pending-head">
             <span className="number">#{m.number}</span>
             <span className="kind">{m.kind}</span>
-            {m.kind === 'action' && (
-              <>
-                <code>{m.target}</code>
-                <span className="muted">{m.applied ? 'applied' : 'request'}</span>
-              </>
-            )}
+            {m.target && <code>{m.target}</code>}
+            {m.kind === 'action' && <span className="muted">{m.applied ? 'applied' : 'request'}</span>}
           </div>
-          {m.kind === 'action' && <div className="pending-text">{m.text}</div>}
+          {m.text && <div className="pending-text">{m.text}</div>}
           {m.comments?.map((c, i) => (
             <div key={i} className="pending-comment">
               <code>{c.target}</code>

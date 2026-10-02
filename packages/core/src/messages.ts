@@ -16,8 +16,10 @@ export interface UserComment {
   source?: string;
 }
 
-/** A _User_Comment_Message_ carries one or more comments, in the order the user added them. */
+/** A _User_Comment_Message_: the composer text with its target, and the draft comments, in the order added. */
 export interface CommentInput {
+  target?: MessageTarget;
+  text?: string;
   comments: UserComment[];
 }
 
@@ -52,7 +54,9 @@ export function formatTarget(target: MessageTarget): string {
 export function messageFields(message: UserMessage): Record<string, unknown> {
   const fields: Record<string, unknown> = { number: message.number, kind: message.kind };
   if (message.kind === 'comment') {
-    fields.comments = message.comments.map((comment) => {
+    if (message.target) fields.target = formatTarget(message.target);
+    if (message.text) fields.text = message.text;
+    if (message.comments.length) fields.comments = message.comments.map((comment) => {
       const entry: Record<string, unknown> = { target: formatTarget(comment.target) };
       if (comment.source) entry.source = comment.source;
       if (comment.quote) entry.quote = comment.quote;
@@ -70,10 +74,13 @@ export function messageFields(message: UserMessage): Record<string, unknown> {
   return fields;
 }
 
-/** Renders one message in _User_Message_Format_: a header line, then YAML fields. */
+/** Renders one message in _User_Message_Format_: the header line, the main text, then attached YAML fields after `--`. */
 export function formatMessage(message: UserMessage): string {
-  const { number, kind, ...rest } = messageFields(message);
-  return `[adoc message ${number}] ${kind}\n${stringify(rest, { lineWidth: 0, blockQuote: 'literal' })}`;
+  const { number, kind, target, text, ...attached } = messageFields(message);
+  const header = `[adoc message ${number}] ${kind}${target ? ` · ${target}` : ''}`;
+  const body = typeof text === 'string' && text ? `${text.replace(/\s+$/, '')}\n` : '';
+  const attachments = Object.keys(attached).length ? `--\n${stringify(attached, { lineWidth: 0, blockQuote: 'literal' })}` : '';
+  return `${header}\n${body}${attachments}`;
 }
 
 export function formatMessages(messages: readonly UserMessage[]): string {

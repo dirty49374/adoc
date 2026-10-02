@@ -22,25 +22,25 @@ Before the loop, read the guide of every plugin you will touch: `adoc skill list
 ## Message format
 
 ```
-[adoc message 17] comment
+[adoc message 17] comment · TASK-260930-order-paging
+Then split the method into two tasks.
+--
 comments:
   - target: TASK-260930-order-paging#method
     source: docs/tasks/TASK-260930-order-paging.md:16
     quote: infinite scroll
     text: Use page numbers instead of infinite scroll.
-  - target: TASK-260930-order-paging
-    text: Then split the method into two tasks.
 
-[adoc message 18] action
-target: TODO-gui#3
+[adoc message 18] action · TODO-gui#3
+TODO-gui#3 checked: Refactor PaymentRepo
+--
 action: toggle
 value: "3"
 applied: true
-text: "TODO-gui#3 checked: Refactor PaymentRepo"
 ```
 
-- A comment message lists one or more comments that the person collected and sent together; handle all of them, in order, before committing. An action message has a single `target`.
-- `target` is `workspace`, a plugin key (`TASK`: about the plugin, e.g. "create a new one"), a document key (`TODO-gui`) or a document key with an anchor (`TASK-…#method`). The plugin guide says what an anchor means.
+- The header names the main target; the text right after it is what the person typed (or, for an action, what the plugin reports). Everything after `--` is attached: for a comment message the draft `comments` the person collected, each with its own target; handle all of them, in order, before committing.
+- A target is `workspace`, a plugin key (`TASK`: about the plugin, e.g. "create a new one"), a document key (`TODO-gui`) or a document key with an anchor (`TASK-…#method`). The plugin guide says what an anchor means.
 - `source` is the file and line the person pointed at; `quote` is the exact text they selected. A comment made with the comment button of an element has no `quote`; use `target` and `source`. If the file changed since, find the place by the quote or the surrounding text.
 - An `action` message with `applied: false` is a **request**: make the change yourself (for example set a status, move a card). With `applied: true` the plugin already changed the file; follow up only if needed.
 

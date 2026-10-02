@@ -260,7 +260,7 @@ input _Comment_Composer_ in comment = {
   - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.
   - _Comment_Composer_ must let the user widen its target from document to plugin to workspace, and must show the chosen target, written as in _adoc:User_Message_Format_.
   - _Comment_Composer_ takes multi-line text; it is enabled when the text is not empty after trimming or the _Draft_Chip_List_ is not empty.
-  - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose _adoc:User_Comment_ entries are the drafts in their order, followed by its own text on the chosen target when there is text.
+  - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose composer text is its own text on the chosen target, and whose _adoc:User_Comment_ entries are the drafts in their order.
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
 .rules

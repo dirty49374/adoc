@@ -40,9 +40,8 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
     setSending(true);
     setError(undefined);
     const comments: UserComment[] = drafts.map(({ id: _id, ...comment }) => comment);
-    if (text.trim()) comments.push({ target, text });
     try {
-      await api.sendComments(comments);
+      await api.sendComments(text.trim() ? { target, text, comments } : { comments });
       draftStore.clear(drafts.map((d) => d.id));
       update('');
     } catch (e) {

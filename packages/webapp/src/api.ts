@@ -125,7 +125,7 @@ export const api = {
   document: (key: string, base?: string) => request<DocumentView>(`/api/documents/${encodeURIComponent(key)}${base ? `?base=${base}` : ''}`),
   versions: (key: string) => request<{ versions: Array<{ version: string; seenAt: string; current: boolean }> }>(`/api/documents/${encodeURIComponent(key)}/versions`),
   references: (targets: string[]) => request<{ references: ReferenceInfo[] }>(`/api/references?targets=${targets.map(encodeURIComponent).join(',')}`),
-  sendComments: (comments: UserComment[]) => request<{ message: PublicMessage }>('/api/messages', post({ comments })),
+  sendComments: (body: { target?: MessageTarget; text?: string; comments: UserComment[] }) => request<{ message: PublicMessage }>('/api/messages', post(body)),
   sendAction: (body: ActionRequest) => request<ActionResponse>('/api/actions', post(body)),
 };
 

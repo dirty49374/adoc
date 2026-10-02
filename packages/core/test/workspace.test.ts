@@ -71,16 +71,19 @@ describe('messages', () => {
     const queue = new MessageQueue();
     const comment = queue.add({
       kind: 'comment',
+      target: { level: 'document', key: 'TASK-a' },
+      text: 'Please look at these.',
       comments: [
         { target: { level: 'anchor', key: 'TASK-a', anchor: 'goal' }, text: 'line one\nline two', quote: 'Do it', source: 'docs/TASK-a.md:8' },
         { target: { level: 'document', key: 'TASK-a' }, text: 'and this' },
       ],
     });
     expect(formatMessage(comment)).toBe(
-      '[adoc message 1] comment\ncomments:\n  - target: TASK-a#goal\n    source: docs/TASK-a.md:8\n    quote: Do it\n    text: |-\n      line one\n      line two\n  - target: TASK-a\n    text: and this\n',
+      '[adoc message 1] comment · TASK-a\nPlease look at these.\n--\ncomments:\n  - target: TASK-a#goal\n    source: docs/TASK-a.md:8\n    quote: Do it\n    text: |-\n      line one\n      line two\n  - target: TASK-a\n    text: and this\n',
     );
     const action = queue.add({ kind: 'action', target: { level: 'plugin', pluginKey: 'TASK' }, action: 'move', value: 'c1', to: 'DONE', applied: false, text: 'move' });
-    expect(formatMessage(action)).toContain('[adoc message 2] action\ntarget: TASK\naction: move\nvalue: c1\nto: DONE\napplied: false\n');
+    expect(formatMessage(action)).toBe('[adoc message 2] action · TASK\nmove\n--\naction: move\nvalue: c1\nto: DONE\napplied: false\n');
+    expect(formatMessage(queue.add({ kind: 'comment', target: { level: 'workspace' }, text: 'just text', comments: [] }))).toBe('[adoc message 3] comment · workspace\njust text\n');
   });
 
   it('waits, takes everything in order, and times out empty', async () => {

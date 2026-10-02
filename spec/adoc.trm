@@ -558,17 +558,19 @@ concept _User_Message_ in message = {
 }
 
 concept _User_Comment_Message_ in message = {
-  A _User_Message_ that carries one or more _User_Comment_ entries the user collected in the _Adoc_Web_UI_ and sent together.
+  A _User_Message_ that carries the text the user typed in the composer, about one _User_Message_Target_, together with the _User_Comment_ entries the user collected as drafts, all sent at once.
 .relations
   is_a _User_Message_
   composed in _Adoc_Web_UI_
+  aims at _User_Message_Target_
   has_member _User_Comment_
 .contract
-  - A _User_Comment_Message_ must carry at least one _User_Comment_, in the order the user added them.
-  - A single comment must be sent as a _User_Comment_Message_ with one _User_Comment_, never in another shape.
+  - A _User_Comment_Message_ must carry composer text, with its _User_Message_Target_, or at least one _User_Comment_, or both.
+  - The _User_Comment_ entries of a _User_Comment_Message_ must keep the order in which the user added them.
 .remarks
-  - Chosen: comments are collected as drafts and sent together, like the comments of one code review, so that the agent handles related requests in one turn.
-  - Chosen: attachments are not supported for now.
+  - Chosen: the composer text is the main message and the drafts are attachments to it, like a chat message with annotations.
+  - Chosen: drafts are collected and sent together, like the comments of one code review, so that the agent handles related requests in one turn.
+  - Chosen: attachments of files are not supported for now.
 }
 
 concept _User_Comment_ in message = {
@@ -628,7 +630,7 @@ concept _User_Message_Target_ in message = {
 }
 
 concept _User_Message_Format_ in message = {
-  The text form in which every _User_Message_ reaches the agent: a header line with the message number and kind, followed by YAML fields.
+  The text form in which every _User_Message_ reaches the agent: a header line, the main text, and the attached fields in YAML after a line `--`.
 .relations
   fields from _Adoc_Web_UI_
   formats _User_Message_
@@ -643,16 +645,16 @@ concept _User_Message_Format_ in message = {
   reports change of _Document_
   run of _Adoc_Server_
 .contract
-  - A message in _User_Message_Format_ must start with the line `[adoc message <number>] <kind>`, where kind is comment or action and the number increases within one run of the _Adoc_Server_.
+  - A message in _User_Message_Format_ must start with the line `[adoc message <number>] <kind>`, followed by ` · <target>` when the message has a main target; kind is comment or action and the number increases within one run of the _Adoc_Server_.
   - A target in _User_Message_Format_ must be written as `workspace`, a _Plugin_Key_, a _Document_Key_ or a _Document_Key_ with a _Document_Anchor_.
-  - A message of kind comment must carry the field comments, a list with one entry per _User_Comment_, each with the fields target and text and, when present, quote and source.
-  - A message of kind action must carry the field target.
-  - A message of kind action must carry the fields action, value, applied and text, and the field to for a drag, where applied is true when the handler has already changed the _Document_.
-  - Multi-line values in _User_Message_Format_ must use YAML block scalars.
-  - With `--output json` or `--output yaml`, the same fields must be returned as structured data.
+  - The main text must follow the header line as plain text: the composer text of a comment message, or the handler text of an action message.
+  - Attached fields must follow a line `--` as YAML: for a comment message the field comments, a list with one entry per _User_Comment_ with target and text and, when present, quote and source; for an action message the fields action, value and applied, and to for a drag.
+  - A comment message without composer text must start its body with the line `--`; a comment message without drafts must have no `--` part.
+  - With `--output json` or `--output yaml`, the same content must be returned as structured data.
 .remarks
-  - Example of a comment: `[adoc message 17] comment`, then `comments:` with entries such as `- target: TASK-1231#method`, `source: docs/tasks/TASK-1231.md:19`, `quote: infinite scroll`, `text: use page numbers instead of infinite scroll`.
-  - Example of an action: `[adoc message 18] action`, then `target: TODO-gui#123`, `action: toggle`, `value: true`, `applied: true` and `text: TODO-gui#123 checked`.
+  - Example of a comment: `[adoc message 3] comment · TASK-261002-herdr-integration`, the composer text, then `--` and `comments:` with entries such as `- target: TASK-1231#method`, `source: docs/tasks/TASK-1231.md:19`, `quote: infinite scroll`, `text: use page numbers instead`.
+  - Example of an action: `[adoc message 4] action · TODO-gui#3`, `TODO-gui#3 checked: Refactor PaymentRepo`, then `--`, `action: toggle`, `value: "3"`, `applied: true`.
+  - Chosen: the person's words come first and the machine fields last, so that a pushed prompt reads like a chat message.
   - Chosen: the plugin writes only the text of an action; adoc writes every other field, because those come from the _Adoc_Web_UI_.
 }
 
