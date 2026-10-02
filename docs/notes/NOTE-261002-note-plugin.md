@@ -1,6 +1,7 @@
 ---
 title: NOTE plugin and browser control
-status: OPEN
+status: MOVED
+moved_to: TASK-261002-change-view-version-picker
 ---
 
 ## Background
