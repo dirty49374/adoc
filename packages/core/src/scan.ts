@@ -13,7 +13,12 @@ export interface DocumentRecord {
   readonly kind: 'file' | 'folder';
   readonly path: string;
   readonly file: string;
+  /** Inside a _Document_Archive_: a folder named `_archive` at any depth of a watch path. */
+  readonly archived: boolean;
 }
+
+/** The folder name of a _Document_Archive_. */
+export const ARCHIVE_FOLDER = '_archive';
 
 export interface ScanProblem {
   readonly kind: 'duplicate-key' | 'unknown-plugin-key' | 'invalid-local-id' | 'layout-mismatch';
@@ -43,7 +48,7 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
   const problems: ScanProblem[] = [];
   const seen = new Set<string>();
 
-  const visit = async (directory: string): Promise<void> => {
+  const visit = async (directory: string, archived: boolean): Promise<void> => {
     let entries;
     try {
       entries = await readdir(directory, { withFileTypes: true });
@@ -60,7 +65,7 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
       const isDir = entry.isDirectory();
       const match = KEY_PREFIX_PATTERN.exec(entry.name);
       if (!match) {
-        if (isDir) await visit(absolute);
+        if (isDir) await visit(absolute, archived || entry.name === ARCHIVE_FOLDER);
         continue;
       }
       const pluginKey = match[1]!;
@@ -93,16 +98,21 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
         problems.push({ kind: 'invalid-local-id', path: relPath, key, message: `${relPath}: the local id "${localId}" may use only lowercase letters, digits, hyphens, underscores and dots.` });
         continue;
       }
+      const record: DocumentRecord = { key, pluginKey, localId, kind: layout.kind, path: relPath, file, archived };
       const existing = documents.get(key);
       if (existing) {
-        problems.push({ kind: 'duplicate-key', path: relPath, key, message: `${key} is carried by both ${existing.path} and ${relPath}; ${existing.path} is used.` });
+        // The not archived document wins, whichever the scan met first.
+        const used = existing.archived && !archived ? record : existing;
+        const other = used === record ? existing : record;
+        documents.set(key, used);
+        problems.push({ kind: 'duplicate-key', path: other.path, key, message: `${key} is carried by both ${used.path} and ${other.path}; ${used.path} is used.` });
         continue;
       }
-      documents.set(key, { key, pluginKey, localId, kind: layout.kind, path: relPath, file });
+      documents.set(key, record);
     }
   };
 
-  for (const path of watch) await visit(resolve(workspace, path));
+  for (const path of watch) await visit(resolve(workspace, path), false);
   return { documents, problems };
 }
 

@@ -85,7 +85,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
   const html = showChanges ? changes.html : view.html;
   return (
     <section className="document-detail-pane main-scroll" data-testid="document-detail-pane">
-      <DocumentHeader view={view} changeState={changeState} changesOn={showChanges} onToggleChanges={() => void toggle()} versions={versions} base={base.current} onPickBase={(v) => void pick(v)} />
+      <DocumentHeader view={view} changeState={changeState} changesOn={showChanges} onToggleChanges={() => void toggle()} versions={versions} base={base.current} onPickBase={(v) => void pick(v)} onArchive={(name) => void onAction({ event: { kind: 'click', name, value: '' } })} />
       {notice && <ActionNotice text={notice} onDismiss={() => setNotice(undefined)} />}
       {showChanges && changes.error && <ActionNotice text={`renderChanges failed: ${changes.error}`} onDismiss={() => undefined} />}
       {html !== undefined ? (

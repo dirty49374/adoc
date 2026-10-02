@@ -96,6 +96,7 @@ button.primary { background: var(--adoc-primary); color: var(--adoc-surface); fo
 button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--adoc-primary), var(--adoc-text) 12%); }
 button.quiet { background: transparent; color: var(--adoc-text-muted); padding: 2px 4px; }
 button.quiet:hover:not(:disabled) { color: var(--adoc-text); background: var(--adoc-surface-element); }
+button.quiet.active { color: var(--adoc-primary); }
 select { font: inherit; font-size: var(--adoc-size-tiny); border: none; background: var(--adoc-surface-element); color: var(--adoc-text); padding: 1px 4px; }
 textarea { font: inherit; color: var(--adoc-text); }
 

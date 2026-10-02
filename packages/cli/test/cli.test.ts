@@ -35,6 +35,12 @@ describe('adoc CLI', () => {
     expect(failed.stdout).toContain('parse-error');
     expect((await run(['skill', 'view', 'adoc-todo'], current.root)).stdout).toContain('The anchor of an item, and of a group heading, is its 1-based line number');
     expect((await run(['skill', 'view', 'adoc'], current.root)).stdout).toContain('adoc message wait');
+    await current.write('docs/_archive/TODO-old.md', '- [ ] archived x\n');
+    expect((await run(['document', 'list'], current.root)).stdout).toMatch(/TODO-a/);
+    expect((await run(['document', 'list'], current.root)).stdout).not.toMatch(/TODO-old/);
+    expect((await run(['document', 'list', '--archived', '--plugin', 'TODO'], current.root)).stdout).toMatch(/TODO-old/);
+    expect((await run(['document', 'search', 'X'], current.root)).stdout).toMatch(/docs\/TODO-a\.md:1  TODO-a  - \[ \] x/);
+    expect((await run(['document', 'search', 'archived', '--archived'], current.root)).stdout).toMatch(/TODO-old/);
   });
 
   it('installs and uninstalls skills', async () => {

@@ -11,6 +11,7 @@ export function ReferenceTooltip({ top, left, target, info }: { top: number; lef
         <>
           <div className="tooltip-title">
             {info.summary.title} <span className="status">{info.summary.status}</span>
+            {info.archived && <span className="adoc-chip adoc-tone-accent">archived</span>}
           </div>
           {info.summary.fields && Object.keys(info.summary.fields).length > 0 && (
             <table>

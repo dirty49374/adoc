@@ -35,6 +35,7 @@ export interface SummaryEntry {
   key: string;
   path: string;
   updatedAt: string;
+  archived: boolean;
   summary?: DocumentSummary;
   error?: string;
 }
@@ -45,6 +46,7 @@ export interface DocumentView {
   path: string;
   file: string;
   version: string;
+  archived: boolean;
   summary?: DocumentSummary;
   summaryError?: string;
   html?: string;
@@ -56,6 +58,7 @@ export interface ReferenceInfo {
   target: string;
   found: boolean;
   key: string;
+  archived?: boolean;
   summary?: DocumentSummary;
   error?: string;
 }

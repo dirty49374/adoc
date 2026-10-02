@@ -1,6 +1,6 @@
 ---
 title: archive by _archive folders
-status: DOING
+status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261002-archive]
 related: [KANBAN-adoc]
@@ -35,3 +35,8 @@ Spec Terms (aterm):
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-archive]].
+- 2026-10-02: core: records under `_archive` are archived; a duplicate key keeps the not archived document; `archived` on summary entries, document views and reference resolution; tab counts without archived; `findDocuments` / `searchDocuments`.
+- 2026-10-02: CLI: `adoc document list` and `adoc document search <text>` with `--plugin` and `--archived` (only archived), local times; agent guide: find documents with these commands, archive with `git mv`.
+- 2026-10-02: web UI: archive button in the list pane title row (title shows `· ARCHIVE`), archived chip and archive/unarchive button in the document header (the action reaches the agent as `user request: archive|unarchive`), archived chip in the reference tooltip.
+- 2026-10-02: checked on a demo copy (port 7799) with one TASK moved into `docs/tasks/_archive/`: list 3 rows and tab count 3; archive view 1 row; header chip and button; the pending message `user request: unarchive`; the tooltip from TODO-gui marks it archived. Tests: core 18, CLI 5 (document list/search), plugin-kit 9.
+

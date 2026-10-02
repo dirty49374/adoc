@@ -1,3 +1,4 @@
+import { Archive } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api, type SummaryEntry } from '../api.js';
 import { PinButton } from '../fold.js';
@@ -11,7 +12,10 @@ const SORT_KEY = 'adoc.list-sort';
 
 type ListState = { phase: 'loading' } | { phase: 'plugin-error'; error: string } | { phase: 'showing'; documents: SummaryEntry[] };
 
-/** _Document_List_Pane_: one row per document of the plugin, in the order this browser chose (last update first by default); `onPin` offers pinning while a document is shown. */
+/**
+ * _Document_List_Pane_: one row per document of the plugin, in the order this browser chose (last update first by default),
+ * without archived documents unless the archive button shows only them; `onPin` offers pinning while a document is shown.
+ */
 export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned }: { pluginKey: string; selected?: string; pinned: boolean; onPin?: (pinned: boolean) => void; unpinned: boolean }) {
   const { revision } = useLive();
   const [state, setState] = useState<ListState>({ phase: 'loading' });
@@ -20,6 +24,8 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
     return isDocumentSort(stored) ? stored : 'updated';
   });
   const now = useMinuteClock();
+  const [archive, setArchive] = useState(false);
+  useEffect(() => setArchive(false), [pluginKey]);
   const pickSort = (next: DocumentSort) => {
     setSort(next);
     writeStored(SORT_KEY, next);
@@ -35,21 +41,26 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
     };
   }, [pluginKey, revision]);
 
+  const shown = state.phase === 'showing' ? state.documents.filter((d) => d.archived === archive) : [];
+
   return (
     <aside className={`document-list-pane foldable${unpinned ? ' unpinned' : ''}`} data-testid="document-list-pane">
       <div className="pane-rail fold-closed">{pluginKey}</div>
       <div className="pane-title fold-open">
-        {pluginKey}
+        {archive ? `${pluginKey} · ARCHIVE` : pluginKey}
         <span className="pane-title-controls">
           <DocumentSortPicker sort={sort} onPick={pickSort} />
+          <button className={`quiet${archive ? ' active' : ''}`} onClick={() => setArchive(!archive)} title={archive ? 'Back to the documents' : 'Show only archived documents'} data-testid="list-archive">
+            <Archive />
+          </button>
           {onPin && <PinButton pinned={pinned} onPin={onPin} what="list" testId="list-pin" />}
         </span>
       </div>
       <div className="document-rows main-scroll fold-open">
         {state.phase === 'loading' && <p className="muted">Loading…</p>}
         {state.phase === 'plugin-error' && <p className="error">Plugin {pluginKey} failed to load: {state.error}</p>}
-        {state.phase === 'showing' && state.documents.length === 0 && <p className="muted">No {pluginKey} documents yet.</p>}
-        {state.phase === 'showing' && sortEntries(state.documents, sort).map((entry) => <DocumentRow key={entry.key} entry={entry} selected={entry.key === selected} now={now} />)}
+        {state.phase === 'showing' && shown.length === 0 && <p className="muted">{archive ? `No archived ${pluginKey} documents.` : `No ${pluginKey} documents yet.`}</p>}
+        {state.phase === 'showing' && sortEntries(shown, sort).map((entry) => <DocumentRow key={entry.key} entry={entry} selected={entry.key === selected} now={now} />)}
       </div>
     </aside>
   );

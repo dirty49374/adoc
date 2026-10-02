@@ -29,7 +29,7 @@ describe('Workspace', () => {
       ['TASK', 1, undefined],
       ['KANBAN', 0, undefined],
     ]);
-    expect(ws.summaryList('TODO')).toEqual([{ key: 'TODO-gui', path: 'docs/TODO-gui.md', updatedAt: expect.any(String), summary: { title: 'GUI', status: '1/3 done', fields: { open: 2, done: 1 } } }]);
+    expect(ws.summaryList('TODO')).toEqual([{ key: 'TODO-gui', path: 'docs/TODO-gui.md', updatedAt: expect.any(String), archived: false, summary: { title: 'GUI', status: '1/3 done', fields: { open: 2, done: 1 } } }]);
     const view = ws.view('TASK-a')!;
     expect(view.summary?.status).toBe('RUNNING');
     expect(view.html).toContain('data-adoc-anchor="goal"');
@@ -47,6 +47,19 @@ describe('Workspace', () => {
     await current!.write('docs/TODO-gui.md', `${TODO}- [ ] Four\n`);
     await ws.refresh();
     expect(Date.parse(ws.summaryList('TODO')[0]!.updatedAt)).toBeGreaterThan(when.getTime());
+  });
+
+  it('archives documents in _archive folders: kept keys, counts without them, the not archived one wins a duplicate', async () => {
+    const ws = await open({ 'docs/TODO-gui.md': TODO, 'docs/tasks/_archive/TASK-a.md': TASK, 'docs/_archive/old/TODO-gui.md': '- [ ] old\n', 'docs/TODO-b.md': '- [ ] cursor paging\n' });
+    expect(ws.pluginInfos().map((p) => [p.key, p.documents])).toEqual([['TODO', 2], ['TASK', 0], ['KANBAN', 0]]);
+    expect(ws.record('TODO-gui')).toMatchObject({ path: 'docs/TODO-gui.md', archived: false });
+    expect(ws.check().filter((e) => e.kind === 'duplicate-key').map((e) => e.message)).toEqual([expect.stringContaining('docs/TODO-gui.md is used')]);
+    expect(ws.resolve('TASK-a')).toMatchObject({ found: true, archived: true });
+    expect(ws.view('TASK-a')?.archived).toBe(true);
+    expect(ws.findDocuments({ archived: false }).map((d) => d.key)).toEqual(expect.arrayContaining(['TODO-gui', 'TODO-b']));
+    expect(ws.findDocuments({ archived: true }).map((d) => d.key)).toEqual(['TASK-a']);
+    expect(ws.searchDocuments('CURSOR', { archived: false })).toEqual([{ key: 'TODO-b', path: 'docs/TODO-b.md', line: 1, text: '- [ ] cursor paging' }]);
+    expect(ws.searchDocuments('do it', { archived: true })).toEqual([{ key: 'TASK-a', path: 'docs/tasks/_archive/TASK-a.md', line: 8, text: 'Do it.' }]);
   });
 
   it('reports every kind of problem in check', async () => {

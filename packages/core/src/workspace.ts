@@ -24,6 +24,7 @@ export interface SummaryEntry {
   key: string;
   path: string;
   updatedAt: string;
+  archived: boolean;
   summary?: DocumentSummary;
   error?: string;
 }
@@ -35,6 +36,7 @@ export interface DocumentView {
   path: string;
   file: string;
   version: string;
+  archived: boolean;
   summary?: DocumentSummary;
   summaryError?: string;
   html?: string;
@@ -206,7 +208,7 @@ export class Workspace {
 
   pluginInfos(): PluginInfo[] {
     return [...this.plugins.values()].map((p) => {
-      const info: PluginInfo = { key: p.key, from: p.from, documents: [...this.documents.values()].filter((d) => d.pluginKey === p.key).length };
+      const info: PluginInfo = { key: p.key, from: p.from, documents: [...this.documents.values()].filter((d) => d.pluginKey === p.key && !d.archived).length };
       if (p.definition) {
         info.description = p.definition.description;
         info.layout = p.definition.layout.kind === 'file' ? `file ${p.key}-<id>${p.definition.layout.extension}` : `folder ${p.key}-<id>/${p.definition.layout.entry}`;
@@ -274,7 +276,32 @@ export class Workspace {
     return [...this.documents.values()]
       .filter((d) => d.pluginKey === pluginKey)
       .sort((a, b) => a.key.localeCompare(b.key))
-      .map((d) => ({ key: d.key, path: d.path, updatedAt: this.cache.get(d.key)!.updatedAt, ...this.summarize(d.key) }));
+      .map((d) => ({ key: d.key, path: d.path, updatedAt: this.cache.get(d.key)!.updatedAt, archived: d.archived, ...this.summarize(d.key) }));
+  }
+
+  /** _Document_Find_Command_ `list`: the entries of every plugin (or one), archived or not as asked, newest first. */
+  findDocuments(options: { pluginKey?: string; archived: boolean }): Array<SummaryEntry & { pluginKey: string }> {
+    return [...this.plugins.keys()]
+      .filter((pluginKey) => !options.pluginKey || pluginKey === options.pluginKey)
+      .flatMap((pluginKey) => this.summaryList(pluginKey).map((entry) => ({ pluginKey, ...entry })))
+      .filter((entry) => entry.archived === options.archived)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.key.localeCompare(b.key));
+  }
+
+  /** _Document_Find_Command_ `search`: every line of a document file that contains the text, case-insensitive. */
+  searchDocuments(text: string, options: { pluginKey?: string; archived: boolean }): Array<{ key: string; path: string; line: number; text: string }> {
+    const needle = text.toLowerCase();
+    const hits: Array<{ key: string; path: string; line: number; text: string }> = [];
+    for (const { key } of this.findDocuments(options)) {
+      const record = this.documents.get(key)!;
+      for (const [name, content] of Object.entries(this.cache.get(key)!.doc.files)) {
+        const path = record.kind === 'file' ? record.path : `${record.path}/${name}`;
+        content.split('\n').forEach((line, i) => {
+          if (line.toLowerCase().includes(needle)) hits.push({ key, path, line: i + 1, text: line.trim() });
+        });
+      }
+    }
+    return hits;
   }
 
   view(key: string): DocumentView | undefined {
@@ -282,7 +309,7 @@ export class Workspace {
     if (!entry) return undefined;
     const summary = this.summarize(key)!;
     const rendered = this.render(key)!;
-    const view: DocumentView = { key, pluginKey: entry.record.pluginKey, path: entry.record.path, file: entry.record.file, version: entry.cached.version };
+    const view: DocumentView = { key, pluginKey: entry.record.pluginKey, path: entry.record.path, file: entry.record.file, version: entry.cached.version, archived: entry.record.archived };
     if (summary.summary) view.summary = summary.summary;
     if (summary.error) view.summaryError = summary.error;
     if (rendered.html !== undefined) view.html = rendered.html;
@@ -291,11 +318,12 @@ export class Workspace {
   }
 
   /** _Document_Reference_Resolution_: the summary of the referenced document, or `found: false`. */
-  resolve(target: string): { found: boolean; key: string; summary?: DocumentSummary; error?: string } {
+  resolve(target: string): { found: boolean; key: string; archived?: boolean; summary?: DocumentSummary; error?: string } {
     const parsed = parseDocumentTarget(target);
     const key = parsed?.key ?? target;
-    if (!parsed || !this.documents.has(parsed.key)) return { found: false, key };
-    return { found: true, key, ...this.summarize(parsed.key) };
+    const record = parsed && this.documents.get(parsed.key);
+    if (!record) return { found: false, key };
+    return { found: true, key, archived: record.archived, ...this.summarize(record.key) };
   }
 
   /** Every _Document_Reference_ that the renderer of a document marked. */

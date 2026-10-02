@@ -46,7 +46,8 @@ applied: true
 
 ## Rules
 
-- Find documents under the watch paths in `.adoc/adoc.yaml` (usually `docs/`). A document's file or folder name is its key: `TASK-260930-order-paging.md`.
+- Find documents with `adoc document list [--plugin TASK]` (newest first) and `adoc document search <text>`, not with `ls` or `grep`: they leave archived documents out, which keeps your context small. Add `--archived` to look only at archived ones. Documents live under the watch paths in `.adoc/adoc.yaml` (usually `docs/`); a document's file or folder name is its key: `TASK-260930-order-paging.md`.
+- **Archive:** a document inside a folder named `_archive` (at any depth of a watch path) is archived. It keeps its key, and references to it still work. To archive, move it with `git mv` into an `_archive` folder next to it (`docs/tasks/TASK-x.md` → `docs/tasks/_archive/TASK-x.md`); to restore, move it back. The person asks for this with the actions `archive` and `unarchive` (an `action` message with `applied: false`).
 - A new document key is `<PLUGIN KEY>-<local id>`; the local id uses lowercase letters, digits, `-`, `_`, `.` only, in English words, such as `260930-order-paging` (today's date as yymmdd, then a title) or `gui`. Never reuse an existing key.
 - Refer to another document by writing `[[KEY]]` in Markdown content.
 - Always read the current file before editing it: the person or a plugin action may have changed it.

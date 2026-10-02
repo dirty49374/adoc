@@ -37,6 +37,18 @@ async function client(options: Options, context: CommandContext): Promise<Server
   return server;
 }
 
+/** An ISO time as local `YYYY-MM-DD HH:MM`. */
+function localTime(iso: string): string {
+  const t = new Date(iso);
+  const two = (n: number) => String(n).padStart(2, '0');
+  return `${t.getFullYear()}-${two(t.getMonth() + 1)}-${two(t.getDate())} ${two(t.getHours())}:${two(t.getMinutes())}`;
+}
+
+/** The options of the _Document_Find_Command_. */
+function findOptions(options: Options): { pluginKey?: string; archived: boolean } {
+  return { ...(typeof options.plugin === 'string' ? { pluginKey: options.plugin } : {}), archived: options.archived === true };
+}
+
 function table(rows: string[][]): string {
   if (!rows.length) return '';
   const widths = rows[0]!.map((_, i) => Math.max(...rows.map((r) => (r[i] ?? '').length)));
@@ -181,6 +193,36 @@ export const commands: readonly CommandDefinition[] = [
     },
   },
   {
+    name: 'document list',
+    options: [
+      ['--plugin <key>', 'only documents of this plugin key, such as TASK'],
+      ['--archived', 'only archived documents (inside an _archive folder)'],
+    ],
+    summary: 'List documents, newest first, without archived ones.',
+    behavior: 'Shows the key, status, last update, title and path of every document, by last update, newest first. Archived documents (inside an _archive folder) are left out; --archived shows only them.',
+    example: 'adoc document list --plugin TASK',
+    async run(_args, options, context) {
+      const found = (await openWorkspace(options, context)).findDocuments(findOptions(options));
+      const rows = [['KEY', 'STATUS', 'UPDATED', 'TITLE', 'PATH'], ...found.map((d) => [d.key, d.summary?.status ?? 'ERROR', localTime(d.updatedAt), d.summary?.title ?? d.error ?? '', d.path])];
+      return { data: found, text: found.length ? table(rows) : `No ${options.archived ? 'archived ' : ''}documents.` };
+    },
+  },
+  {
+    name: 'document search',
+    argument: '<text>',
+    options: [
+      ['--plugin <key>', 'only documents of this plugin key, such as TASK'],
+      ['--archived', 'only archived documents (inside an _archive folder)'],
+    ],
+    summary: 'Find the lines of documents that contain a text, without archived documents.',
+    behavior: 'Prints every line of a document file that contains the text, case-insensitive, as path:line, key and line. Archived documents (inside an _archive folder) are left out; --archived searches only them.',
+    example: 'adoc document search "cursor paging"',
+    async run(args, options, context) {
+      const hits = (await openWorkspace(options, context)).searchDocuments(args[0]!, findOptions(options));
+      return { data: hits, text: hits.length ? hits.map((h) => `${h.path}:${h.line}  ${h.key}  ${h.text}`).join('\n') : `No ${options.archived ? 'archived ' : ''}document contains "${args[0]}".` };
+    },
+  },
+  {
     name: 'skill list',
     options: [],
     summary: 'List the agent guides adoc can show or install.',
@@ -309,6 +351,7 @@ export const groups: Record<string, string> = {
   mcp: 'Serve the adoc MCP tool',
   message: 'Receive user messages',
   plugin: 'Inspect declared plugins',
+  document: 'Find documents',
   skill: 'Show and install agent guides',
   ui: 'Inspect and control browser sessions of the web UI',
   agent: 'Claim and show the assigned agent',
