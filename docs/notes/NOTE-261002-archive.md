@@ -24,12 +24,15 @@ status: OPEN
 
 ## Open questions
 
-- `--archived`는 "archive만"일까요, "archive 포함"일까요? (추천: "archive만". UI 버튼과 같은 뜻이 되고, 둘 다 필요하면 두 번 실행하면 됩니다.)
-- `adoc document search`까지 만들까요, `list`만 만들고 검색은 agent의 `grep`에 맡길까요? `grep`에 맡기면 `_archive`가 섞이는 문제는 남습니다(agent가 `--glob '!**/_archive/**'`를 쓰도록 skill에 적는 정도).
-- archive 요청 버튼을 어디에 둘까요? 문서 헤더(`_Document_Header_`)에 두는 것을 추천합니다.
+- (없음. 남은 질문은 사람의 위임으로 agent가 추천안대로 정해 Decisions에 적음)
 
 ## Decisions
 
 - **방식:** watch path 안의 `_archive` 폴더 아래에 있는 문서가 archive입니다.
 - **UI:** list pane(`_Document_List_Pane_`)에 archive를 보는 버튼을 둡니다. 누르면 archive 목록만 따로 보입니다.
 - **CLI:** archive는 옵션으로만 검색되게 합니다(기본은 제외). agent의 context를 낭비하지 않기 위해서입니다.
+- **`--archived`는 "archive만":** UI의 archive 버튼과 같은 뜻입니다. 전부 보려면 두 번 실행합니다. (agent가 추천안으로 정함)
+- **CLI 명령:** `adoc document list`와 `adoc document search <text>`를 둘 다 만듭니다. agent guide는 문서를 찾을 때 `ls`/`grep` 대신 이 명령을 쓰라고 안내합니다. (agent가 추천안으로 정함)
+- **archive 요청 버튼:** 문서 헤더(`_Document_Header_`)에 둡니다. 버튼은 기존 action 메커니즘으로 `archive`/`unarchive`를 보내고, plugin이 처리하지 않으면 기본 action handler가 agent에게 요청 message로 전달합니다. 새 전달 경로를 만들지 않습니다. (agent가 추천안으로 정함)
+- **같은 key가 양쪽에 있으면:** archive가 아닌 쪽을 쓰고 duplicate key 경고를 냅니다.
+

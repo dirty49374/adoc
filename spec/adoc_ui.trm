@@ -135,6 +135,7 @@ list _Document_List_Pane_ in document = {
 .contract
   - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, in the order chosen in the _Document_Sort_Picker_, and by default by last update, newest first.
   - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
+  - _Document_List_Pane_ must leave out archived documents, and must show only the archived ones while the person turns on its archive button in the title row.
   - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
 .states
   - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.
@@ -195,6 +196,7 @@ panel _Document_Detail_Pane_ in document = {
 label _Document_Header_ in document = {
   The header at the top of the _Document_Detail_Pane_ that shows the identity and state of the shown _adoc:Document_.
 .relations
+  references _adoc:Document_Action_
   references _adoc:Document_
   shows _adoc:Document_Key_
   shows _adoc:Document_Summary_
@@ -204,6 +206,7 @@ label _Document_Header_ in document = {
 .contract
   - _Document_Header_ must show the _adoc:Document_Key_, the title and the status of the _adoc:Document_Summary_, and the file path, updated on every change.
   - _Document_Header_ must contain the _Change_Toggle_ and the _Change_Base_Picker_.
+  - _Document_Header_ must mark an archived _adoc:Document_ as archived, and must offer a button that triggers the _adoc:Document_Action_ `archive`, or `unarchive` for an archived one.
 }
 
 panel _Document_Body_ in document = {
@@ -320,6 +323,7 @@ card _Reference_Tooltip_ in document = {
   part of _Document_Body_
 .contract
   - _Reference_Tooltip_ must show the title and the status of the referenced _adoc:Document_Summary_ as "title (status)", and every free field as a row of a table.
+  - _Reference_Tooltip_ must mark a referenced _adoc:Document_ that is archived.
 .states
   - _Reference_Tooltip_ is one of loading, showing, broken; in broken the user sees that the referenced _adoc:Document_Key_ does not exist.
 }

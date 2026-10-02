@@ -496,10 +496,12 @@ concept _Document_Summary_List_ in document = {
   shows _Document_Key_
   used by _Document_List_View_
   references _Assigned_Agent_
+  references _Document_Archive_
 .contract
   - A _Document_Summary_List_ must contain exactly one entry for each _Document_ of its _Plugin_ under every _Watch_Path_.
   - An entry whose summarize failed must show the _Document_Key_ and the parse error instead of a _Document_Summary_.
   - Every entry, also one whose summarize failed, must carry the last update of its _Document_: the newest modification time of its files.
+  - Every entry must say whether its _Document_ is in a _Document_Archive_.
 .remarks
   - Chosen: the last update is the file modification time, not the last git commit, so that an edit by the _Assigned_Agent_ shows at once.
 }
@@ -871,6 +873,50 @@ concept _Browser_Session_ in runtime = {
   - A _Browser_Session_ must survive a reload of its tab and keep its id.
 .remarks
   - Chosen: sessions are kept in memory and forgotten when the _Adoc_Server_ restarts.
+}
+
+concept _Document_Archive_ in document = {
+  Every folder named `_archive` inside a _Watch_Path_; a _Document_ inside one, at any depth, is archived: kept with its _Document_Key_ but out of the way.
+.relations
+  references _adoc:Plugin_
+  inside _Watch_Path_
+  holds _Document_
+  references _Document_Key_
+  references _Document_Reference_
+  references _Plugin_Tab_
+  references _Assigned_Agent_
+  references _Default_Action_Handler_
+  references _Duplicate_Document_Key_Warning_
+  references _Document_Find_Command_
+.contract
+  - An archived _Document_ must keep its _Document_Key_, so that every _Document_Reference_ to it still resolves.
+  - When an archived and a not archived _Document_ carry the same _Document_Key_, the not archived one must be used, and the _Duplicate_Document_Key_Warning_ must name both.
+  - The document count of a _Plugin_Tab_ must leave archived documents out.
+  - The _Assigned_Agent_ archives a _Document_ by moving it with `git mv` into an `_archive` folder next to it, and restores it by moving it back; adoc itself never moves documents, and an archive request from the person reaches the agent through the _Default_Action_Handler_ as the actions `archive` and `unarchive`.
+  - The _Document_Find_Command_ must leave archived documents out unless `--archived` asks for them.
+.remarks
+  - Chosen: a folder rather than a status field, so that one mechanism works for every _Plugin_, also for those without a status.
+  - Chosen: the leading underscore marks a folder that adoc treats specially, as in `_drafts` of Jekyll.
+  - Example: `docs/tasks/_archive/TASK-261002-ui-polish.md` is the archived TASK-261002-ui-polish.
+}
+
+procedure _Document_Find_Command_ in surface = {
+  The `adoc document list` and `adoc document search <text>` commands with which the _Assigned_Agent_ finds documents without reading archived ones.
+.relations
+  references _adoc:Document_Key_
+  part of _Adoc_CLI_
+  invoked by _Assigned_Agent_
+  lists _Document_
+  uses _Document_Summary_List_
+  references _Document_Archive_
+  references _Plugin_Key_
+.contract
+  - `adoc document list` must show the _Document_Key_, title, status, last update and path of each _Document_, newest first, optionally of one _Plugin_Key_ with `--plugin`.
+  - `adoc document search <text>` must show each line of a _Document_ file that contains the text, case-insensitive, as key, path, line number and line, optionally of one _Plugin_Key_ with `--plugin`.
+  - Both must leave archived documents out by default and show only archived ones with `--archived`.
+.remarks
+  - Chosen: `--archived` means "only archived", the same as the archive button of the web UI; run both forms to see everything.
+  - Chosen: the agent guide tells the agent to find documents with these commands rather than `ls` or `grep`, so that archived documents do not fill its context.
 }
 
 procedure _Browser_Open_Command_ in surface = {
