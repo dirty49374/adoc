@@ -158,7 +158,7 @@ list _Document_List_Pane_ in document = {
 .contract
   - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, in the order chosen in the _Document_Sort_Picker_, and by default by last update, newest first.
   - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
-  - _Document_List_Pane_ must link, in small text `SKILL.md` beside the plugin key in its title row, to the _Skill_View_ of the _adoc:Plugin_Skill_ of its plugin.
+  - _Document_List_Pane_ must link, in small text after the plugin key and a separator (`KANBAN | SKILL.md`) in its title row, to the _Skill_View_ of the _adoc:Plugin_Skill_ of its plugin.
   - _Document_List_Pane_ must leave out archived documents, and must show only the archived ones while the person turns on its archive button in the title row.
   - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
 .states

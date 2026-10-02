@@ -187,7 +187,8 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .document-list-pane.unpinned { width: 32px; }
 .document-list-pane.unpinned:is(:hover, :has(textarea:focus)) { width: 280px; box-shadow: var(--adoc-shadow); }
 .pane-rail { writing-mode: vertical-rl; padding: 10px 7px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; }
-.pane-title-name { display: inline-flex; align-items: baseline; gap: 8px; }
+.pane-title-name { display: inline-flex; align-items: baseline; gap: 6px; }
+.title-separator { color: var(--adoc-border); font-weight: 400; }
 .skill-link { font-family: var(--adoc-font-mono); font-size: var(--adoc-size-tiny); font-weight: 400; letter-spacing: 0; color: var(--adoc-text-muted); text-decoration: none; }
 .skill-link:hover { color: var(--adoc-md-link); text-decoration: underline; }
 .home-skills { display: flex; gap: 14px; margin: 6px 0 0; }
