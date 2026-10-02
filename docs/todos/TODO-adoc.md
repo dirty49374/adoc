@@ -18,3 +18,4 @@
 - [ ] Web UI: horizontal and vertical scrollbars always show on the page (new, since the UI polish); not reproduced in the demo, which has no terminal panel, so suspect the terminal panel (xterm.js sizing) first
 - [ ] Plugins: register a source (GitHub URL etc.) for a plugin so that `adoc plugin update` can update it, see [[NOTE-261002-installation]]
 - [ ] Markdown documents: edit in the web UI (e.g. answer an open question by typing right below it); an edit reaches the agent with a diff of what the person changed, see [[NOTE-261002-client-plugins]]
+- [ ] Markdown: render Mermaid diagrams in ```mermaid fences (code syntax highlighting already works: fenced code with a language, highlight.js, since the UI polish)
