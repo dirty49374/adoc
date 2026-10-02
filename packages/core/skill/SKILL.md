@@ -18,7 +18,7 @@ adoc is a place where a person and an agent work on documents together. The pers
 
 - Each plugin defines one kind of document, under a **plugin key** in uppercase letters: `TODO`, `TASK`, `KANBAN`, `NOTE`, `SKETCH`, …
 - A plugin has any number of documents. A document is one file or one folder under the watch paths (usually `docs/`); the plugin decides which, and the file's extension. Its name without the extension is its **document key**, `<PLUGIN KEY>-<local id>`: the file `TASK-260930-order-paging.md` has the key `TASK-260930-order-paging`, the folder `BUG-42/` the key `BUG-42`.
-- Create a new document in the first watch path, in a folder named after the plugin key in lowercase plus `s`: `docs/tasks/TASK-260930-order-paging.md`, `docs/kanbans/KANBAN-adoc.yaml`.
+- Create a new document in the first watch path, in a folder named after the plugin key in lowercase plural: `docs/tasks/TASK-260930-order-paging.md`, `docs/sketches/SKETCH-261002-login.excalidraw`.
 - The local id uses lowercase letters, digits, `-`, `_` and `.`, in English words: today's date as yymmdd and a title (`260930-order-paging`), or a topic (`gui`). A key is never reused.
 - A document inside a folder named `_archive` is archived: it keeps its key and references to it work, but lists and searches leave it out. To archive one, move it with `git mv` into an `_archive` folder next to it (`docs/tasks/_archive/TASK-x.md`), together with its companion files; to restore it, move it back.
 - `[[KEY]]` or `[[KEY#anchor]]` in Markdown content refers to another document.
