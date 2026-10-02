@@ -32,7 +32,7 @@ adoc check            # runs summarize and render on every document; exits 1 on 
 
 Actions run only from the web UI: start `adoc server run`, open a sample document and click, toggle or drag.
 
-A running `adoc server run` reloads the plugin whenever a file in its folder changes.
+A running `adoc server run` reloads the plugin whenever a file at the top of its folder, such as `index.ts`, changes.
 
 ## What a plugin provides
 
@@ -91,6 +91,29 @@ Return any of:
 - `message`: text sent to the agent.
 
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` and changes nothing. That is often all you need: the agent then edits the file.
+
+## Companion files
+
+A file document can have companion files: files beside it with the same name and another extension, declared in the layout, such as `layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] }` for `SKETCH-login.excalidraw` with `SKETCH-login.png`. They belong to the document (its version, its last update, archiving) but are not in `doc`, since they may be binary. An action writes one by returning `companions: { '.png': content }`. A content in `files` or `companions` is text, or `{ base64 }` for binary data.
+
+## Browser code: the client module
+
+When HTML is not enough, for example for a drawing board, the plugin brings browser code: the folder `client/` with `index.js` (an ES module with every library bundled in) and optionally `index.css`. adoc serves it at `/assets/plugins/<KEY>/` and loads it once per page. The module defines custom elements, and `render` returns their tags:
+
+```ts
+render: (doc) => html`<adoc-sketch data-adoc-document="${doc.key}" data-adoc-file="${doc.file}"></adoc-sketch>`,
+```
+
+The element talks to adoc only through DOM events and two URLs:
+
+| what | how |
+|---|---|
+| read the main file | `fetch('/api/documents/<key>/file')` → `{ key, version, file, text }` |
+| change files | dispatch `new CustomEvent('adoc-action', { bubbles: true, detail: { name, value, reply } })`; adoc runs the action (kind `client`) with the shown version and calls `reply({ status, version?, reason? })` with `applied`, `sent`, `refused`, `failed` or `busy` (another action was running: try again) |
+| tell the agent | dispatch `new CustomEvent('adoc-draft', { bubbles: true, detail: { text } })`: one draft comment on the document waits in the composer; a later one replaces it |
+| follow changes | `window.addEventListener('adoc-documents-changed', (e) => e.detail.keys…)` |
+
+Keep the `render` output the same across versions (load the content in the element, not in attributes), or the page replaces the element on every change and it loses its state. A `client/` built from sources (with esbuild, for example) is a build output; see the SKETCH plugin for a complete example.
 
 ## Styling: classes and design tokens
 

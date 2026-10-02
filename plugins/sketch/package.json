@@ -1,0 +1,19 @@
+{
+  "name": "@adoc/plugin-sketch",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The SKETCH plugin: Excalidraw drawings that the person makes and the agent reads.",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "tsc -p web"
+  },
+  "devDependencies": {
+    "@excalidraw/excalidraw": "0.18.1",
+    "esbuild": "0.28.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2"
+  }
+}

@@ -70,7 +70,11 @@ export function LiveProvider({ children, onNavigate }: { children: ReactNode; on
         setState((s) => {
           if (data.type === 'hello') return { ...s, status: 'connected', revision: s.revision + 1, messages: data.messages, agent: data.agent, connection: s.connection + 1, changed: { keys: ['*'], tick: s.changed.tick + 1 } };
           if (data.type === 'agent') return { ...s, agent: data.agent };
-          if (data.type === 'documents') return { ...s, revision: s.revision + 1, changed: { keys: data.changed, tick: s.changed.tick + 1 } };
+          if (data.type === 'documents') {
+            // Elements of plugin client modules follow changes of their documents through this window event.
+            window.dispatchEvent(new CustomEvent('adoc-documents-changed', { detail: { keys: data.changed } }));
+            return { ...s, revision: s.revision + 1, changed: { keys: data.changed, tick: s.changed.tick + 1 } };
+          }
           if (data.type === 'messages') return { ...s, messages: data.messages };
           return s;
         });

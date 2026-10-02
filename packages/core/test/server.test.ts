@@ -1,10 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 import { readServerRecord } from '../src/registry.js';
 import { discoverHome } from '../src/home.js';
 import { AdocServer } from '../src/server.js';
 import { Workspace } from '../src/workspace.js';
-import { fixture, freePort, type Fixture } from '@adoc/testing';
+import { fixture, freePort, PLUGINS, type Fixture } from '@adoc/testing';
 
 let current: { fixture: Fixture; server?: AdocServer } | undefined;
 afterEach(async () => {
@@ -47,6 +49,30 @@ describe('AdocServer', () => {
     expect(refused.status).toBe(409);
     await f.write('docs/TODO-new.md', '# New\n');
     await expect.poll(async () => (await json(`${server.url}/api/plugins/TODO/documents`)).documents.length, { timeout: 3000 }).toBe(2);
+  });
+
+  it('keeps companion files with their document, writes binary contents, and serves a plugin client module', async () => {
+    const f = await fixture({ 'docs/SKETCH-a.excalidraw': '{ "type": "excalidraw", "elements": [] }', 'docs/SKETCH-a.png': 'old', 'docs/SKETCH-lost.png': 'x' });
+    await f.write('.adoc/adoc.yaml', `plugins:\n  - key: SKETCH\n    from: ${PLUGINS}/sketch\nwatch: [docs]\n`);
+    current = { fixture: f };
+    const ws = await Workspace.open(await discoverHome(f.root));
+    expect(ws.record('SKETCH-a')?.companions).toEqual(['docs/SKETCH-a.png']);
+    expect(ws.check().map((e) => e.path)).toContain('docs/SKETCH-lost.png');
+    const server = new AdocServer(ws, { port: await freePort(), host: '127.0.0.1', log: () => undefined, debounceMs: 30 });
+    current.server = server;
+    await server.start();
+    const file = await json(`${server.url}/api/documents/SKETCH-a/file`);
+    expect(file).toMatchObject({ key: 'SKETCH-a', file: 'docs/SKETCH-a.excalidraw', text: '{ "type": "excalidraw", "elements": [] }' });
+    const scene = '{ "type": "excalidraw", "elements": [{ "type": "rectangle" }] }';
+    const saved = await json(`${server.url}/api/actions`, post({ key: 'SKETCH-a', version: file.version, event: { kind: 'client', name: 'save', value: JSON.stringify({ scene, png: Buffer.from([137, 80, 78, 71]).toString('base64') }) } }));
+    expect(saved).toMatchObject({ status: 'applied', version: expect.any(String) });
+    expect(saved.version).not.toBe(file.version);
+    expect([...(await readFile(join(f.root, 'docs/SKETCH-a.png')))]).toEqual([137, 80, 78, 71]);
+    expect(await readFile(join(f.root, 'docs/SKETCH-a.excalidraw'), 'utf8')).toBe(scene);
+    const plugin = (await json(`${server.url}/api/workspace`)).plugins.find((p: { key: string }) => p.key === 'SKETCH');
+    expect(plugin.client).toEqual({ style: true });
+    expect((await fetch(`${server.url}/assets/plugins/SKETCH/index.js`)).headers.get('content-type')).toMatch(/javascript/);
+    expect((await fetch(`${server.url}/assets/plugins/TODO/index.js`)).status).toBe(404);
   });
 
   it('serves built files under /assets/ and index.html for every client route', async () => {

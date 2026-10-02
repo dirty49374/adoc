@@ -1,5 +1,6 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": { "noEmit": true, "composite": false, "declaration": false, "verbatimModuleSyntax": true, "erasableSyntaxOnly": true },
-  "include": ["."]
+  "include": ["."],
+  "exclude": ["*/node_modules", "*/client", "*/web", "*/build.mjs"]
 }

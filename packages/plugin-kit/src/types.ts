@@ -1,7 +1,11 @@
 /** How the files of one document are laid out on disk. */
 export type DocumentLayout =
-  /** One file named `<KEY>-<id><extension>`, such as `TODO-gui.md`. */
-  | { kind: 'file'; extension: string }
+  /**
+   * One file named `<KEY>-<id><extension>`, such as `TODO-gui.md`, and optionally companion files with the same name
+   * and the listed extensions, such as `SKETCH-login.png` beside `SKETCH-login.excalidraw`. Companion files belong to
+   * the document but are not handed to plugin functions, since they may be binary.
+   */
+  | { kind: 'file'; extension: string; companions?: string[] }
   /** One folder named `<KEY>-<id>/` whose main file is `entry`, such as `BUG-42/bug.yaml`. */
   | { kind: 'folder'; entry: string };
 
@@ -34,7 +38,8 @@ export interface DocumentSummary {
 
 /** A user operation on a control that `action()` marked. */
 export interface ActionEvent {
-  kind: 'click' | 'toggle' | 'drag';
+  /** `client`: sent by an element of the plugin's client module (`client/index.js`) with the `adoc-action` DOM event. */
+  kind: 'click' | 'toggle' | 'drag' | 'client';
   /** The action name given to `action()`. */
   name: string;
   /** The value given to `action()`. */
@@ -47,12 +52,17 @@ export interface ActionEvent {
   anchor?: string;
 }
 
+/** A file content in an action result: text, or binary data as base64. */
+export type FileContent = string | { base64: string };
+
 /** What an action handler returns. Every field is optional. */
 export interface ActionResult {
   /** New text for the main file. */
   text?: string;
-  /** New texts for files of a folder document, by path relative to the document. */
-  files?: Record<string, string>;
+  /** New contents for files of a folder document, by path relative to the document. */
+  files?: Record<string, FileContent>;
+  /** New contents for companion files of a file document, by extension, such as `{ '.png': { base64 } }`. */
+  companions?: Record<string, FileContent>;
   /** Text of the message sent to the agent. */
   message?: string;
 }

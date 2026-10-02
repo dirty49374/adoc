@@ -1,6 +1,6 @@
 ---
 title: plugin client modules and the SKETCH plugin
-status: DOING
+status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261002-client-plugins]
 related: [KANBAN-adoc]
@@ -35,3 +35,9 @@ Spec Terms (aterm):
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-client-plugins]].
+- 2026-10-02: plugin kit: `companions` in the file layout; action results may return `companions` and `{ base64 }` contents; action kind `client`; authoring skill sections "Companion files" and "Browser code: the client module".
+- 2026-10-02: core: companions in the scan (a companion without its document is a layout-mismatch warning), the version and the last update; binary and companion writes; the applied action returns the new version; `/api/documents/:key/file`; `client/` served at `/assets/plugins/<KEY>/`, looked up on every workspace request; request bodies up to 32 MB; plugin folders watched at the top only (a plugin folder may hold node_modules).
+- 2026-10-02: web UI: client modules loaded once; `adoc-action` (with `reply`) and `adoc-draft` (one per document) from elements; `adoc-documents-changed`; the version of an applied action is taken at once and counts as seen, so the person's own changes do not turn the change view on (this also fixes TODO toggles).
+- 2026-10-02: SKETCH plugin (`plugins/sketch`, its own workspace package): `.excalidraw` + `.png`; Excalidraw board bundled with code splitting (first load about 800 KB) and its fonts; saves 1.2 s after the last change; `renderChanges` shows the board with a note; skill. Registered in this repository with `docs/sketches/SKETCH-261002-sketchpad.excalidraw`.
+- 2026-10-02: checked on a demo copy (port 7799): the board in dark mode; drawing saves the JSON and a PNG (white background), header "N shapes", one chip "The sketch … changed: … .png (image) and … .excalidraw (Excalidraw JSON)" that stays one after more drawing; the board stays after its own saves; an agent edit of the JSON shows up on the open board; sending a message carries the chip with both paths. Tests: core 20 (companions, binary writes, file endpoint, client module), CLI 5, plugin-kit 9.
+

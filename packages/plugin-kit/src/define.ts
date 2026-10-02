@@ -4,8 +4,14 @@ import { HtmlFragment } from './types.js';
 
 const fn = z.custom<(...args: never[]) => unknown>((v) => typeof v === 'function', 'must be a function');
 
+const EXTENSION = /^\.[a-z0-9]+$/;
+
 const layoutSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('file'), extension: z.string().regex(/^\.[a-z0-9]+$/, 'must look like ".md" (a dot, then lowercase letters or digits)') }),
+  z.object({
+    kind: z.literal('file'),
+    extension: z.string().regex(EXTENSION, 'must look like ".md" (a dot, then lowercase letters or digits)'),
+    companions: z.array(z.string().regex(EXTENSION, 'each must look like ".png" (a dot, then lowercase letters or digits)')).optional(),
+  }),
   z.object({ kind: z.literal('folder'), entry: z.string().regex(/^[^/\\]+$/, 'must be a file name inside the folder, such as "bug.yaml"') }),
 ]);
 
@@ -25,11 +31,15 @@ export const summarySchema = z.object({
   fields: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
 });
 
+/** A file content in an action result: text, or binary data as base64. */
+const contentSchema = z.union([z.string(), z.object({ base64: z.string() }).strict()]);
+
 /** Validates what an action handler returned. */
 export const actionResultSchema = z
   .object({
     text: z.string().optional(),
-    files: z.record(z.string(), z.string()).optional(),
+    files: z.record(z.string(), contentSchema).optional(),
+    companions: z.record(z.string(), contentSchema).optional(),
     message: z.string().optional(),
   })
   .strict();

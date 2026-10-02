@@ -64,7 +64,7 @@ const actionSchema = z.object({
   key: z.string(),
   version: z.string(),
   event: z.object({
-    kind: z.enum(['click', 'toggle', 'drag']),
+    kind: z.enum(['click', 'toggle', 'drag', 'client']),
     name: z.string().min(1),
     value: z.string(),
     checked: z.boolean().optional(),
@@ -82,6 +82,10 @@ const WEBAPP_TYPES: Record<string, string> = {
   '.map': 'application/json',
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.ttf': 'font/ttf',
+  '.png': 'image/png',
+  '.json': 'application/json',
   '.txt': 'text/plain; charset=utf-8',
 };
 
@@ -95,7 +99,7 @@ async function readBody(request: IncomingMessage): Promise<unknown> {
   let size = 0;
   for await (const chunk of request) {
     size += (chunk as Buffer).length;
-    if (size > 1_000_000) throw new AdocError('request.too-large', 'request body is larger than 1 MB');
+    if (size > 32_000_000) throw new AdocError('request.too-large', 'request body is larger than 32 MB');
     chunks.push(chunk as Buffer);
   }
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
@@ -201,7 +205,8 @@ export class AdocServer {
       // npm packages are not watched: they change only through npm.
       if (!plugin.directory || plugin.directory.split(/[\\/]/).includes('node_modules')) continue;
       try {
-        if ((await stat(plugin.directory)).isDirectory()) this.watchers.push(watch(plugin.directory, { recursive: true }, () => this.schedulePluginReload()));
+        // Only the top of the folder, where index.ts lives: a plugin folder may hold node_modules and a built client/.
+        if ((await stat(plugin.directory)).isDirectory()) this.watchers.push(watch(plugin.directory, () => this.schedulePluginReload()));
       } catch {
         // A missing plugin folder is already reported as a load error.
       }
@@ -418,6 +423,11 @@ export class AdocServer {
       const base = url.searchParams.get('base');
       return sendJson(response, 200, base && base !== view.version ? { ...view, changes: ws.changes(key, base) } : view);
     }
+    match = /^\/api\/documents\/([^/]+)\/file$/.exec(path);
+    if (match && method === 'GET') {
+      const file = ws.mainFile(decodeURIComponent(match[1]!));
+      return file ? sendJson(response, 200, file) : sendJson(response, 404, { error: `${match[1]} does not exist` });
+    }
     match = /^\/api\/documents\/([^/]+)\/versions$/.exec(path);
     if (match && method === 'GET') {
       const versions = ws.storedVersions(decodeURIComponent(match[1]!));
@@ -474,7 +484,7 @@ export class AdocServer {
       if (outcome.status === 'applied' || outcome.status === 'sent') {
         const message = outcome.message ? this.queue.add({ kind: 'action', ...outcome.message }) : undefined;
         if (outcome.status === 'applied') this.broadcast({ type: 'documents', revision: ws.revision, changed: [key] });
-        return sendJson(response, 200, { status: outcome.status, message: message && publicMessage(message) });
+        return sendJson(response, 200, { status: outcome.status, version: outcome.version, message: message && publicMessage(message) });
       }
       return sendJson(response, outcome.status === 'refused' ? 409 : 422, outcome);
     }
@@ -482,17 +492,24 @@ export class AdocServer {
     return this.serveWebapp(path, response);
   }
 
-  /** Serves a built file under `/assets/`; every other path is a client route and gets index.html. */
+  /**
+   * Serves a built file under `/assets/` (the `client/` folder of a plugin under `/assets/plugins/<KEY>/`); every other
+   * path is a client route and gets index.html.
+   */
   private async serveWebapp(path: string, response: ServerResponse): Promise<void> {
-    const file = path.startsWith('/assets/') && /^\/assets(\/[\w-][\w.-]*)+$/.test(path) ? path.slice(1) : 'index.html';
+    const asset = path.startsWith('/assets/') && /^\/assets(\/[\w-][\w.-]*)+$/.test(path);
+    const plugin = asset ? /^\/assets\/plugins\/([A-Z]+)\/(.+)$/.exec(path) : null;
+    const directory = plugin ? this.workspace.pluginInfos().find((p) => p.key === plugin[1] && p.client)?.directory : undefined;
+    const file = plugin ? (directory ? join(directory, 'client', plugin[2]!) : undefined) : join(this.webappDirectory, asset ? path.slice(1) : 'index.html');
+    if (!file) return sendJson(response, 404, { error: `no file ${path}` });
     try {
-      let body: Buffer | string = await readFile(join(this.webappDirectory, file));
+      let body: Buffer | string = await readFile(file);
       // The configured colour scheme is in the page from the first paint; a browser's own choice replaces it.
-      if (file === 'index.html') body = body.toString('utf8').replace('__ADOC_THEME__', this.workspace.config.ui.theme);
+      if (!asset) body = body.toString('utf8').replace('__ADOC_THEME__', this.workspace.config.ui.theme);
       response.writeHead(200, { 'content-type': WEBAPP_TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
       response.end(body);
     } catch {
-      if (file !== 'index.html') return sendJson(response, 404, { error: `no file ${path}` });
+      if (asset) return sendJson(response, 404, { error: `no file ${path}` });
       response.writeHead(503, { 'content-type': 'text/plain; charset=utf-8' });
       response.end('The adoc web UI is not built; run pnpm build in the adoc repository.');
     }

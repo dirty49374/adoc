@@ -21,7 +21,8 @@ packages/             every folder is a package: package.json, src/, test/, tsco
   cli/                  the adoc command line and the MCP tool
   webapp/               React 19 + react-router web UI, bundled into its dist/ for core to serve
   testing/              @adoc/testing (private): test helpers every package's tests share (temporary workspaces, free ports)
-plugins/              every folder is a plugin: index.ts + skill/SKILL.md (TODO, TASK, KANBAN, NOTE)
+plugins/              every folder is a plugin: index.ts + skill/SKILL.md (TODO, TASK, KANBAN, NOTE, SKETCH);
+                        SKETCH also has package.json and web/, built into client/ (its browser code)
 examples/demo/        a demo workspace (port 7701)
 docs/                 this repository's own adoc documents (port 7700)
 bin/adoc              runs the CLI of this checkout

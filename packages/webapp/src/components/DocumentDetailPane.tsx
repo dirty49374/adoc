@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, HttpError, type ActionRequest, type DocumentView } from '../api.js';
+import { api, HttpError, type ActionRequest, type ActionResponse, type DocumentView } from '../api.js';
 import { useLive } from '../live.js';
 import { seenVersions } from '../storage.js';
 import { ActionNotice } from './ActionNotice.js';
@@ -37,9 +37,16 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
     );
   }, [documentKey]);
 
+  // A change that this browser's own action caused is not a change for the person: while an action runs, a change
+  // notice waits for the reply (the server announces the change before it replies), and the reply's version counts
+  // as seen.
+  const inFlight = useRef(0);
+  const reloadAfterAction = useRef(false);
   useEffect(load, [load]);
   useEffect(() => {
-    if (changed.keys.includes(documentKey) || changed.keys.includes('*')) load();
+    if (!changed.keys.includes(documentKey) && !changed.keys.includes('*')) return;
+    if (inFlight.current) reloadAfterAction.current = true;
+    else load();
   }, [changed.tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = async () => {
@@ -61,9 +68,27 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
     setChangesOn(true);
   };
 
-  const onAction = async (request: Omit<ActionRequest, 'key' | 'version'>) => {
-    if (state.phase !== 'showing') return;
-    const response = await api.sendAction({ ...request, key: documentKey, version: state.view.version });
+  // The version the next action is sent with: the shown one, or the one an applied action returned before the reload.
+  const version = useRef<string | undefined>(undefined);
+  if (state.phase === 'showing') version.current ??= state.view.version;
+  useEffect(() => {
+    if (state.phase === 'showing') version.current = state.view.version;
+  }, [state]);
+
+  const onAction = async (request: Omit<ActionRequest, 'key' | 'version'>): Promise<ActionResponse | undefined> => {
+    if (!version.current) return undefined;
+    inFlight.current += 1;
+    let response: ActionResponse;
+    try {
+      response = await api.sendAction({ ...request, key: documentKey, version: version.current });
+      if (response.status === 'applied' && response.version) seenVersions.set(documentKey, response.version);
+    } finally {
+      inFlight.current -= 1;
+      if (!inFlight.current && reloadAfterAction.current) {
+        reloadAfterAction.current = false;
+        load();
+      }
+    }
     if (response.status === 'refused') {
       setNotice(`Refused: ${response.reason}`);
       load();
@@ -71,8 +96,10 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
       setNotice(`The action failed: ${response.error}`);
       load();
     } else {
+      if (response.version) version.current = response.version;
       setNotice(undefined);
     }
+    return response;
   };
 
   if (state.phase === 'loading') return <section className="document-detail-pane pane-placeholder">Loading…</section>;

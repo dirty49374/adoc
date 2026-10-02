@@ -11,6 +11,8 @@ export interface PluginInfo {
   layout?: string;
   error?: string;
   documents: number;
+  /** The plugin's client module (`client/index.js`), and whether it has a stylesheet. */
+  client?: { style: boolean };
 }
 
 export interface CheckEntry {
@@ -100,10 +102,10 @@ export interface UserComment {
 export interface ActionRequest {
   key: string;
   version: string;
-  event: { kind: 'click' | 'toggle' | 'drag'; name: string; value: string; checked?: boolean; to?: string; anchor?: string };
+  event: { kind: 'click' | 'toggle' | 'drag' | 'client'; name: string; value: string; checked?: boolean; to?: string; anchor?: string };
 }
 
-export type ActionResponse = { status: 'applied' | 'sent'; message?: PublicMessage } | { status: 'refused'; reason: string } | { status: 'failed'; error: string };
+export type ActionResponse = { status: 'applied' | 'sent'; version?: string; message?: PublicMessage } | { status: 'refused'; reason: string } | { status: 'failed'; error: string };
 
 export class HttpError extends Error {
   constructor(
@@ -131,6 +133,7 @@ export const api = {
   references: (targets: string[]) => request<{ references: ReferenceInfo[] }>(`/api/references?targets=${targets.map(encodeURIComponent).join(',')}`),
   sendComments: (body: { target?: MessageTarget; text?: string; comments: UserComment[] }) => request<{ message: PublicMessage }>('/api/messages', post(body)),
   sendAction: (body: ActionRequest) => request<ActionResponse>('/api/actions', post(body)),
+  file: (key: string) => request<{ key: string; version: string; file: string; text: string }>(`/api/documents/${encodeURIComponent(key)}/file`),
 };
 
 /** Writes a target as in _User_Message_Format_. */

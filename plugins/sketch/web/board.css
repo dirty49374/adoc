@@ -1,0 +1,6 @@
+/* The board takes the height of the window below the document header; Excalidraw fills it. */
+adoc-sketch {
+  display: block;
+  height: calc(100vh - 240px);
+  min-height: 420px;
+}

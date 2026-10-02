@@ -4,6 +4,7 @@ export type {
   ActionResult,
   DocumentLayout,
   DocumentSummary,
+  FileContent,
   PluginDefinition,
   PluginDocument,
 } from './types.js';

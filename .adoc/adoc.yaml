@@ -8,6 +8,8 @@ plugins:
     from: ./plugins/kanban
   - key: NOTE
     from: ./plugins/note
+  - key: SKETCH
+    from: ./plugins/sketch
 watch:
   - docs
 agent:

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type MouseEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { openComments } from '../openComments.js';
-import { api, pluginOf, type ActionRequest, type ReferenceInfo } from '../api.js';
+import { api, pluginOf, type ActionRequest, type ActionResponse, type ReferenceInfo } from '../api.js';
 import { AnchorCommentButton } from './AnchorCommentButton.js';
 import { CommentPopover, type PopoverRequest } from './CommentPopover.js';
 import { DraftMarkerColumn } from './DraftMarkerColumn.js';
@@ -14,7 +14,7 @@ const DRAG_TYPE = 'application/x-adoc-drag';
 interface Props {
   documentKey: string;
   html: string;
-  onAction: (request: { event: ActionEvent }) => Promise<void>;
+  onAction: (request: { event: ActionEvent }) => Promise<ActionResponse | undefined>;
 }
 
 /**
@@ -78,11 +78,12 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     return { top: rect.top - base.top, left: rect.left - base.left, bottom: rect.bottom - base.top, width: base.width };
   };
 
-  const act = async (event: ActionEvent) => {
-    if (busy.current) return;
+  /** Sends one action at a time; an action while another is running is dropped and answered `busy`. */
+  const act = async (event: ActionEvent): Promise<ActionResponse | { status: 'busy' } | undefined> => {
+    if (busy.current) return { status: 'busy' };
     busy.current = true;
     try {
-      await onAction({ event });
+      return await onAction({ event });
     } finally {
       busy.current = false;
     }
@@ -126,6 +127,33 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     };
     element.addEventListener('change', listener);
     return () => element.removeEventListener('change', listener);
+  }, []);
+
+  // Elements of a plugin client module: `adoc-action` becomes a Document_Action (answered through `detail.reply`),
+  // `adoc-draft` puts the element's one draft on this document.
+  const elementAction = useRef<(e: Event) => void>(() => undefined);
+  elementAction.current = (e) => {
+    const detail = (e as CustomEvent<{ name?: unknown; value?: unknown; reply?: (outcome: unknown) => void }>).detail;
+    if (typeof detail?.name !== 'string') return;
+    const event: ActionEvent = { kind: 'client', name: detail.name, value: typeof detail.value === 'string' ? detail.value : '' };
+    const anchor = anchorOf(e.target as Element);
+    if (anchor) event.anchor = anchor;
+    void act(event).then((outcome) => detail.reply?.(outcome ?? { status: 'failed', error: 'the document is not shown' }));
+  };
+  useEffect(() => {
+    const element = content.current;
+    if (!element) return;
+    const onAction = (e: Event) => elementAction.current(e);
+    const onDraft = (e: Event) => {
+      const text = (e as CustomEvent<{ text?: unknown }>).detail?.text;
+      if (typeof text === 'string' && text.trim()) draftStore.putElementDraft({ target: { level: 'document', key: documentKey }, text });
+    };
+    element.addEventListener('adoc-action', onAction);
+    element.addEventListener('adoc-draft', onDraft);
+    return () => {
+      element.removeEventListener('adoc-action', onAction);
+      element.removeEventListener('adoc-draft', onDraft);
+    };
   }, []);
 
   const onMouseOver = (e: MouseEvent<HTMLDivElement>) => {

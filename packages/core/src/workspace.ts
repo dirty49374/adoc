@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, normalize } from 'node:path';
 import {
@@ -7,6 +8,7 @@ import {
   summarySchema,
   type ActionEvent,
   type DocumentSummary,
+  type FileContent,
   type PluginDefinition,
   type PluginDocument,
 } from '@adoc/plugin-kit';
@@ -77,12 +79,14 @@ export interface PluginInfo {
   /** The plugin folder and the scope of the place it was loaded from (_Plugin_Directory_). */
   directory?: string;
   scope?: Scope;
+  /** The _Plugin_Client_Module_, when the plugin has one: whether it has a stylesheet too. */
+  client?: { style: boolean };
   error?: string;
   documents: number;
 }
 
 export type ActionOutcome =
-  | { status: 'applied' | 'sent'; message?: ActionMessageInput }
+  | { status: 'applied' | 'sent'; version?: string; message?: ActionMessageInput }
   | { status: 'refused'; reason: string }
   | { status: 'failed'; error: string };
 
@@ -217,6 +221,8 @@ export class Workspace {
         info.layout = p.definition.layout.kind === 'file' ? `file ${p.key}-<id>${p.definition.layout.extension}` : `folder ${p.key}-<id>/${p.definition.layout.entry}`;
       }
       if (p.directory) info.directory = p.directory;
+      // Looked up on every call: a plugin may build its client module while the server runs.
+      if (p.definition && p.directory && existsSync(join(p.directory, 'client', 'index.js'))) info.client = { style: existsSync(join(p.directory, 'client', 'index.css')) };
       if (p.skill) info.scope = p.skill.scope;
       if (p.error) info.error = p.error;
       return info;
@@ -314,6 +320,12 @@ export class Workspace {
     return hits;
   }
 
+  /** The main file of a document with its version, for the elements of a _Plugin_Client_Module_. */
+  mainFile(key: string): { key: string; version: string; file: string; text: string } | undefined {
+    const entry = this.entry(key);
+    return entry && { key, version: entry.cached.version, file: entry.record.file, text: entry.cached.doc.text };
+  }
+
   view(key: string): DocumentView | undefined {
     const entry = this.entry(key);
     if (!entry) return undefined;
@@ -393,24 +405,31 @@ export class Workspace {
     } catch (error) {
       return { status: 'failed', error: errorMessage(error) };
     }
-    const writes: Array<[string, string]> = [];
+    const writes: Array<[string, FileContent]> = [];
     if (result.text !== undefined) writes.push([fresh.record.file, result.text]);
-    for (const [rel, text] of Object.entries(result.files ?? {})) {
+    for (const [rel, content] of Object.entries(result.files ?? {})) {
       if (fresh.record.kind !== 'folder') return { status: 'failed', error: `action ${event.name} returned files, but ${key} is a file document; return text instead.` };
       const path = normalize(`${fresh.record.path}/${rel}`);
       if (!path.startsWith(`${fresh.record.path}/`)) return { status: 'failed', error: `action ${event.name} tried to write outside ${key}: ${rel}` };
-      writes.push([path, text]);
+      writes.push([path, content]);
+    }
+    const layout = fresh.definition.layout;
+    for (const [extension, content] of Object.entries(result.companions ?? {})) {
+      if (layout.kind !== 'file' || !layout.companions?.includes(extension)) return { status: 'failed', error: `action ${event.name} returned the companion ${extension}, which the layout of ${fresh.record.pluginKey} does not declare.` };
+      writes.push([`${fresh.record.path.slice(0, -layout.extension.length)}${extension}`, content]);
     }
     if (writes.length) {
       if (fresh.cached.version !== version) return { status: 'refused', reason: `${key} changed after it was shown; reload and try again.` };
-      for (const [path, text] of writes) {
+      for (const [path, content] of writes) {
         await mkdir(dirname(join(this.root, path)), { recursive: true });
-        await writeFile(join(this.root, path), text);
+        await writeFile(join(this.root, path), typeof content === 'string' ? content : Buffer.from(content.base64, 'base64'));
       }
       await this.refresh();
     }
     const applied = writes.length > 0;
-    if (result.message === undefined) return { status: applied ? 'applied' : 'sent' };
-    return { status: applied ? 'applied' : 'sent', message: { ...base, applied, text: result.message } };
+    // An applied action returns the new version, so that the page can send the next action without reloading first.
+    const after = applied ? { version: this.cache.get(key)?.version } : {};
+    if (result.message === undefined) return { status: applied ? 'applied' : 'sent', ...after };
+    return { status: applied ? 'applied' : 'sent', ...after, message: { ...base, applied, text: result.message } };
   }
 }

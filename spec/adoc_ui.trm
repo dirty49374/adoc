@@ -453,6 +453,7 @@ label _Action_Notice_ in document = {
 button _Change_Toggle_ in document = {
   The toggle in the _Document_Header_ that switches the _Document_Body_ between the current version and the changes since the version this browser showed last.
 .relations
+  references _adoc:Document_Action_
   references _adoc:Document_
   references _adoc_ui:Document_Body_
   part of _Document_Header_
@@ -460,6 +461,7 @@ button _Change_Toggle_ in document = {
   shows _adoc:Plugin_Renderer_
 .contract
   - _Change_Toggle_ must turn on by itself when the shown _adoc:Document_ has a newer version than the one this browser showed last, including when the person opens it after the change.
+  - A version that a _adoc:Document_Action_ of this browser produced counts as shown, so that the person's own changes never turn the _Change_Toggle_ on.
   - _Change_Toggle_ must let the person turn the changes off and on.
   - With the changes on, the _Document_Body_ must show the HTML from renderChanges of the plugin, or a line diff of the main file when the plugin has none.
   - _Change_Toggle_ must show that changes are unavailable when the base version is no longer in the _adoc:Document_Version_Store_.

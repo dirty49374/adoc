@@ -15,6 +15,8 @@ export interface DocumentRecord {
   readonly file: string;
   /** Inside a _Document_Archive_: a folder named `_archive` at any depth of a watch path. */
   readonly archived: boolean;
+  /** The companion files of a file document that exist, such as `docs/SKETCH-login.png`. */
+  readonly companions: readonly string[];
 }
 
 /** The folder name of a _Document_Archive_. */
@@ -47,6 +49,8 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
   const documents = new Map<string, DocumentRecord>();
   const problems: ScanProblem[] = [];
   const seen = new Set<string>();
+  /** Companion files found, by the path their document would have. */
+  const companions = new Map<string, string[]>();
 
   const visit = async (directory: string, archived: boolean): Promise<void> => {
     let entries;
@@ -79,6 +83,12 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
       let localId: string;
       let file: string;
       if (layout.kind === 'file') {
+        const companion = isDir ? undefined : layout.companions?.find((ext) => entry.name.endsWith(ext));
+        if (companion) {
+          const main = `${relPath.slice(0, -companion.length)}${layout.extension}`;
+          companions.set(main, [...(companions.get(main) ?? []), relPath]);
+          continue;
+        }
         if (isDir || !entry.name.endsWith(layout.extension)) {
           problems.push({ kind: 'layout-mismatch', path: relPath, message: `${relPath}: ${pluginKey} documents are files ending with ${layout.extension}.` });
           continue;
@@ -98,7 +108,7 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
         problems.push({ kind: 'invalid-local-id', path: relPath, key, message: `${relPath}: the local id "${localId}" may use only lowercase letters, digits, hyphens, underscores and dots.` });
         continue;
       }
-      const record: DocumentRecord = { key, pluginKey, localId, kind: layout.kind, path: relPath, file, archived };
+      const record: DocumentRecord = { key, pluginKey, localId, kind: layout.kind, path: relPath, file, archived, companions: [] };
       const existing = documents.get(key);
       if (existing) {
         // The not archived document wins, whichever the scan met first.
@@ -113,6 +123,11 @@ export async function scanDocuments(workspace: string, watch: readonly string[],
   };
 
   for (const path of watch) await visit(resolve(workspace, path), false);
+  for (const [main, paths] of companions) {
+    const record = [...documents.values()].find((d) => d.path === main);
+    if (record) documents.set(record.key, { ...record, companions: paths.sort() });
+    else for (const path of paths) problems.push({ kind: 'layout-mismatch', path, message: `${path} is a companion file, but its document ${main} does not exist.` });
+  }
   return { documents, problems };
 }
 
@@ -143,6 +158,16 @@ export async function readDocument(workspace: string, record: DocumentRecord): P
   const mainName = record.kind === 'file' ? record.path.split('/').pop()! : record.file.slice(record.path.length + 1);
   const hash = createHash('sha256');
   for (const name of Object.keys(files).sort()) hash.update(name).update('\0').update(files[name]!).update('\0');
+  // Companion files count for the version and the last update, but plugins do not receive them: they may be binary.
+  for (const path of record.companions) {
+    try {
+      const absoluteCompanion = join(workspace, path);
+      updated = Math.max(updated, (await stat(absoluteCompanion)).mtimeMs);
+      hash.update(path).update('\0').update(await readFile(absoluteCompanion)).update('\0');
+    } catch {
+      // A companion removed since the scan; the next scan drops it.
+    }
+  }
   const doc: PluginDocument = {
     key: record.key,
     pluginKey: record.pluginKey,
