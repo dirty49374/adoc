@@ -1,15 +1,15 @@
 # adoc for the adoc repository itself. Plugins come from ./plugins.
 plugins:
+  - key: NOTE
+    from: ./plugins/note
   - key: TODO
     from: ./plugins/todo
+  - key: SKETCH
+    from: ./plugins/sketch
   - key: TASK
     from: ./plugins/task
   - key: KANBAN
     from: ./plugins/kanban
-  - key: NOTE
-    from: ./plugins/note
-  - key: SKETCH
-    from: ./plugins/sketch
 watch:
   - docs
 agent:
