@@ -4,7 +4,7 @@
     "adoc-kanban": {
       "source": "./plugins/kanban/skill",
       "sourceType": "local",
-      "computedHash": "e354100a73a426053ddbd17db59d5cc201847de066d8ac1b3834cd636015c4ce"
+      "computedHash": "0f2f6d6ce3a4a45b11ac1b8609fb409fbc70f34fec35bc188678751741ca3052"
     },
     "adoc-note": {
       "source": "./plugins/note/skill",
@@ -14,12 +14,12 @@
     "adoc-sketch": {
       "source": "./plugins/sketch/skill",
       "sourceType": "local",
-      "computedHash": "2866e235f4067b9a959ae8069f7936cdd3bae5653397e5f4507ef3586529ebcb"
+      "computedHash": "8fdc726702270973ce781fe92002fd23a2dd714efe8eacaf54499a14fed9655e"
     },
     "adoc-task": {
       "source": "./plugins/task/skill",
       "sourceType": "local",
-      "computedHash": "921f87ce6bfae52f571026bb0fc2ca8ee3ea1f2ca8645ade8325ad88aa3400cf"
+      "computedHash": "85bef1e156aa931ba89da191226c914cc1d7d361844ffe1e767623f2cdd36d8e"
     },
     "adoc-todo": {
       "source": "./plugins/todo/skill",
