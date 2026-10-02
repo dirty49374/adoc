@@ -4,7 +4,7 @@ import { readServerRecord } from '../src/registry.js';
 import { discoverHome } from '../src/home.js';
 import { AdocServer } from '../src/server.js';
 import { Workspace } from '../src/workspace.js';
-import { fixture, freePort, type Fixture } from './fixture.js';
+import { fixture, freePort, type Fixture } from '@adoc/testing';
 
 let current: { fixture: Fixture; server?: AdocServer } | undefined;
 afterEach(async () => {

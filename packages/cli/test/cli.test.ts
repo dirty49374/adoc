@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { afterEach, describe, expect, it } from 'vitest';
-import { fixture, freePort, type Fixture } from '../../core/test/fixture.js';
+import { fixture, freePort, type Fixture } from '@adoc/testing';
 import { runCommand } from '../src/program.js';
 
 const ENTRY = resolve(import.meta.dirname, '../dist/entry.js');
@@ -33,7 +33,7 @@ describe('adoc CLI', () => {
     const failed = await run(['check'], current.root);
     expect(failed.code).toBe(1);
     expect(failed.stdout).toContain('parse-error');
-    expect((await run(['skill', 'view', 'adoc-todo'], current.root)).stdout).toContain('The anchor of an item is its 1-based line number');
+    expect((await run(['skill', 'view', 'adoc-todo'], current.root)).stdout).toContain('The anchor of an item, and of a group heading, is its 1-based line number');
     expect((await run(['skill', 'view', 'adoc'], current.root)).stdout).toContain('adoc message wait');
   });
 

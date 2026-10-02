@@ -8,7 +8,7 @@ import { discoverHome } from '../src/home.js';
 import { resolveAgentPane } from '../src/herdr.js';
 import { MessageQueue } from '../src/messages.js';
 import { attachTransport, createTransport } from '../src/transports.js';
-import { fixture, type Fixture } from './fixture.js';
+import { fixture, type Fixture } from '@adoc/testing';
 
 interface FakeSession {
   name: string;

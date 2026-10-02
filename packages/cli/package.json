@@ -25,6 +25,7 @@
     "test": "vitest run --testTimeout 20000"
   },
   "devDependencies": {
-    "@types/shell-quote": "1.7.5"
+    "@types/shell-quote": "1.7.5",
+    "@adoc/testing": "workspace:*"
   }
 }

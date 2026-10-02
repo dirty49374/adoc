@@ -22,6 +22,7 @@
     "test": "vitest run --testTimeout 20000"
   },
   "devDependencies": {
-    "@types/ws": "8.18.1"
+    "@types/ws": "8.18.1",
+    "@adoc/testing": "workspace:*"
   }
 }
