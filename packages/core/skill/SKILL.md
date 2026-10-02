@@ -69,7 +69,7 @@ ui:
   theme: dark               # default colours of the web UI: dark | light | system; each browser may choose another
 ```
 
-Only `plugins` is needed in practice; the table gives the defaults:
+Only `plugins` is needed in practice, and `agent.transport` outside herdr; the table gives the defaults:
 
 | key | meaning |
 |---|---|
@@ -122,7 +122,7 @@ How a plugin is meant to be used, what its files look like, what an anchor means
 adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings). They are the folders under `plugins/` of the adoc repository; declare each with a path to its folder.
 
 1. **Talk first.** Before any work, take time with the person to decide how this project will use them: which documents to keep, what goes where, how detailed.
-2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether every change is committed, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
+2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether the project commits, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
    - Use a **NOTE** to discuss ideas with the person or to help them understand something. Draw state and sequence diagrams with Mermaid (```` ```mermaid ````) wherever they help.
    - When the person agrees on a good idea from a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`, and point the item to it (see the TODO skill).
    - Start the work only when the documents it depends on are agreed and, if the project commits, committed.
@@ -147,7 +147,7 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 | `adoc plugin list` | the declared plugins |
 | `adoc server run` / `adoc mcp run` / `adoc init` | run the server / serve the MCP tool / create a workspace (command line only) |
 
-Every command takes `--output text|markdown|json|yaml` and answers `--help`; `--home <dir>` (command line only) chooses the workspace, which is otherwise the nearest `.adoc` folder upwards. `adoc message` and `adoc ui` need the running server of the workspace; the person usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
+Every command takes `--output text|markdown|json|yaml` and answers `--help`; the workspace is the parent of the nearest `.adoc` folder upwards, or of the `.adoc` folder named by `--home <path>` (command line only) or `ADOC_HOME`. `adoc message` and `adoc ui` need the running server of the workspace; the person usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
 
 ### Workflow of the assigned agent
 
@@ -163,7 +163,7 @@ Then read the skills of the plugins you will work with (see "Using a plugin").
 #### The loop
 
 1. Receive messages: pushed into your pane (herdr), or with `adoc message wait`.
-2. For each message, read the target document and do what the text asks.
+2. For each message, read the documents it targets (the main target and the target of each attached comment) and do what it asks.
 3. Run `adoc check`; fix every error, and every warning about a document you changed.
 4. Commit, unless the project does not (see "Committing").
 5. When you created or substantially changed a document the person should see, open it for them: `adoc ui open <KEY>`.
@@ -203,7 +203,7 @@ applied: true
 #### Committing
 
 - adoc never commits. Unless the project's agent instructions say not to commit, or the workspace is not a git repository, you do, with `git add` and `git commit`, naming the document keys in the message, such as `TODO-gui: detail item 3`.
-- Commit each finished piece of work: a message once its attached comments are handled, or work you started yourself, such as a note you wrote or a TASK you start.
+- Commit each piece of work when it is done: a message once its attached comments are handled, or a step you take yourself, such as writing a note or starting a TASK.
 - Stage by path, and only these: the files you changed, and the uncommitted changes to documents made by the person or by plugin actions (such as a sketch's PNG). Stage nothing else, such as a `.adoc/adoc.yaml` you did not change.
 
 #### Talking to the person
