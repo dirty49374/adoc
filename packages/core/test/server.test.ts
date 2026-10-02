@@ -57,7 +57,7 @@ describe('AdocServer', () => {
     expect(skills.map((s: { name: string }) => s.name)).toEqual(expect.arrayContaining(['adoc', 'adoc-plugin-authoring', 'adoc-todo']));
     expect(skills.find((s: { name: string }) => s.name === 'adoc-todo')).toMatchObject({ pluginKey: 'TODO' });
     const todo = await json(`${server.url}/api/skills/adoc-todo`);
-    expect(todo.html).toContain('<h1>TODO documents</h1>');
+    expect(todo.html).toMatch(/<h1 data-adoc-source="[^"]*skill\/SKILL\.md:6">TODO documents<\/h1>/);
     expect((await fetch(`${server.url}/api/skills/nope`)).status).toBe(404);
     const file = await json(`${server.url}/api/skills/adoc-todo/file`);
     expect(file).toMatchObject({ name: 'adoc-todo', file: expect.stringContaining('skill/SKILL.md'), text: expect.stringContaining('name: adoc-todo') });
