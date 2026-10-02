@@ -1,6 +1,7 @@
 ---
 title: Right panel layout with the herdr terminal
-status: OPEN
+status: MOVED
+moved_to: TASK-261002-herdr-integration
 ---
 
 ## Background

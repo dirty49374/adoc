@@ -1,6 +1,7 @@
 ---
 title: herdr integration as the default
-status: OPEN
+status: MOVED
+moved_to: TASK-261002-herdr-integration
 ---
 
 ## Background

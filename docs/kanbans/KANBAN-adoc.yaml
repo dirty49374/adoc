@@ -13,3 +13,6 @@ cards:
   - id: c4
     text: Change view version picker [[TASK-261002-change-view-version-picker]]
     column: DONE
+  - id: c5
+    text: herdr integration [[TASK-261002-herdr-integration]]
+    column: RUNNING

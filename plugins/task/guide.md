@@ -9,6 +9,7 @@ A TASK document is a detailed work order for one piece of work.
 title: Paginate the order list
 status: RUNNING
 assignee: adoc-dev
+notes: [NOTE-260929-order-list-speed]
 related: [TODO-gui]
 ---
 
@@ -26,7 +27,8 @@ Order list loads in under 200 ms with 10k orders.
 ```
 
 - `title` and `status` are required in spirit; `status` is free text, usually TODO, RUNNING, REVIEW or DONE.
-- `assignee` and `related` (a list of document keys) are optional and appear in tooltips.
+- `notes` (the NOTE keys the task came from), `assignee` and `related` (other document keys) are optional and appear in tooltips.
+- When a task comes from one or more NOTEs, always list them in `notes`, so that the task can be traced back to the discussion.
 - Write `[[KEY]]` in the body to refer to another document.
 - Recommended id: date and title, such as `TASK-260930-order-paging`.
 

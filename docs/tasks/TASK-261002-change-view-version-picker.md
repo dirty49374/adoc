@@ -2,7 +2,8 @@
 title: Change view over any version in memory
 status: DONE
 assignee: adoc-dev
-related: [NOTE-261002-note-plugin, TODO-adoc]
+notes: [NOTE-261002-note-plugin]
+related: [TODO-adoc]
 ---
 
 ## Goal

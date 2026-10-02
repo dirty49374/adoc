@@ -34,6 +34,7 @@ export default definePlugin({
     const { data, title, status, sections } = parse(doc);
     const fields: Record<string, string | number> = { sections: sections.length };
     if (data.assignee) fields.assignee = String(data.assignee);
+    if (Array.isArray(data.notes)) fields.notes = data.notes.join(', ');
     if (Array.isArray(data.related)) fields.related = data.related.join(', ');
     return { title, status, fields };
   },
@@ -43,6 +44,7 @@ export default definePlugin({
     return html`
       <div class="adoc-toolbar">
         ${data.assignee ? html`<span class="adoc-muted">assignee: ${String(data.assignee)}</span>` : ''}
+        ${Array.isArray(data.notes) ? html`<span class="adoc-muted">notes: ${data.notes.map((k, i) => html`${i ? ', ' : ''}${ref(String(k))}`)}</span>` : ''}
         ${Array.isArray(data.related) ? html`<span class="adoc-muted">related: ${data.related.map((k, i) => html`${i ? ', ' : ''}${ref(String(k))}`)}</span>` : ''}
         ${STATUSES.filter((s) => s !== status).map((s) => html`<button ${action({ kind: 'click', name: 'set-status', value: s })}>→ ${s}</button>`)}
       </div>

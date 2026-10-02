@@ -17,6 +17,8 @@ panel _App_Shell_ in shell = {
   contains _Plugin_Tab_Bar_
   contains _Connection_Status_Label_
   contains _Git_Status_Label_
+  contains _Agent_Pane_Label_
+  contains _Panel_Resizer_
   contains _Warning_Link_
   contains _Message_Dock_
   contains _Workspace_Home_Panel_
@@ -183,6 +185,7 @@ panel _Document_Body_ in document = {
   sends _adoc:Document_Action_
   contains _Anchor_Comment_Button_
   contains _Comment_Popover_
+  contains _Draft_Marker_Column_
   contains _Reference_Tooltip_
 .contract
   - _Document_Body_ must show the HTML returned by the _adoc:Plugin_Renderer_ unchanged, except for removing scripts.
@@ -228,10 +231,10 @@ panel _Comment_Popover_ in comment = {
 }
 
 input _Draft_Comment_Input_ in comment = {
-  The text input with an Add button inside the _Comment_Popover_ that adds one draft _adoc:User_Comment_ to the _Draft_Comment_List_ without sending anything.
+  The text input with an Add button inside the _Comment_Popover_ that adds one draft _adoc:User_Comment_ to the _Draft_Chip_List_ without sending anything.
 .relations
   part of _Comment_Popover_
-  adds to _Draft_Comment_List_
+  adds to _Draft_Chip_List_
   composes _adoc:User_Comment_
 .contract
   - _Draft_Comment_Input_ takes multi-line text; it refuses to add text that is empty after trimming.
@@ -241,24 +244,8 @@ input _Draft_Comment_Input_ in comment = {
   - Chosen: Ctrl+Enter or Cmd+Enter adds.
 }
 
-list _Draft_Comment_List_ in comment = {
-  The list in the _Message_Dock_, above the _Comment_Composer_, with one row per draft _adoc:User_Comment_ that is not sent yet.
-.relations
-  shows _adoc:User_Comment_
-  part of _Message_Dock_
-  filled by _Draft_Comment_Input_
-  sent by _Comment_Composer_
-.contract
-  - _Draft_Comment_List_ must show one row per draft, in the order added, with its target, quote and text, and a control to remove it.
-  - _Draft_Comment_List_ must keep its drafts across navigation and page reloads in the same browser until they are sent or removed.
-.states
-  - _Draft_Comment_List_ is one of empty, showing; in empty it is hidden.
-.remarks
-  - Chosen: drafts live in the browser only, like an unsent chat input; the server sees them only when they are sent.
-}
-
 input _Comment_Composer_ in comment = {
-  The single text input with a send button, at the bottom of the _Message_Dock_, that sends every draft in the _Draft_Comment_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
+  The single text input with a send button, at the bottom of the _Message_Dock_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
 .relations
   references _adoc:Document_
   references _adoc:Plugin_
@@ -266,15 +253,15 @@ input _Comment_Composer_ in comment = {
   references _adoc:User_Message_Format_
   composes _adoc:User_Comment_Message_
   targets _adoc:User_Message_Target_
-  sends _Draft_Comment_List_
+  sends _Draft_Chip_List_
   sends to _adoc:Adoc_Server_
   placed in _Message_Dock_
 .contract
   - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.
   - _Comment_Composer_ must let the user widen its target from document to plugin to workspace, and must show the chosen target, written as in _adoc:User_Message_Format_.
-  - _Comment_Composer_ takes multi-line text; it is enabled when the text is not empty after trimming or the _Draft_Comment_List_ is not empty.
+  - _Comment_Composer_ takes multi-line text; it is enabled when the text is not empty after trimming or the _Draft_Chip_List_ is not empty.
   - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose _adoc:User_Comment_ entries are the drafts in their order, followed by its own text on the chosen target when there is text.
-  - _Comment_Composer_ must clear its text and the _Draft_Comment_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
+  - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
 .rules
   - Through _Comment_Composer_ the user must never send an empty message.
@@ -300,20 +287,92 @@ card _Reference_Tooltip_ in document = {
 }
 
 panel _Message_Dock_ in message = {
-  The side panel of _App_Shell_ that shows every _adoc:User_Message_ not yet delivered, the _Draft_Comment_List_ and the one _Comment_Composer_.
+  The resizable right panel of _App_Shell_: the _Terminal_Panel_ of the assigned agent when an _adoc:Agent_Claim_ exists, otherwise the _Pending_Message_List_; the _Comment_Composer_ is always at its bottom.
 .relations
   references _adoc:Assigned_Agent_
   references _adoc:User_Message_Transport_
+  references _adoc:Agent_Claim_
   shows _adoc:User_Message_
+  contains _Terminal_Panel_
   contains _Pending_Message_List_
-  contains _Draft_Comment_List_
+  contains _Draft_Chip_List_
   contains _Comment_Composer_
+  resized by _Panel_Resizer_
   part of _App_Shell_
 .contract
-  - _Message_Dock_ must show the _adoc:Assigned_Agent_ name and the kind of _adoc:User_Message_Transport_.
-  - _Message_Dock_ must show the _Pending_Message_List_, then the _Draft_Comment_List_, then the _Comment_Composer_.
+  - _Message_Dock_ must show the _Terminal_Panel_ when an _adoc:Agent_Claim_ exists, and the _Pending_Message_List_ otherwise.
+  - _Message_Dock_ must show the _Draft_Chip_List_ and the _Comment_Composer_ at its bottom in both cases.
+  - _Message_Dock_ must show the number of undelivered messages as a badge.
 .states
-  - _Message_Dock_ is one of expanded, collapsed; collapsed shows only the number of undelivered messages and drafts.
+  - _Message_Dock_ is one of terminal, messages, collapsed; collapsed shows only the badge.
+}
+
+panel _Terminal_Panel_ in message = {
+  The live terminal of the assigned agent's herdr pane inside the _Message_Dock_, under a header with the pane, the agent and its status.
+.relations
+  shows _adoc:Agent_Terminal_Stream_
+  shows _adoc:Agent_Claim_
+  part of _Message_Dock_
+.contract
+  - _Terminal_Panel_ must render the frames of the _adoc:Agent_Terminal_Stream_ and follow the size of the panel.
+  - _Terminal_Panel_ must take control of the stream when the person focuses it, and must then send every key, including keys composed by an input method such as Korean, to the pane.
+  - _Terminal_Panel_ must show the claimed pane id, the agent kind and the agent status in its header, updated on every change.
+.states
+  - _Terminal_Panel_ is one of connecting, observing, controlling, pane-gone; in pane-gone the person sees that the claimed pane closed and that messages are held.
+.remarks
+  - Chosen: xterm.js renders the terminal.
+}
+
+input _Panel_Resizer_ in shell = {
+  The draggable border between the main area and the _Message_Dock_ that sets the width of the _Message_Dock_.
+.relations
+  resizes _Message_Dock_
+  part of _App_Shell_
+.contract
+  - _Panel_Resizer_ takes a horizontal drag; it refuses widths that would leave less than a usable minimum for either side.
+  - _Panel_Resizer_ must keep the chosen width across navigation and page reloads in the same browser.
+}
+
+list _Draft_Marker_Column_ in comment = {
+  The one-character margin of the _Document_Body_ that shows a dot on each line carrying a draft _adoc:User_Comment_, and unfolds the draft as a card on hover.
+.relations
+  references _adoc:Document_
+  references _adoc:Document_Anchor_
+  shows _adoc:User_Comment_
+  part of _Document_Body_
+  filled by _Draft_Comment_Input_
+.contract
+  - _Draft_Marker_Column_ must show one dot per draft of the shown _adoc:Document_, beside the element of its _adoc:Document_Anchor_ or its source position.
+  - Hovering a dot must unfold a card with the target, quote and text of the draft, with controls to edit and to remove it.
+  - _Draft_Marker_Column_ must take one character of width and nothing more.
+}
+
+list _Draft_Chip_List_ in comment = {
+  The row of chips above the _Comment_Composer_ with one chip per draft _adoc:User_Comment_ not sent yet, across every document.
+.relations
+  references _adoc:Document_
+  references _adoc_ui:Draft_Marker_Column_
+  shows _adoc:User_Comment_
+  part of _Message_Dock_
+  filled by _Draft_Comment_Input_
+  sent by _Comment_Composer_
+.contract
+  - _Draft_Chip_List_ must show one chip per draft, in the order added, labelled with its target, and a control to remove it.
+  - Clicking a chip must open the draft's _adoc:Document_ and scroll to its marker in the _Draft_Marker_Column_.
+  - _Draft_Chip_List_ must keep its drafts across navigation and page reloads in the same browser until they are sent or removed.
+.states
+  - _Draft_Chip_List_ is one of empty, showing; in empty it is hidden.
+.remarks
+  - Chosen: drafts live in the browser only, like an unsent chat input; the server sees them only when they are sent.
+}
+
+label _Agent_Pane_Label_ in shell = {
+  The label in the top bar of _App_Shell_ that names the assigned agent's herdr pane and its status, or says that no agent has claimed the workspace.
+.relations
+  shows _adoc:Agent_Claim_
+  part of _App_Shell_
+.contract
+  - _Agent_Pane_Label_ must show the claimed pane id and the agent status, updated on every change, and "no agent" when there is no _adoc:Agent_Claim_.
 }
 
 list _Pending_Message_List_ in message = {

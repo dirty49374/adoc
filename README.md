@@ -44,6 +44,15 @@ adoc skill view adoc-plugin-authoring   # how to write a plugin
 
 A new workspace is a git repository with `adoc init`, plugins declared in `.adoc/adoc.yaml`, and documents under `docs/`.
 
+## Workflow for this repository
+
+Work on adoc itself goes through adoc:
+
+1. **NOTE**: the agent summarizes a conversation into a `NOTE-…` and develops it with the person's comments.
+2. **Design in aterm**: the agreed ideas become Terms and contracts in `spec/*.trm`, checked with `aterm corpus check`.
+3. **TASK**: a `TASK-…` describes the work, lists the NOTEs it came from in `notes:`, and points at the Terms it implements.
+4. **Implement**: the agent works through the TASK, logging progress; the spec may still change during the work and is kept in sync.
+
 ## Develop
 
 ```sh

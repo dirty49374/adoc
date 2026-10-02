@@ -43,6 +43,7 @@ concept _Adoc_Home_ in workspace = {
 concept _Adoc_Config_ in workspace = {
   The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, and the server address of one _Adoc_Workspace_.
 .relations
+  references _adoc:Agent_Claim_
   configures _Adoc_Workspace_
   inside _Adoc_Home_
   declares _Plugin_
@@ -57,7 +58,8 @@ concept _Adoc_Config_ in workspace = {
   - An _Adoc_Config_ must declare the host and port of the _Adoc_Server_.
 .remarks
   - Chosen: the _Adoc_Config_ assigns the _Plugin_Key_, so one plugin package may serve two keys in one workspace.
-  - Example: `plugins: [{key: TODO, from: ./.adoc/plugins/todo}]`, `watch: [docs]`, `agent: {name: adoc-dev, transport: {kind: hc, target: mldev:ahq-dev/adoc-dev}}`, `server: {host: 0.0.0.0, port: 7700}`.
+  - Example: `plugins: [{key: TODO, from: ./.adoc/plugins/todo}]`, `watch: [docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`.
+  - Chosen: the herdr kind needs no target in the _Adoc_Config_; the target comes from the _Agent_Claim_.
 }
 
 concept _Watch_Path_ in workspace = {
@@ -77,9 +79,10 @@ concept _Watch_Path_ in workspace = {
 }
 
 concept _Assigned_Agent_ in workspace = {
-  The single agent that receives every _User_Message_ of an _Adoc_Workspace_ and edits its documents.
+  The single agent that receives every _User_Message_ of an _Adoc_Workspace_ and edits its documents, identified by the _Agent_Claim_ when it runs in a herdr pane.
 .relations
   belongs to _Adoc_Workspace_
+  identified by _Agent_Claim_
   receives _User_Message_
   edits _Document_
   reads _Plugin_Agent_Guide_
@@ -105,11 +108,12 @@ concept _Adoc_CLI_ in surface = {
   includes _User_Message_Wait_Command_
   includes _Adoc_Check_Command_
   includes _Browser_Open_Command_
+  includes _Agent_Claim_Command_
   finds server by _Server_Record_
   starts _Adoc_Server_
   shows _Plugin_Agent_Guide_
 .contract
-  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open` and `adoc check`.
+  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
   - Every finite result of the _Adoc_CLI_ must support `--output text`, `--output markdown`, `--output json` and `--output yaml`, with text as the default.
   - A command of the _Adoc_CLI_ that needs the running _Adoc_Server_ must find it through the _Server_Record_ and must fail with a clear error when no _Adoc_Server_ is running.
   - Every command of the _Adoc_CLI_ must answer `--help` with its usage, behavior and an example.
@@ -659,11 +663,13 @@ concept _User_Message_Transport_ in message = {
   delivers to _Assigned_Agent_
   configured by _Adoc_Config_
   uses _User_Message_Format_
+  uses _Agent_Claim_
   has_part _User_Message_Wait_Command_
 .contract
   - All kinds of _User_Message_Transport_ must share one interface, so that a new kind can be added without changing the rest of adoc.
-  - adoc must provide the wait, hc and herdr kinds of _User_Message_Transport_.
-  - The wait kind of _User_Message_Transport_ must be the default.
+  - adoc must provide the herdr, hc and wait kinds of _User_Message_Transport_.
+  - The herdr kind of _User_Message_Transport_ must be the default; it must deliver to the pane named by the _Agent_Claim_, with `agent.prompt`.
+  - While the herdr kind has no _Agent_Claim_, every _User_Message_ must stay held, so that `adoc message wait` can still take it.
   - Every kind of _User_Message_Transport_ must deliver the same text in _User_Message_Format_.
   - A push kind, such as hc or herdr, must deliver each _User_Message_ as soon as it is created, and must keep it held when delivery fails.
 }
@@ -682,6 +688,8 @@ concept _Adoc_Server_ in runtime = {
   started by _Adoc_CLI_
   writes _Server_Record_
   tracks _Browser_Session_
+  relays _Agent_Terminal_Stream_
+  watches _Agent_Claim_
   keeps _Document_Version_Store_
 .contract
   - An _Adoc_Server_ must run locally, one per _Adoc_Workspace_, in the foreground of `adoc server run` or inside `adoc mcp run --with-server`.
@@ -867,4 +875,57 @@ concept _Document_Version_Store_ in runtime = {
 .remarks
   - Chosen: the default base is the version the browser showed last, so the person sees everything that changed since they last looked; any other version in the store can be chosen.
   - Chosen: memory only, so changes from before a restart are not available; git keeps the full history.
+}
+
+concept _Agent_Claim_ in workspace = {
+  The record, in the file `.adoc/claim.yaml`, of the herdr pane where the _Assigned_Agent_ runs: the herdr session socket, the pane id, the agent kind and the agent session id.
+.relations
+  references _adoc:Adoc_Web_UI_
+  references _adoc:Adoc_Workspace_
+  references _adoc:User_Message_
+  identifies _Assigned_Agent_
+  written by _Agent_Claim_Command_
+  read by _Adoc_Server_
+  inside _Adoc_Home_
+  targets _User_Message_Transport_
+.contract
+  - An _Adoc_Workspace_ must have at most one _Agent_Claim_; a new claim replaces the old one, and the old pane stops being the _Assigned_Agent_.
+  - The _Adoc_Server_ must follow changes of `.adoc/claim.yaml` while it runs, and must show the claimed pane and its agent status in the _Adoc_Web_UI_.
+  - When the claimed pane closes, the _Adoc_Server_ must keep the claim but show it as gone and hold every _User_Message_ until a new claim.
+  - `.adoc/claim.yaml` must not be committed; `adoc init` must list it in `.adoc/.gitignore`.
+.remarks
+  - Chosen: a separate file rather than `.adoc/adoc.yaml`, because the claim belongs to one computer and changes often.
+}
+
+procedure _Agent_Claim_Command_ in surface = {
+  The `adoc agent claim` command with which an agent makes its own herdr pane the _Assigned_Agent_ of the workspace; `adoc agent show` prints the current _Agent_Claim_.
+.relations
+  references _adoc:Adoc_Server_
+  part of _Adoc_CLI_
+  invoked by _Assigned_Agent_
+  writes _Agent_Claim_
+.contract
+  - _Agent_Claim_Command_ must find the pane in this order: the pane given by `--pane`; else the pane whose recorded agent session equals the caller's session id (`CLAUDE_CODE_SESSION_ID`, `CODEX_SESSION_ID`), searched in every herdr session; else `HERDR_PANE_ID` with `HERDR_SOCKET_PATH`, unless the caller descends from a shared agent daemon such as `codex app-server`.
+  - _Agent_Claim_Command_ must fail with a clear error naming `--pane` when none of these finds a pane.
+  - `adoc server run --agent-pane <pane>` must write the same _Agent_Claim_ before the _Adoc_Server_ starts.
+.remarks
+  - Chosen: the order follows herdr-connect, whose tools may run in another process than the agent's pane.
+  - Example: the agent runs `adoc agent claim` once at the start of a session; claiming again from another pane takes the role over.
+}
+
+concept _Agent_Terminal_Stream_ in runtime = {
+  The live terminal of the pane named by the _Agent_Claim_, which the _Adoc_Server_ relays between herdr and the browser sessions.
+.relations
+  references _adoc:Adoc_Web_UI_
+  relayed by _Adoc_Server_
+  shows pane of _Agent_Claim_
+  controlled by _Browser_Session_
+.contract
+  - The _Adoc_Server_ must take the stream from `herdr terminal session control` for the one _Browser_Session_ that controls the terminal, and from `herdr terminal session observe` for every other one.
+  - The controlling _Browser_Session_ is the one that last focused the terminal; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll`.
+  - The _Adoc_Server_ must send `terminal.release` when the controlling _Browser_Session_ closes or another one takes control, so that the person's own herdr terminal gets its size back.
+  - The _Adoc_Server_ must subscribe to the agent status and the closing of the claimed pane through herdr events and pass them to the _Adoc_Web_UI_.
+.remarks
+  - Chosen: herdr's own session stream rather than a PTY attach or the herdr TUI, so that adoc needs no node-pty.
+  - Chosen: the controlling browser resizes the pane to its own terminal size while it controls it.
 }
