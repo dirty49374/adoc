@@ -1,6 +1,6 @@
 ---
 name: adoc-task
-description: "TASK documents: detailed work orders with front matter and ## sections that go from TODO through RUNNING and REVIEW to DONE. Use when work needs a design and a plan before it is done, when finishing work for review, or when the person reviews, approves or archives tasks."
+description: "TASK documents: detailed work orders with front matter and ## sections that go from TODO through RUNNING and REVIEW to DONE. Use when work needs a design and a plan before it is done, when finishing work for review, or when the user reviews, approves or archives tasks."
 ---
 
 # TASK documents
@@ -9,26 +9,26 @@ Document keys look like `TASK-<local id>`. Read the general workflow with `adoc 
 
 ## Purpose
 
-A TASK is the work order for one piece of work that needs a design and a plan: what it achieves, how, and when it counts as done, with a log of what happened. It lets the person agree on the work before it starts and review it when it ends.
+A TASK is the work order for one piece of work that needs a design and a plan: what it achieves, how, and when it counts as done, with a log of what happened. It lets the user agree on the work before it starts and review it when it ends.
 
 ## States and workflow
 
 `TODO` → `RUNNING` → `REVIEW` → `DONE`, then archived.
 
-- Write the TASK and agree on it with the person before you start; it usually comes from a NOTE.
+- Write the TASK and agree on it with the user before you start; it usually comes from a NOTE.
 - Set `RUNNING` when you start (a step to commit, see the adoc skill), and log progress in `## Log`.
-- When you finish, set `REVIEW`. **Only the person decides that a task is DONE:** when they approve it, you set `status: DONE`.
-- **Keep the person told.** While any TASK has `status: REVIEW`, end every report to the person in the conversation (after finishing a piece of work, when you go idle) with one line listing those TASKs in the order of `adoc document list --plugin TASK` (the most recently changed first; pick the REVIEW ones yourself): at most three keys, then the number of the others, if any: `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`.
-- **When the person says they will review:** open the first one of that order with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When they approve it, set `status: DONE`, commit, and open the next one. When they ask for changes, make them and keep the task in REVIEW. Stop when none is left or the person stops.
-- **When the number of DONE TASKs (not archived) reaches 10, 20, 30, …**, ask the person whether to archive them. If they agree, archive each, and the NOTEs listed in their `notes:` unless a task that stays lists them too; run `adoc check` and commit.
+- When you finish, set `REVIEW`. **Only the user decides that a task is DONE:** when they approve it, you set `status: DONE`.
+- **Keep the user told.** While any TASK has `status: REVIEW`, end every report to the user in the conversation (after finishing a piece of work, when you go idle) with one line listing those TASKs in the order of `adoc document list --plugin TASK` (the most recently changed first; pick the REVIEW ones yourself): at most three keys, then the number of the others, if any: `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`.
+- **When the user says they will review:** open the first one of that order with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When they approve it, set `status: DONE`, commit, and open the next one. When they ask for changes, make them and keep the task in REVIEW. Stop when none is left or the user stops.
+- **When the number of DONE TASKs (not archived) reaches 10, 20, 30, …**, ask the user whether to archive them. If they agree, archive each, and the NOTEs listed in their `notes:` unless a task that stays lists them too; run `adoc check` and commit.
 
 ## Instructions
 
 - When a task comes from one or more NOTEs, always list them in `notes:`, so that the task can be traced back to the discussion.
-- Keep `## Done when` checkable: concrete results the person can verify. Check an item when you have verified it, and log how.
+- Keep `## Done when` checkable: concrete results the user can verify. Check an item when you have verified it, and log how.
 - Log facts in `## Log` with dates: what changed, what was checked and how, and what was not checked.
 - To split a task, create a new TASK and link both with `[[KEY]]`.
-- When the person asks for a status change the work does not allow yet, such as DONE while `## Done when` items are open, keep the status, say why in your conversation, and ask whether to drop those items.
+- When the user asks for a status change the work does not allow yet, such as DONE while `## Done when` items are open, keep the status, say why in your conversation, and ask whether to drop those items.
 
 ## File
 
@@ -70,4 +70,4 @@ The anchor of a section is its heading in lowercase, with every run of other cha
 
 ## Actions
 
-None of its own beyond the common `archive` and `unarchive` (see the adoc skill): the person asks for a status change in a comment or in the conversation, and you edit `status:` in the front matter.
+None of its own beyond the common `archive` and `unarchive` (see the adoc skill): the user asks for a status change in a comment or in the conversation, and you edit `status:` in the front matter.

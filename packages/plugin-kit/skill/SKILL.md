@@ -42,7 +42,7 @@ A running `adoc server run` reloads the plugin whenever a file at the top of its
 | `layout` | `{ kind: 'file', extension: '.md', companions?: ['.png'] }` or `{ kind: 'folder', entry: 'bug.yaml' }` | a document is the file `NOTE-<local id>.md` (with optional companion files, see below), or the folder `NOTE-<local id>/` with the main file `bug.yaml` |
 | `summarize(doc)` | returns `{ title, status, fields? }` | shown in the list and in reference tooltips; `status` is free text; `fields` values are string, number or boolean, so join lists: `attendees.join(', ')` |
 | `render(doc)` | returns `html\`…\`` | the document body; adoc draws the header (key, title, status) around it, so do not repeat the title |
-| `renderChanges(doc, previous)` | returns `html\`…\`` | optional; the body showing what changed since `previous`, an earlier version that the person saw last. Without it adoc shows a line diff of the main file |
+| `renderChanges(doc, previous)` | returns `html\`…\`` | optional; the body showing what changed since `previous`, an earlier version that the user saw last. Without it adoc shows a line diff of the main file |
 | `actions` | `{ [name]: (doc, event) => { text?, files?, companions?, message? } }` | optional; see Actions |
 
 The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.ts`, with front matter `name` and `description`; a plugin without it fails to load.
@@ -54,7 +54,7 @@ The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.t
 
 If a function throws, adoc shows the message as the document's error and in `adoc check`; you do not need try/catch.
 
-The main file is written by hand, too: the agent edits it directly, and the person can edit the whole main file in the web UI. Parse it leniently (ignore lines you do not understand, give defaults for missing fields) and throw only when the file cannot be read at all.
+The main file is written by hand, too: the agent edits it directly, and the user can edit the whole main file in the web UI. Parse it leniently (ignore lines you do not understand, give defaults for missing fields) and throw only when the file cannot be read at all.
 
 ## Helpers (`import { … } from '@adoc/plugin-kit'`)
 
@@ -81,7 +81,7 @@ Never add `<script>` or `on…=` attributes; adoc removes them. Every interactio
 
 ## Actions
 
-The person clicks, toggles or drags a control marked with `action()`. adoc calls `actions[name](doc, event)` on the server.
+The user clicks, toggles or drags a control marked with `action()`. adoc calls `actions[name](doc, event)` on the server.
 
 `event` is `{ kind, name, value, checked?, to?, anchor? }`:
 - `kind` is the control type you gave `action()` (`click`, `toggle` or `drag`), or `client` for an `adoc-action` event of your client module; `name` selects the handler; `value` is the value you gave `action()` (or the event's `value`), always as a string;
@@ -98,7 +98,7 @@ Any other key fails the action.
 
 A content is text, or `{ base64 }` for binary data.
 
-A handler sends the agent a message only when it returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
+A handler sends the agent a message only when it returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the user saw it, adoc writes nothing, sends nothing and shows the user why.
 
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` (for a toggle the value is the new checked state, for a drag `<value> to <to>`) and changes nothing. That is often all you need: the agent then edits the file.
 
@@ -212,14 +212,14 @@ export default definePlugin({
 
 ## skill/SKILL.md
 
-The plugin's skill is what the agent reads before it touches the plugin's documents, and what the person reads in the web UI (`SKILL.md` beside the plugin key, where they may comment on it or edit it; `adoc skill update` installs a changed one). `adoc skill install` installs the folder `skill/` for the agents the skills CLI detects, so keep only the skill in it, never code.
+The plugin's skill is what the agent reads before it touches the plugin's documents, and what the user reads in the web UI (`SKILL.md` beside the plugin key, where they may comment on it or edit it; `adoc skill update` installs a changed one). `adoc skill install` installs the folder `skill/` for the agents the skills CLI detects, so keep only the skill in it, never code.
 
-**Front matter.** `name` is `adoc-` and the plugin key in lowercase. The `description` is all an agent sees when it chooses a skill, so write it in the third person and say what the documents are and **when to use them**, with the words a person would use (the plugin key, the file extension, the kind of work). At most 1024 characters, no XML tags.
+**Front matter.** `name` is `adoc-` and the plugin key in lowercase. The `description` is all an agent sees when it chooses a skill, so write it in the third person and say what the documents are and **when to use them**, with the words a user would use (the plugin key, the file extension, the kind of work). At most 1024 characters, no XML tags.
 
 **Body.** Cover these, in whatever order and depth fits the plugin and the project:
 
 1. **Purpose:** where these documents are used and what they achieve.
-2. **States and workflow:** the states a document goes through and the recommended flow between them, including who moves it (the agent, or only the person).
+2. **States and workflow:** the states a document goes through and the recommended flow between them, including who moves it (the agent, or only the user).
 3. **Instructions for the agent:** what to do, what not to do, and what to do when something happens: "do X", "never do Y", "when Z, do W".
 4. **File:** the format, with a short example, and the recommended local id.
 5. **Anchors:** what an anchor is, so that the agent finds a commented place.
@@ -232,7 +232,7 @@ Here is a sensible starting point; it is an example only, so change, drop or add
 ```markdown
 ---
 name: adoc-review
-description: "REVIEW documents: one code review each, with its findings and their resolution. Use when the person asks for a review, comments on a finding, or wants to know what is still open before a release."
+description: "REVIEW documents: one code review each, with its findings and their resolution. Use when the user asks for a review, comments on a finding, or wants to know what is still open before a release."
 ---
 
 # REVIEW documents
@@ -243,7 +243,7 @@ Document keys look like `REVIEW-<local id>`. Read the general workflow with `ado
 One REVIEW records the review of one change: what was looked at, each finding, and how it was resolved, so that nothing found in a review is lost.
 
 ## States and workflow
-`OPEN` → `ANSWERED` → `CLOSED`. You open a review and answer findings; only the person closes it.
+`OPEN` → `ANSWERED` → `CLOSED`. You open a review and answer findings; only the user closes it.
 
 ## Instructions
 - Write one finding per `##` section, with the file and line it concerns.
@@ -259,5 +259,5 @@ The anchor of a finding is its heading in lowercase with hyphens: `REVIEW-…#sq
 ## Actions
 | action | what adoc already did | what you do |
 |---|---|---|
-| `resolve` | nothing (`applied: false`) | mark the finding resolved, as the person asks |
+| `resolve` | nothing (`applied: false`) | mark the finding resolved, as the user asks |
 ```

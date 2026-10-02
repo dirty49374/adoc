@@ -19,7 +19,7 @@ function board(doc: PluginDocument) {
 }
 
 export default definePlugin({
-  description: 'A drawing, such as a UI wireframe, that the person draws in Excalidraw; saved as Excalidraw JSON with a PNG beside it.',
+  description: 'A drawing, such as a UI wireframe, that the user draws in Excalidraw; saved as Excalidraw JSON with a PNG beside it.',
   layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] },
 
   summarize(doc) {

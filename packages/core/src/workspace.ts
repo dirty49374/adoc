@@ -327,7 +327,7 @@ export class Workspace {
   }
 
   /**
-   * Writes the main file that the person edited in the _Document_Editor_, when `version` is still current; answers
+   * Writes the main file that the user edited in the _Document_Editor_, when `version` is still current; answers
    * with the new version and the unified diff from `since` (the text the unsent edits started from) to the new text.
    */
   async editMainFile(key: string, version: string, text: string, since?: string): Promise<{ status: 'applied'; version: string; diff: string } | { status: 'refused'; reason: string }> {

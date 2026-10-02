@@ -161,8 +161,8 @@ list _Document_List_Pane_ in document = {
   - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, in the order chosen in the _Document_Sort_Picker_, and by default by last update, newest first.
   - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
   - _Document_List_Pane_ must link, in small text after the plugin key and a separator (`KANBAN | SKILL.md`) in its title row, to the _Skill_View_ of the _adoc:Plugin_Skill_ of its plugin.
-  - _Document_List_Pane_ must leave out archived documents, and must show only the archived ones while the person turns on its archive button in the title row.
-  - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it or while a chosen plugin tab holds it open, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
+  - _Document_List_Pane_ must leave out archived documents, and must show only the archived ones while the user turns on its archive button in the title row.
+  - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it or while a chosen plugin tab holds it open, and stay unfolded when the user pins it, with the same pin and fold behaviour as the _Comment_Composer_.
   - At `/p/:plugin` without a document, _Document_List_Pane_ must open its top _adoc:Document_ in the chosen order.
 .states
   - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.
@@ -223,7 +223,7 @@ panel _Document_Detail_Pane_ in document = {
 }
 
 panel _File_Editor_ in document = {
-  The text editor that replaces the rendered view while the person edits a whole file: the main file of the shown _adoc:Document_ in place of the _Document_Body_, or the `SKILL.md` of the shown _adoc:Agent_Skill_ in the _Skill_View_.
+  The text editor that replaces the rendered view while the user edits a whole file: the main file of the shown _adoc:Document_ in place of the _Document_Body_, or the `SKILL.md` of the shown _adoc:Agent_Skill_ in the _Skill_View_.
 .relations
   references _adoc:Agent_Skill_
   references _adoc_ui:Skill_View_
@@ -240,7 +240,7 @@ panel _File_Editor_ in document = {
   - _File_Editor_ must open from the edit button of the _Document_Header_ or of the _Skill_View_ with the current text of the file, and must save it at once on the save button or Ctrl+S through the _adoc:Adoc_Server_.
   - When a save is refused because the file changed, _File_Editor_ must keep the typed text and say so.
   - After a save, _File_Editor_ must put one draft _adoc:User_Comment_ on the _adoc:Document_ or the _adoc:Agent_Skill_ with the unified diff since the text before the first edit that has not been sent, replacing the earlier one, and must remove it when the text is back to that text; the draft of a skill also asks the agent to run `adoc skill update`.
-  - A version that a save of this browser produced counts as shown, so that the person's own edit never turns the _Change_Toggle_ on.
+  - A version that a save of this browser produced counts as shown, so that the user's own edit never turns the _Change_Toggle_ on.
 .states
   - _File_Editor_ is one of editing, saving, refused.
 }
@@ -323,7 +323,7 @@ panel _Comment_Popover_ in comment = {
 .states
   - _Comment_Popover_ is one of closed, open; it stays open until the draft is added or cancelled, even when the _Document_Body_ has a newer version.
 .rules
-  - Through _Comment_Popover_ the user must never lose typed text by leaving the page: when the person or the agent navigates away, the popover must open again with the same text when the person returns to that _adoc:Document_.
+  - Through _Comment_Popover_ the user must never lose typed text by leaving the page: when the user or the agent navigates away, the popover must open again with the same text when the user returns to that _adoc:Document_.
 }
 
 input _Draft_Comment_Input_ in comment = {
@@ -361,7 +361,7 @@ input _Comment_Composer_ in comment = {
   - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose composer text is its own text on the chosen target, and whose _adoc:User_Comment_ entries are the drafts in their order.
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
-  - _Comment_Composer_ must stay open when the person pins it; unpinned, it must fold into one line that shows the number of drafts and whether text is typed, and unfold while the pointer is on it or its input has focus, keeping its text and the drafts; the pin is kept across page reloads in the same browser.
+  - _Comment_Composer_ must stay open when the user pins it; unpinned, it must fold into one line that shows the number of drafts and whether text is typed, and unfold while the pointer is on it or its input has focus, keeping its text and the drafts; the pin is kept across page reloads in the same browser.
   - The main area must leave room below its content for the open _Comment_Composer_, also while it is folded, so that the end of a document can always be scrolled into view above it.
 .rules
   - Through _Comment_Composer_ the user must never send an empty message.
@@ -417,7 +417,7 @@ panel _Terminal_Panel_ in message = {
   - _Terminal_Panel_ must take control of the stream when its page loads with focus and on any click, key press or focus in the page, and must then send every key, including keys composed by an input method such as Korean, the mouse wheel and mouse buttons, to the pane; Shift+Enter must reach the pane as a new line (ESC CR, the Alt+Enter sequence), not as Enter.
   - _Terminal_Panel_ must report whether this tab controls or observes the stream to the header of the _Message_Dock_, and must draw with the colours and the monospace font of the _adoc:Web_UI_Theme_.
 .states
-  - _Terminal_Panel_ is one of connecting, observing, controlling, pane-gone; in pane-gone the person sees that the claimed pane closed and that messages are held.
+  - _Terminal_Panel_ is one of connecting, observing, controlling, pane-gone; in pane-gone the user sees that the claimed pane closed and that messages are held.
 .remarks
   - Chosen: xterm.js renders the terminal.
 }
@@ -434,7 +434,7 @@ input _Panel_Resizer_ in shell = {
   - _Panel_Resizer_ must keep the chosen width across navigation and page reloads in the same browser.
   - _Panel_Resizer_ must carry a button in the middle of its rule that swaps the sides of the main area and the _Message_Dock_, and must keep that choice across page reloads in the same browser.
 .remarks
-  - Chosen: the main area is on the left by default; a person who talks with the agent more than reading puts the _Message_Dock_ on the left.
+  - Chosen: the main area is on the left by default; a user who talks with the agent more than reading puts the _Message_Dock_ on the left.
 }
 
 list _Draft_Marker_Column_ in comment = {
@@ -519,9 +519,9 @@ button _Change_Toggle_ in document = {
   uses _adoc:Document_Version_Store_
   shows _adoc:Plugin_Renderer_
 .contract
-  - _Change_Toggle_ must turn on by itself when the shown _adoc:Document_ has a newer version than the one this browser showed last, including when the person opens it after the change.
-  - A version that a _adoc:Document_Action_ of this browser produced counts as shown, so that the person's own changes never turn the _Change_Toggle_ on.
-  - _Change_Toggle_ must let the person turn the changes off and on.
+  - _Change_Toggle_ must turn on by itself when the shown _adoc:Document_ has a newer version than the one this browser showed last, including when the user opens it after the change.
+  - A version that a _adoc:Document_Action_ of this browser produced counts as shown, so that the user's own changes never turn the _Change_Toggle_ on.
+  - _Change_Toggle_ must let the user turn the changes off and on.
   - With the changes on, the _Document_Body_ must show the HTML from renderChanges of the plugin, or a line diff of the main file when the plugin has none.
   - _Change_Toggle_ must show that changes are unavailable when the base version is no longer in the _adoc:Document_Version_Store_.
 .remarks

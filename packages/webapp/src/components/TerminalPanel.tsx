@@ -47,7 +47,7 @@ function decode(base64: string): Uint8Array {
 }
 
 /**
- * _Terminal_Panel_: the live terminal of the claimed herdr pane. The tab the person is using controls it
+ * _Terminal_Panel_: the live terminal of the claimed herdr pane. The tab the user is using controls it
  * (taken on load when focused, and on any click, key press or focus in the page), so keys and the size go
  * to the pane. Other tabs observe; herdr's observe stream can lag for agent panes, so an idle observer
  * re-opens its stream every few seconds to get a fresh full frame. The phase goes to the _Message_Dock_ header.

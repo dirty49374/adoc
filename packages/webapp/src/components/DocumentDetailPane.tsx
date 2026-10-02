@@ -38,7 +38,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
     );
   }, [documentKey]);
 
-  // A change that this browser's own action caused is not a change for the person: while an action runs, a change
+  // A change that this browser's own action caused is not a change for the user: while an action runs, a change
   // notice waits for the reply (the server announces the change before it replies), and the reply's version counts
   // as seen.
   const inFlight = useRef(0);

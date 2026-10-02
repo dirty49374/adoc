@@ -362,7 +362,7 @@ concept _Agent_Skill_ in plugin = {
 .contract
   - Every _Agent_Skill_ must be the folder `skill/` of its owner folder, so that installing it never copies the owner's code.
   - `adoc skill view <name>` must show the `SKILL.md` of the _Agent_Skill_ with that name.
-  - The _Adoc_Web_UI_ must show every _Agent_Skill_ read-only, rendered like a document body, so that the person reads what the agent reads.
+  - The _Adoc_Web_UI_ must show every _Agent_Skill_ read-only, rendered like a document body, so that the user reads what the agent reads.
 .remarks
   - Chosen: the Agent Skills format (agentskills.io): a folder with `SKILL.md` whose front matter has `name` and `description`.
 }
@@ -384,7 +384,7 @@ procedure _Skill_Install_Command_ in surface = {
 .remarks
   - Chosen: the `skills` CLI writes the agent-specific places (`.agents/skills`, `.claude/skills`, …), so adoc supports every agent it supports.
   - Chosen: `ADOC_SKILLS_CLI` replaces the command (default `npx -y skills@1`), for internal mirrors and tests.
-  - Chosen: whether `skills-lock.json` is committed is the person's decision.
+  - Chosen: whether `skills-lock.json` is committed is the user's decision.
 }
 
 procedure _Skill_Check_ in runtime = {
@@ -483,7 +483,7 @@ concept _Document_Local_ID_ in document = {
 .contract
   - A _Document_Local_ID_ must use only lowercase letters, digits, hyphens, underscores and dots.
   - A _Document_Local_ID_ must be unique within its _Plugin_.
-  - adoc must not generate a _Document_Local_ID_; the person or agent that creates the _Document_ chooses it.
+  - adoc must not generate a _Document_Local_ID_; the user or agent that creates the _Document_ chooses it.
 .remarks
   - Chosen: lowercase only, so that case-insensitive file systems cannot merge two documents.
   - Chosen: Korean or other non-ASCII titles are not allowed; a title is written in English words.
@@ -768,7 +768,7 @@ concept _User_Message_Format_ in message = {
 .remarks
   - Example of a comment: `[adoc message 3] comment · TASK-261002-herdr-integration`, the composer text, then `--` and `comments:` with entries such as `- target: TASK-1231#method`, `source: docs/tasks/TASK-1231.md:19`, `quote: infinite scroll`, `text: use page numbers instead`.
   - Example of an action: `[adoc message 4] action · TODO-gui#3`, `TODO-gui#3 checked: Refactor PaymentRepo`, then `--`, `action: toggle`, `value: "3"`, `applied: true`.
-  - Chosen: the person's words come first and the machine fields last, so that a pushed prompt reads like a chat message.
+  - Chosen: the user's words come first and the machine fields last, so that a pushed prompt reads like a chat message.
   - Chosen: the plugin writes only the text of an action; adoc writes every other field, because those come from the _Adoc_Web_UI_.
 }
 
@@ -847,7 +847,7 @@ concept _Web_UI_Theme_ in runtime = {
   - The _Web_UI_Theme_ must separate regions by three surface levels (surface, panel, element) rather than borders, and must mark emphasis such as selection, focus, a held message or a warning with an accent bar on the left edge.
   - The _Web_UI_Theme_ must draw every box with square corners, so that an accent bar stays a straight line.
   - In the _Web_UI_Theme_ the largest text must be the base body size; headings must stand out by colour and weight, and only smaller sizes are allowed for meta information.
-  - The _Web_UI_Theme_ must show the default colour scheme of the _Adoc_Config_ from the first paint, unless the person chose system, light or dark in this browser, and must remember that choice per browser.
+  - The _Web_UI_Theme_ must show the default colour scheme of the _Adoc_Config_ from the first paint, unless the user chose system, light or dark in this browser, and must remember that choice per browser.
   - The _Web_UI_Theme_ must bundle its fonts so that the _Adoc_Web_UI_ looks the same offline: a proportional font with Hangul for text and a monospace font with Hangul and Nerd Font symbols for terminals and code.
   - The _Web_UI_Theme_ must draw icons as vector graphics.
   - The _Web_UI_Theme_ must style the generic `adoc-*` classes listed in the authoring guide of the _Plugin_Kit_, so that a plugin needs no CSS of its own.
@@ -999,7 +999,7 @@ concept _Document_Archive_ in document = {
   - An archived _Document_ must keep its _Document_Key_, so that every _Document_Reference_ to it still resolves.
   - When an archived and a not archived _Document_ carry the same _Document_Key_, the not archived one must be used, and the _Duplicate_Document_Key_Warning_ must name both.
   - The document count of a _Plugin_Tab_ must leave archived documents out.
-  - The _Assigned_Agent_ archives a _Document_ by moving it with `git mv` into an `_archive` folder next to it, and restores it by moving it back; adoc itself never moves documents, and an archive request from the person reaches the agent through the _Default_Action_Handler_ as the actions `archive` and `unarchive`.
+  - The _Assigned_Agent_ archives a _Document_ by moving it with `git mv` into an `_archive` folder next to it, and restores it by moving it back; adoc itself never moves documents, and an archive request from the user reaches the agent through the _Default_Action_Handler_ as the actions `archive` and `unarchive`.
   - The _Document_Find_Command_ must leave archived documents out unless `--archived` asks for them.
 .remarks
   - Chosen: a folder rather than a status field, so that one mechanism works for every _Plugin_, also for those without a status.
@@ -1041,7 +1041,7 @@ procedure _Browser_Open_Command_ in surface = {
   - `adoc ui list` must show each _Browser_Session_ with its id, connection state, last access and location, most recent first.
 .remarks
   - Chosen: the name follows `aterm ui`.
-  - Example: after writing a NOTE, the agent runs `adoc ui open NOTE-261002-note-plugin` so that the person sees it.
+  - Example: after writing a NOTE, the agent runs `adoc ui open NOTE-261002-note-plugin` so that the user sees it.
 }
 
 concept _Document_Version_Store_ in runtime = {
@@ -1057,7 +1057,7 @@ concept _Document_Version_Store_ in runtime = {
   - A request for the changes of a _Document_ must name the base _Document_Version_; when the store no longer holds it, the _Adoc_Web_UI_ must say that the changes are unavailable.
   - The _Document_Version_Store_ must list the versions it holds for a _Document_, newest first, each with the time it was first seen.
 .remarks
-  - Chosen: the default base is the version the browser showed last, so the person sees everything that changed since they last looked; any other version in the store can be chosen.
+  - Chosen: the default base is the version the browser showed last, so the user sees everything that changed since they last looked; any other version in the store can be chosen.
   - Chosen: memory only, so changes from before a restart are not available; git keeps the full history.
 }
 
@@ -1106,10 +1106,10 @@ concept _Agent_Terminal_Stream_ in runtime = {
   controlled by _Browser_Session_
 .contract
   - The _Adoc_Server_ must take the stream from `herdr terminal session control` for the one _Browser_Session_ that controls the terminal, and from `herdr terminal session observe` for every other one.
-  - The controlling _Browser_Session_ is the one the person used last: it takes control when it loads with focus and on any click, key press or focus in its page; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll` with a direction and a number of lines, so that the wheel scrolls the pane's scrollback rather than reaching the program as keys, and mouse buttons as `terminal.mouse` with an action, a button and a 0-based cell.
+  - The controlling _Browser_Session_ is the one the user used last: it takes control when it loads with focus and on any click, key press or focus in its page; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll` with a direction and a number of lines, so that the wheel scrolls the pane's scrollback rather than reaching the program as keys, and mouse buttons as `terminal.mouse` with an action, a button and a 0-based cell.
   - The _Adoc_Server_ must subscribe again when herdr drops the event subscription, for example after herdr restarts.
   - An observing _Browser_Session_ that receives no frame for three seconds must re-open its stream, because herdr's observe stream can lag behind agent panes.
-  - The _Adoc_Server_ must send `terminal.release` when the controlling _Browser_Session_ closes or another one takes control, so that the person's own herdr terminal gets its size back.
+  - The _Adoc_Server_ must send `terminal.release` when the controlling _Browser_Session_ closes or another one takes control, so that the user's own herdr terminal gets its size back.
   - The _Adoc_Server_ must subscribe to the agent status and the closing of the claimed pane through herdr events and pass them to the _Adoc_Web_UI_.
 .remarks
   - Chosen: herdr's own session stream rather than a PTY attach or the herdr TUI, so that adoc needs no node-pty.

@@ -11,7 +11,7 @@ export interface OpenComment {
 
 const KEY = 'adoc.open-comments';
 
-/** Unsaved popover input per document, restored when the person returns to that document. */
+/** Unsaved popover input per document, restored when the user returns to that document. */
 export const openComments = {
   /** By the target of the body the comment was opened in, as written by formatTarget. */
   get(subject: string): OpenComment | undefined {

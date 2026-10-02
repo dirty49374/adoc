@@ -130,7 +130,7 @@ export async function readSkillFile(workspace: Workspace, name: string): Promise
 }
 
 /**
- * Writes a `SKILL.md` that the person edited in the _File_Editor_, when `version` is still current; answers with the
+ * Writes a `SKILL.md` that the user edited in the _File_Editor_, when `version` is still current; answers with the
  * new version and the unified diff from `since` (the text the unsent edits started from) to the new text.
  */
 export async function editSkillFile(workspace: Workspace, name: string, version: string, text: string, since?: string): Promise<{ status: 'applied'; version: string; diff: string } | { status: 'refused'; reason: string }> {

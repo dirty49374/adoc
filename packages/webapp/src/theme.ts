@@ -9,7 +9,7 @@ const listeners = new Set<() => void>();
 const root = document.documentElement;
 /** The default of the _Adoc_Config_ (`ui.theme`), which the server writes into the page as `data-theme`. */
 const configured: ThemeChoice = root.dataset.theme === 'light' || root.dataset.theme === 'system' ? root.dataset.theme : 'dark';
-/** This browser's own choice, if the person made one. */
+/** This browser's own choice, if the user made one. */
 let chosen: ThemeChoice | undefined = readStored<ThemeChoice | undefined>(KEY, undefined);
 
 const current = (): ThemeChoice => chosen ?? configured;

@@ -1,6 +1,6 @@
 # adoc
 
-adoc is a document collaboration system for agents. Its documents are plugin-defined files kept in git, such as TODO lists, task work orders and KANBAN boards. **An agent edits them directly.** A person reads the rendered documents in a web UI and comments on a section or on selected text, or uses buttons, checkboxes and drag-and-drop. Each of those becomes a one-time **message** to the agent. adoc does not depend on any agent harness: an agent can receive messages through the `adoc` CLI, through MCP, or by having them pushed into its herdr pane.
+adoc is a document collaboration system for agents. Its documents are plugin-defined files kept in git, such as TODO lists, task work orders and KANBAN boards. **An agent edits them directly.** A user reads the rendered documents in a web UI and comments on a section or on selected text, or uses buttons, checkboxes and drag-and-drop. Each of those becomes a one-time **message** to the agent. adoc does not depend on any agent harness: an agent can receive messages through the `adoc` CLI, through MCP, or by having them pushed into its herdr pane.
 
 The specification is an aterm corpus, and it is the authority:
 
@@ -52,7 +52,7 @@ Install the agent skills with `adoc skill install` (it runs the Vercel `skills` 
 
 Work on adoc itself goes through adoc:
 
-1. **NOTE**: the agent summarizes a conversation into a `NOTE-…` and develops it with the person's comments.
+1. **NOTE**: the agent summarizes a conversation into a `NOTE-…` and develops it with the user's comments.
 2. **Design in aterm**: the agreed ideas become Terms and contracts in `spec/*.trm`, checked with `aterm corpus check`.
 3. **TASK**: a `TASK-…` describes the work, lists the NOTEs it came from in `notes:`, and points at the Terms it implements.
 4. **Implement**: the agent works through the TASK, logging progress; the spec may still change during the work and is kept in sync.

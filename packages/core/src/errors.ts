@@ -1,4 +1,4 @@
-/** An expected failure with a stable code and a message meant for the person or agent reading it. */
+/** An expected failure with a stable code and a message meant for the user or agent reading it. */
 export class AdocError extends Error {
   constructor(
     readonly code: string,

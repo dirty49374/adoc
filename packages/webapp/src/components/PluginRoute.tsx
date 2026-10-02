@@ -9,7 +9,7 @@ import { SkillView } from './SkillView.js';
 /**
  * The `/p/:plugin`, `/p/:plugin/:document` and `/p/:plugin/skill` routes: the list pane, and beside it the detail pane
  * of the chosen document or the _Skill_View_ of the plugin's skill. While something is shown beside it, the list folds
- * into a rail unless the person pinned it.
+ * into a rail unless the user pinned it.
  */
 export function PluginRoute({ view }: { view?: 'skill' }) {
   const { pluginKey, documentKey } = useParams();

@@ -1,15 +1,15 @@
 ---
 name: adoc
-description: "Explains adoc, where a person and an agent work together on plugin-defined documents, and how its assigned agent works: claim, receive messages, edit documents, check, commit. Use when a project has an .adoc folder, when an adoc message arrives, or when setting up adoc for a project."
+description: "Explains adoc, where a user and an agent work together on plugin-defined documents, and how its assigned agent works: claim, receive messages, edit documents, check, commit. Use when a project has an .adoc folder, when an adoc message arrives, or when setting up adoc for a project."
 ---
 
 # adoc
 
 ## Overview
 
-adoc is a place where a person and an agent work on documents together. The person uses the adoc web UI in a browser; the agent uses the `adoc` command line or its MCP tool. Both connect to the **adoc server** of the workspace and talk through the documents: the person reads the rendered documents, comments on them, edits them or presses their buttons, and those reach the agent as **messages**; the agent edits the files. Some changes reach the agent only as uncommitted changes: an edit whose draft the person has not sent yet, or an action that sends no message.
+adoc is a place where a user and an agent work on documents together. The user uses the adoc web UI in a browser; the agent uses the `adoc` command line or its MCP tool. Both connect to the **adoc server** of the workspace and talk through the documents: the user reads the rendered documents, comments on them, edits them or presses their buttons, and those reach the agent as **messages**; the agent edits the files. Some changes reach the agent only as uncommitted changes: an edit whose draft the user has not sent yet, or an action that sends no message.
 
-- The adoc server watches the documents for changes, renders each document for the web UI through its plugin (the plugin summarizes and renders it; adoc draws only the header around it), runs the plugin's actions, holds the person's messages and delivers them to the agent.
+- The adoc server watches the documents for changes, renders each document for the web UI through its plugin (the plugin summarizes and renders it; adoc draws only the header around it), runs the plugin's actions, holds the user's messages and delivers them to the agent.
 - What a document is and how it looks comes from **plugins**: adoc itself knows no document kind.
 - adoc never starts an agent. Run the agent in a herdr pane (recommended): adoc then pushes every message straight into that pane, and the web UI shows its terminal. Without herdr, the agent takes its messages with `adoc message wait`.
 - A workspace is usually a git repository, so that the agent can commit every change; adoc also works without git and then warns in `adoc check`.
@@ -93,7 +93,7 @@ A workspace (project scope):
     plugins/<name>/     # project-scope plugins, declared as `from: <name>`
   .agents/skills/       # project-scope skills, the copies written by `adoc skill install`
   .claude/skills/       # links to them for Claude Code (one folder per detected agent)
-  skills-lock.json      # written by the skills CLI; the person decides whether it is committed
+  skills-lock.json      # written by the skills CLI; the user decides whether it is committed
   docs/                 # a watch path: the documents
     tasks/_archive/     # archived documents, in `_archive` folders at any depth
 ```
@@ -113,7 +113,7 @@ $XDG_RUNTIME_DIR/adoc/<hash>.json  # a record of each running adoc server (pid, 
 
 ## Using a plugin
 
-How a plugin is meant to be used, what its files look like, what an anchor means and what to do for each of its actions is written in its skill. **Always read the skill of a plugin before you touch its documents:** `adoc skill list`, then `adoc skill view adoc-<plugin key in lowercase>`, such as `adoc skill view adoc-task`. The person sees the same text in the web UI (`SKILL.md` beside the plugin key).
+How a plugin is meant to be used, what its files look like, what an anchor means and what to do for each of its actions is written in its skill. **Always read the skill of a plugin before you touch its documents:** `adoc skill list`, then `adoc skill view adoc-<plugin key in lowercase>`, such as `adoc skill view adoc-task`. The user sees the same text in the web UI (`SKILL.md` beside the plugin key).
 
 ## For the agent
 
@@ -121,14 +121,14 @@ How a plugin is meant to be used, what its files look like, what an anchor means
 
 adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings). They are the folders under `plugins/` of the adoc repository; declare each with a path to its folder.
 
-1. **Talk first.** Before any work, take time with the person to decide how this project will use them: which documents to keep, what goes where, how detailed.
+1. **Talk first.** Before any work, take time with the user to decide how this project will use them: which documents to keep, what goes where, how detailed.
 2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether the project commits, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
-   - Use a **NOTE** to discuss ideas with the person or to help them understand something. Draw state and sequence diagrams with Mermaid (```` ```mermaid ````) wherever they help.
-   - When the person agrees on a good idea from a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`, and point the item to it (see the TODO skill).
+   - Use a **NOTE** to discuss ideas with the user or to help them understand something. Draw state and sequence diagrams with Mermaid (```` ```mermaid ````) wherever they help.
+   - When the user agrees on a good idea from a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`, and point the item to it (see the TODO skill).
    - Start the work only when the documents it depends on are agreed and, if the project commits, committed.
    - The work may go to a subagent or a herdr development agent.
-   - When a task is finished, it goes to the person's review (see the TASK skill).
-3. **Change the procedure with the person as you go**, and keep `AGENTS.md` up to date.
+   - When a task is finished, it goes to the user's review (see the TASK skill).
+3. **Change the procedure with the user as you go**, and keep `AGENTS.md` up to date.
 4. **Make plugins fit the work.** A plugin is easy to write, so change one or write a new one whenever the documents should look or behave differently (skill `adoc-plugin-authoring`).
 
 ### Commands
@@ -141,19 +141,19 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 | `adoc document list [--plugin KEY] [--archived]` | documents, the most recently changed first, without archived ones (`--archived`: only those) |
 | `adoc document search <text> [--plugin KEY] [--archived]` | lines of documents that contain the text |
 | `adoc check` | every warning and error of the documents and plugins; exits 1 on errors |
-| `adoc ui open <KEY>[#anchor]` / `adoc ui list` | show a document in the person's browser tab / list the tabs |
+| `adoc ui open <KEY>[#anchor]` / `adoc ui list` | show a document in the user's browser tab / list the tabs |
 | `adoc skill list` / `adoc skill view <name>` | the agent skills / one of them |
-| `adoc skill install` / `update` / `uninstall` | manage the installed skills (command line only; through MCP, ask the person to run them) |
+| `adoc skill install` / `update` / `uninstall` | manage the installed skills (command line only; through MCP, ask the user to run them) |
 | `adoc plugin list` | the declared plugins |
 | `adoc server run` / `adoc mcp run` / `adoc init` | run the server / serve the MCP tool / create a workspace (command line only) |
 
-Every command takes `--output text|markdown|json|yaml` and answers `--help`; the workspace is the parent of the nearest `.adoc` folder upwards, or of the `.adoc` folder named by `--home <path>` (command line only) or `ADOC_HOME`. `adoc message` and `adoc ui` need the running server of the workspace; the person usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
+Every command takes `--output text|markdown|json|yaml` and answers `--help`; the workspace is the parent of the nearest `.adoc` folder upwards, or of the `.adoc` folder named by `--home <path>` (command line only) or `ADOC_HOME`. `adoc message` and `adoc ui` need the running server of the workspace; the user usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
 
 ### Workflow of the assigned agent
 
 #### Start: claim
 
-- **In herdr (recommended):** run `adoc agent claim` once at the start of your session. Your pane becomes the assigned agent: the person's messages are pushed into it as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over.
+- **In herdr (recommended):** run `adoc agent claim` once at the start of your session. Your pane becomes the assigned agent: the user's messages are pushed into it as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over.
 - **Outside herdr:** set `agent.transport.kind: wait` in `.adoc/adoc.yaml`, and take the held messages with `adoc message wait`.
 
 The server holds every message until it is delivered or the server stops: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them.
@@ -166,7 +166,7 @@ Then read the skills of the plugins you will work with (see "Using a plugin").
 2. For each message, read the documents it targets (the main target and the target of each attached comment) and do what it asks.
 3. Run `adoc check`; fix every error, and every warning about a document you changed.
 4. Commit, unless the project does not (see "Committing").
-5. When you created or substantially changed a document the person should see, open it for them: `adoc ui open <KEY>`.
+5. When you created or substantially changed a document the user should see, open it for them: `adoc ui open <KEY>`.
 6. Go back to 1.
 
 #### Message format
@@ -189,24 +189,24 @@ value: "3"
 applied: true
 ```
 
-- The header names the main target, and the text after it is what the person typed (for an action, what the plugin reports). After `--` come the attached `comments`: the draft comments the person collected and sent with the message, each with its own target; handle all of them, in order. A message of attached comments only has no target and no text.
-- A target is `workspace`, a plugin key (about the plugin, such as "create a new one"), a document key, a document key with an anchor (the plugin's skill says what an anchor means), or `skill <name>` (about an agent skill: change the `SKILL.md` in the skill's `directory` that `adoc skill list --output json` shows, then run `adoc skill update`, or through MCP ask the person to run it).
-- `source` is the file and line the person pointed at; `quote` is the exact text they selected. If the file changed since, find the place by the quote or the text around it; if you cannot find it, ask (see "Talking to the person").
-- A comment may carry a diff that starts with `I edited <file>:`: the person already changed the file in the web UI. Read the diff, keep the change, and do what the rest of the message asks.
+- The header names the main target, and the text after it is what the user typed (for an action, what the plugin reports). After `--` come the attached `comments`: the draft comments the user collected and sent with the message, each with its own target; handle all of them, in order. A message of attached comments only has no target and no text.
+- A target is `workspace`, a plugin key (about the plugin, such as "create a new one"), a document key, a document key with an anchor (the plugin's skill says what an anchor means), or `skill <name>` (about an agent skill: change the `SKILL.md` in the skill's `directory` that `adoc skill list --output json` shows, then run `adoc skill update`, or through MCP ask the user to run it).
+- `source` is the file and line the user pointed at; `quote` is the exact text they selected. If the file changed since, find the place by the quote or the text around it; if you cannot find it, ask (see "Talking to the user").
+- A comment may carry a diff that starts with `I edited <file>:`: the user already changed the file in the web UI. Read the diff, keep the change, and do what the rest of the message asks.
 - An `action` message with `applied: false` is a request: make the change yourself. With `applied: true` the plugin already wrote the change: do not redo it, commit it (see "Committing"), and do more only when the text or the plugin's skill asks for it. Every document has the common actions `archive` and `unarchive` (the archive button of its header): they ask you to archive or restore it (see "Plugins and documents"). A plugin's skill lists only its own actions. Some actions send no message at all, such as a sketch's `save`; their skill says how the change reaches you.
 
 #### Rules
 
 - Find documents with `adoc document list` and `adoc document search`, not with `ls` or `grep`: they leave archived documents out and keep your context small.
-- Always read the current file before editing it: the person or a plugin action may have changed it.
+- Always read the current file before editing it: the user or a plugin action may have changed it.
 
 #### Committing
 
 - adoc never commits. Unless the project's agent instructions say not to commit, or the workspace is not a git repository, you do, with `git add` and `git commit`, naming the document keys in the message, such as `TODO-gui: detail item 3`.
 - Commit each piece of work when it is done: a message once its attached comments are handled, or a step you take yourself, such as writing a note or starting a TASK.
-- Stage by path, and only these: the files you changed, and the uncommitted changes to documents made by the person or by plugin actions (such as a sketch's PNG). Stage nothing else, such as a `.adoc/adoc.yaml` you did not change.
+- Stage by path, and only these: the files you changed, and the uncommitted changes to documents made by the user or by plugin actions (such as a sketch's PNG). Stage nothing else, such as a `.adoc/adoc.yaml` you did not change.
 
-#### Talking to the person
+#### Talking to the user
 
-- Answer the person in your conversation: in herdr, the web UI shows your terminal. Answer a comment that asks a question there, and say there why you decline what a message asks, leaving the document as it is.
+- Answer the user in your conversation: in herdr, the web UI shows your terminal. Answer a comment that asks a question there, and say there why you decline what a message asks, leaving the document as it is.
 - When you need an answer about a place in a Markdown document, write the question there, next to the place, as a blockquote starting with `> Question:`, and remove it once answered. A plugin's skill says when its view does not show such a line, or names a better place, such as a NOTE's **Open questions**; otherwise ask in your conversation.
