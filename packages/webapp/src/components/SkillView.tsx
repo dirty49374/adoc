@@ -1,19 +1,18 @@
 import { Pencil } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api, type SkillInfo } from '../api.js';
-import { drawDiagrams } from '../diagrams.js';
+import { DocumentBody } from './DocumentBody.js';
 import { FileEditor } from './FileEditor.js';
 
 type SkillState = { phase: 'loading' } | { phase: 'missing' } | { phase: 'showing'; skill: SkillInfo & { html: string } };
 
 /**
- * _Skill_View_: one agent skill, its SKILL.md rendered like a document body. Comments go through the composer (the
- * skill is its narrowest target); the edit button opens the _File_Editor_ on the SKILL.md.
+ * _Skill_View_: one agent skill, its SKILL.md in a _Document_Body_: comments on selected text and through the composer
+ * target the skill; the edit button opens the _File_Editor_ on the SKILL.md.
  */
 export function SkillView({ name }: { name: string }) {
   const [state, setState] = useState<SkillState>({ phase: 'loading' });
   const [editing, setEditing] = useState(false);
-  const body = useRef<HTMLDivElement>(null);
   const load = useCallback(() => {
     api.skill(name).then(
       (skill) => setState({ phase: 'showing', skill }),
@@ -25,9 +24,6 @@ export function SkillView({ name }: { name: string }) {
     setEditing(false);
     load();
   }, [load]);
-  useEffect(() => {
-    if (state.phase === 'showing' && body.current) void drawDiagrams(body.current);
-  }, [state, editing]);
 
   if (state.phase === 'loading') return <div className="pane-placeholder">Loading…</div>;
   if (state.phase === 'missing') return <div className="pane-placeholder">No skill is named {name}.</div>;
@@ -59,9 +55,7 @@ export function SkillView({ name }: { name: string }) {
           }}
         />
       ) : (
-        <div className="document-body">
-          <div className="rendered" translate="yes" ref={body} dangerouslySetInnerHTML={{ __html: skill.html }} />
-        </div>
+        <DocumentBody subject={{ level: 'skill', name }} html={skill.html} />
       )}
     </section>
   );

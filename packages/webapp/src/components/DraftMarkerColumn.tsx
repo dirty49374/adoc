@@ -1,5 +1,6 @@
 import { Circle, Pencil, X } from 'lucide-react';
 import { useLayoutEffect, useState } from 'react';
+import { formatTarget, type Subject } from '../api.js';
 import { draftStore, useDrafts, type DraftComment } from '../drafts.js';
 
 interface Placed {
@@ -11,8 +12,8 @@ interface Placed {
  * _Draft_Marker_Column_: a one-character margin with a dot beside each element that carries a draft of this
  * document; hovering a dot unfolds its card.
  */
-export function DraftMarkerColumn({ documentKey, content, container, html, onEdit }: { documentKey: string; content: HTMLElement | null; container: HTMLElement | null; html: string; onEdit: (draft: DraftComment) => void }) {
-  const drafts = useDrafts().filter((d) => (d.target.level === 'document' || d.target.level === 'anchor') && d.target.key === documentKey);
+export function DraftMarkerColumn({ subject, content, container, html, onEdit }: { subject: Subject; content: HTMLElement | null; container: HTMLElement | null; html: string; onEdit: (draft: DraftComment) => void }) {
+  const drafts = useDrafts().filter((d) => formatTarget(d.target) === formatTarget(subject) || (d.target.level === 'anchor' && subject.level === 'document' && d.target.key === subject.key));
   const [placed, setPlaced] = useState<Placed[]>([]);
   const [open, setOpen] = useState<number>();
 
@@ -37,7 +38,7 @@ export function DraftMarkerColumn({ documentKey, content, container, html, onEdi
           <Circle />
           {open === draft.id && (
             <div className="draft-card floating">
-              <div className="draft-card-target">{draft.target.level === 'anchor' ? `#${draft.target.anchor}` : documentKey}</div>
+              <div className="draft-card-target">{draft.target.level === 'anchor' ? `#${draft.target.anchor}` : formatTarget(subject)}</div>
               {draft.quote && <blockquote>{draft.quote}</blockquote>}
               <div>{draft.text}</div>
               <div className="draft-card-actions">

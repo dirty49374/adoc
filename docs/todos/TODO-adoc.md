@@ -20,5 +20,5 @@
 - [x] Plugin tab order NOTE | TODO | SKETCH | TASK | KANBAN, set in this repository's `.adoc/adoc.yaml` (tabs follow the order of `plugins`)
 - [x] List pane title: write the skill link as `KANBAN | SKILL.md` (a separator between the plugin key and the link)
 - [x] Plugin tab click: unfold the list pane and open its top document; fold the list pane again when the pointer leaves both the tab bar and the list pane
-- [ ] Skill view: comments on selected text (the comment popover of a document body) do not work on a SKILL.md yet; only the composer can target `skill <name>`
+- [x] Skill view: comments on selected text (the comment popover of a document body) do not work on a SKILL.md yet; only the composer can target `skill <name>`
 - [ ] Composer: when the document list pane is pinned (takes its width), the composer stays centred on the whole main area instead of moving with the reading column

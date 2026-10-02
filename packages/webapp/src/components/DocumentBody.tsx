@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type MouseEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { openComments } from '../openComments.js';
-import { api, pluginOf, type ActionRequest, type ActionResponse, type ReferenceInfo } from '../api.js';
+import { api, formatTarget, pluginOf, type ActionRequest, type ActionResponse, type ReferenceInfo, type Subject } from '../api.js';
 import { AnchorCommentButton } from './AnchorCommentButton.js';
 import { CommentPopover, type PopoverRequest } from './CommentPopover.js';
 import { DraftMarkerColumn } from './DraftMarkerColumn.js';
@@ -13,16 +13,19 @@ type ActionEvent = ActionRequest['event'];
 const DRAG_TYPE = 'application/x-adoc-drag';
 
 interface Props {
-  documentKey: string;
+  /** The document (or skill) the body shows. */
+  subject: Subject;
   html: string;
-  onAction: (request: { event: ActionEvent }) => Promise<ActionResponse | undefined>;
+  /** Absent for a body without actions, such as a skill. */
+  onAction?: (request: { event: ActionEvent }) => Promise<ActionResponse | undefined>;
 }
 
 /**
  * _Document_Body_: shows the renderer's HTML and turns its marked elements into anchors,
  * references and actions. A newer version waits while a comment popover is open.
  */
-export function DocumentBody({ documentKey, html, onAction }: Props) {
+export function DocumentBody({ subject, html, onAction }: Props) {
+  const subjectKey = formatTarget(subject);
   const navigate = useNavigate();
   const container = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -54,7 +57,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
         window.setTimeout(() => target.classList.remove('adoc-flash'), 1600);
       }
     }
-    const left = openComments.get(documentKey);
+    const left = openComments.get(subjectKey);
     if (left && !popover) {
       const anchor = left.target.level === 'anchor' ? element.querySelector(`[data-adoc-anchor="${CSS.escape(left.target.anchor)}"]`) : null;
       const box = container.current!.getBoundingClientRect();
@@ -85,7 +88,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     if (busy.current) return { status: 'busy' };
     busy.current = true;
     try {
-      return await onAction({ event });
+      return await onAction?.({ event });
     } finally {
       busy.current = false;
     }
@@ -148,7 +151,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     const onAction = (e: Event) => elementAction.current(e);
     const onDraft = (e: Event) => {
       const text = (e as CustomEvent<{ text?: unknown }>).detail?.text;
-      if (typeof text === 'string' && text.trim()) draftStore.putOwnDraft('element', { level: 'document', key: documentKey }, text);
+      if (typeof text === 'string' && text.trim()) draftStore.putOwnDraft('element', subject, text);
     };
     element.addEventListener('adoc-action', onAction);
     element.addEventListener('adoc-draft', onDraft);
@@ -194,15 +197,15 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
       const anchor = anchorOf(common);
       const source = start.closest('[data-adoc-source]')?.getAttribute('data-adoc-source') ?? undefined;
       const p = position(range.getBoundingClientRect());
-      const request: PopoverRequest = { target: anchor ? { level: 'anchor', key: documentKey, anchor } : { level: 'document', key: documentKey }, quote, top: p.bottom + 6, left: Math.min(Math.max(0, p.left), p.width - 380) };
+      const request: PopoverRequest = { target: anchor && subject.level === 'document' ? { level: 'anchor', key: subject.key, anchor } : subject, quote, top: p.bottom + 6, left: Math.min(Math.max(0, p.left), p.width - 380) };
       if (source) request.source = source;
       setPopover(request);
     }, 0);
   };
 
   const openAnchorComment = () => {
-    if (!hover) return;
-    const request: PopoverRequest = { target: { level: 'anchor', key: documentKey, anchor: hover.anchor }, top: hover.top + 28, left: Math.max(0, hover.left - 360) };
+    if (!hover || subject.level !== 'document') return;
+    const request: PopoverRequest = { target: { level: 'anchor', key: subject.key, anchor: hover.anchor }, top: hover.top + 28, left: Math.max(0, hover.left - 360) };
     if (hover.source) request.source = hover.source;
     setPopover(request);
   };
@@ -269,12 +272,12 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       />
-      <DraftMarkerColumn documentKey={documentKey} content={content.current} container={container.current} html={shown} onEdit={editDraft} />
+      <DraftMarkerColumn subject={subject} content={content.current} container={container.current} html={shown} onEdit={editDraft} />
       {hover && !popover && <AnchorCommentButton top={hover.top} left={hover.left} anchor={hover.anchor} onOpen={openAnchorComment} />}
       {tooltip && <ReferenceTooltip top={tooltip.top} left={tooltip.left} target={tooltip.target} info={references.current.get(tooltip.target)} />}
       {popover && (
         <CommentPopover
-          documentKey={documentKey}
+          subject={subject}
           request={popover}
           onClose={() => {
             setPopover(undefined);

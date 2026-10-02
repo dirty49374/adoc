@@ -13,13 +13,14 @@ const KEY = 'adoc.open-comments';
 
 /** Unsaved popover input per document, restored when the person returns to that document. */
 export const openComments = {
-  get(documentKey: string): OpenComment | undefined {
-    return readStored<Record<string, OpenComment>>(KEY, {})[documentKey];
+  /** By the target of the body the comment was opened in, as written by formatTarget. */
+  get(subject: string): OpenComment | undefined {
+    return readStored<Record<string, OpenComment>>(KEY, {})[subject];
   },
-  set(documentKey: string, comment: OpenComment | undefined): void {
+  set(subject: string, comment: OpenComment | undefined): void {
     const all = readStored<Record<string, OpenComment>>(KEY, {});
-    if (comment && comment.text) all[documentKey] = comment;
-    else delete all[documentKey];
+    if (comment && comment.text) all[subject] = comment;
+    else delete all[subject];
     writeStored(KEY, all);
   },
 };

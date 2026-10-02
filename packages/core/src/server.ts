@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve } from 'node:path';
-import { markdown } from '@adoc/plugin-kit';
+import { frontmatter, markdown } from '@adoc/plugin-kit';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { z } from 'zod';
 import { AdocError, errorMessage } from './errors.js';
@@ -467,10 +467,13 @@ export class AdocServer {
     }
     match = /^\/api\/skills\/([\w.-]+)$/.exec(path);
     if (match && method === 'GET') {
-      // The _Skill_View_: the SKILL.md rendered with the plugin-kit Markdown, like a document body.
+      // The _Skill_View_: the SKILL.md rendered with the plugin-kit Markdown like a document body, with source
+      // positions, so that a comment on selected text says which line of which SKILL.md it is about.
       try {
-        const { entry, body } = await viewSkill(ws, match[1]!);
-        return sendJson(response, 200, { name: entry.name, description: entry.description, scope: entry.scope, pluginKey: entry.pluginKey, html: markdown(body).html });
+        const { entry } = await viewSkill(ws, match[1]!);
+        const file = await readSkillFile(ws, entry.name);
+        const { body, bodyLine } = frontmatter(file.text);
+        return sendJson(response, 200, { name: entry.name, description: entry.description, scope: entry.scope, pluginKey: entry.pluginKey, html: markdown(body, { file: file.file, line: bodyLine }).html });
       } catch (error) {
         return sendJson(response, 404, { error: errorMessage(error) });
       }

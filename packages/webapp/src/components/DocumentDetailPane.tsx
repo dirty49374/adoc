@@ -130,7 +130,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
       {editing ? (
         <FileEditor target={{ level: 'document', key: documentKey }} load={() => api.file(documentKey)} onSave={saveEdit} onClose={() => setEditing(false)} />
       ) : html !== undefined ? (
-        <DocumentBody documentKey={documentKey} html={html} onAction={onAction} />
+        <DocumentBody subject={{ level: 'document', key: documentKey }} html={html} onAction={onAction} />
       ) : (
         <div className="document-body parse-error" data-testid="render-error">
           <div className="adoc-block adoc-tone-error">

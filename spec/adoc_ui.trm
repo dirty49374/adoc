@@ -123,7 +123,7 @@ panel _Skill_View_ in shell = {
   references _Document_Body_
 .contract
   - _Skill_View_ must show the name and the description from the front matter as its header, and the rest of the `SKILL.md` rendered with the same Markdown rendering as a _Document_Body_.
-  - _Skill_View_ must offer the edit button of the _File_Editor_, and the _Comment_Composer_ must offer the skill as its narrowest target while a _Skill_View_ is shown.
+  - _Skill_View_ must show the `SKILL.md` in a _Document_Body_, so that a comment on selected text targets the skill with its source line, must offer the edit button of the _File_Editor_, and the _Comment_Composer_ must offer the skill as its narrowest target while a _Skill_View_ is shown.
 .states
   - _Skill_View_ is one of loading, showing, missing; in missing the user sees that no skill has that name.
 }
@@ -263,8 +263,9 @@ label _Document_Header_ in document = {
 }
 
 panel _Document_Body_ in document = {
-  The region of the _Document_Detail_Pane_ that holds the HTML returned by the _adoc:Plugin_Renderer_ and turns its marked elements into anchors, references and actions.
+  The region that holds rendered HTML, the output of the _adoc:Plugin_Renderer_ in the _Document_Detail_Pane_ or a `SKILL.md` in the _Skill_View_, and turns its marked elements into anchors, references, actions and comments on selected text.
 .relations
+  references _adoc_ui:Skill_View_
   references _adoc:Plugin_Client_Module_
   references _adoc_ui:Draft_Chip_List_
   references _adoc:Adoc_Server_

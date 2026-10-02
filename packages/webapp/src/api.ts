@@ -155,6 +155,9 @@ export const api = {
     request<EditResponse>(`/api/documents/${encodeURIComponent(key)}/file`, post(body)),
 };
 
+/** What a rendered body is: a document, or an agent skill. Comments in it target it, or an anchor of the document. */
+export type Subject = { level: 'document'; key: string } | { level: 'skill'; name: string };
+
 /** Writes a target as in _User_Message_Format_. */
 export function formatTarget(target: MessageTarget): string {
   switch (target.level) {

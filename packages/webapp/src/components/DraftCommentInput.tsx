@@ -1,26 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
-import { formatTarget, type UserComment } from '../api.js';
+import { formatTarget, type Subject, type UserComment } from '../api.js';
 import { draftStore } from '../drafts.js';
 import { openComments } from '../openComments.js';
 
 interface Props {
-  documentKey: string;
+  /** The document or skill whose body holds the popover: the open comment is kept under it. */
+  subject: Subject;
   comment: Omit<UserComment, 'text'>;
   initialText?: string;
   onDone: () => void;
 }
 
 /** _Draft_Comment_Input_: adds one draft comment for its popover's target; sends nothing. Typed text survives leaving the page. */
-export function DraftCommentInput({ documentKey, comment, initialText, onDone }: Props) {
+export function DraftCommentInput({ subject, comment, initialText, onDone }: Props) {
   const [text, setText] = useState(initialText ?? '');
   const area = useRef<HTMLTextAreaElement>(null);
   useEffect(() => area.current?.focus(), []);
   const update = (value: string) => {
     setText(value);
-    openComments.set(documentKey, { ...comment, text: value });
+    openComments.set(formatTarget(subject), { ...comment, text: value });
   };
   const finish = () => {
-    openComments.set(documentKey, undefined);
+    openComments.set(formatTarget(subject), undefined);
     onDone();
   };
   const add = () => {
