@@ -24,7 +24,7 @@ export default definePlugin({
 
   summarize(doc) {
     const { title, columns, cards } = parse(doc);
-    const shown = cards.filter((c) => c.column !== HIDDEN);
+    const shown = cards.filter((c) => c.column !== HIDDEN && columns.includes(c.column));
     const fields: Record<string, number> = {};
     for (const column of columns.filter((c) => c !== HIDDEN)) fields[column] = shown.filter((c) => c.column === column).length;
     return { title, status: `${shown.length} cards`, fields };
