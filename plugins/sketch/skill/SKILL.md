@@ -1,6 +1,6 @@
 ---
 name: adoc-sketch
-description: "SKETCH documents: drawings, such as UI wireframes, that the person draws in Excalidraw, saved as JSON with a PNG beside it. Use when a message says a sketch changed, when the person wants to draw something, or when a drawing must be read or tidied."
+description: "SKETCH documents: drawings, such as UI wireframes, that the person draws in Excalidraw, saved as JSON with a PNG beside it. Use when a message carries a comment that a sketch changed, when the person wants to draw something, or when a drawing must be read or tidied."
 ---
 
 # SKETCH documents
@@ -13,8 +13,8 @@ A SKETCH is a drawing the person makes in the web UI, usually a UI wireframe or 
 
 ## States and workflow
 
-- A sketch has no states. The person draws, and every change is saved at once; saving alone tells you nothing.
-- The save also puts one draft comment on the sketch into the composer: `The sketch SKETCH-<id> changed: <png path> (image) and <json path> (Excalidraw JSON).` It reaches you as an attached comment of the next message the person sends. Then read the sketch and do what the message asks.
+- A sketch has no states. The person draws, and every change is saved at once.
+- A save sends no message; it puts one draft comment on the sketch into the composer: `The sketch SKETCH-<id> changed: <png path> (image) and <json path> (Excalidraw JSON).` It reaches you as an attached comment of the next message the person sends. Then read the sketch and do what the message asks.
 - You may offer the person an empty board when a drawing would help the conversation.
 
 ## Instructions
@@ -22,7 +22,7 @@ A SKETCH is a drawing the person makes in the web UI, usually a UI wireframe or 
 - Read **both** files of a changed sketch: look at the PNG to see the layout, and read the JSON for the exact texts, the shapes and how they connect. If you cannot view images, work from the JSON and say so.
 - Describe back in one or two sentences what you understood from the drawing before you act on it, when it is not obvious.
 - You may edit the JSON, for example to tidy a wireframe or add labels. Read it just before you edit it, since the person may be drawing; the open board picks up your change. The board does not fill in missing fields, so write every new element in full: copy an element of the same type, or use the example below, and give it a new unique `id`, `seed` and `versionNonce` (random integers) and `version: 1`.
-- Never write the PNG yourself: the web UI writes it on the person's next save, so after your own edit it shows the older drawing until then. Commit the JSON alone and tell the person.
+- Never write the PNG yourself: the web UI writes it on the person's next save, so after your own edit it shows the older drawing until then. Commit as usual and tell the person.
 - To give the person an empty board, create `SKETCH-<id>.excalidraw` with the empty board below and open it for them with `adoc ui open SKETCH-<id>`.
 
 ## File
