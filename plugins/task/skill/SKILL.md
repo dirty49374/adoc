@@ -28,7 +28,7 @@ A TASK is the work order for one piece of work that needs a design and a plan: w
 - Keep `## Done when` checkable: concrete results the person can verify.
 - Log facts in `## Log` with dates: what changed, what was checked and how, and what was not checked.
 - To split a task, create a new TASK and link both with `[[KEY]]`.
-- When the person asks for a status change the work does not allow yet, keep the status and say why in the task.
+- When the person asks for a status change the work does not allow yet, such as DONE while `## Done when` items are open, keep the status and say why in your conversation.
 
 ## File
 
