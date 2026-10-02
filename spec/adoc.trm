@@ -43,6 +43,7 @@ concept _Adoc_Home_ in workspace = {
 concept _Adoc_Config_ in workspace = {
   The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, the server address and the default colour scheme of the web UI of one _Adoc_Workspace_.
 .relations
+  references _adoc:Plugin_Directory_
   references _adoc:Agent_Claim_
   configures _Adoc_Workspace_
   inside _Adoc_Home_
@@ -54,7 +55,7 @@ concept _Adoc_Config_ in workspace = {
   configures _Adoc_Server_
   configures _Web_UI_Theme_
 .contract
-  - Each _Plugin_ declared in an _Adoc_Config_ must name its source as a local path or an npm package, and the _Plugin_Key_ under which it is used.
+  - Each _Plugin_ declared in an _Adoc_Config_ must name its source as a bare name looked up in the _Plugin_Directory_ entries, a local path or an npm package, and the _Plugin_Key_ under which it is used.
   - An _Adoc_Config_ must declare exactly one _Assigned_Agent_ with a name and one _User_Message_Transport_ with the settings of its kind.
   - An _Adoc_Config_ must declare the host and port of the _Adoc_Server_.
   - An _Adoc_Config_ may declare the default colour scheme of the _Web_UI_Theme_ as `ui.theme`: dark, light or system; dark when it is not declared.
@@ -87,7 +88,7 @@ concept _Assigned_Agent_ in workspace = {
   identified by _Agent_Claim_
   receives _User_Message_
   edits _Document_
-  reads _Plugin_Agent_Guide_
+  reads _Plugin_Skill_
   commits changes of _Plugin_Action_Handler_
 .contract
   - An _Adoc_Workspace_ must have exactly one _Assigned_Agent_.
@@ -103,6 +104,7 @@ concept _Assigned_Agent_ in workspace = {
 concept _Adoc_CLI_ in surface = {
   The `adoc` command line, whose commands take the form `adoc <noun> <verb>` in the manner of aterm and serve both people and the _Assigned_Agent_.
 .relations
+  references _adoc:Plugin_
   serves _Assigned_Agent_
   references _Document_
   selects _Adoc_Home_
@@ -111,17 +113,21 @@ concept _Adoc_CLI_ in surface = {
   includes _Adoc_Check_Command_
   includes _Browser_Open_Command_
   includes _Agent_Claim_Command_
+  includes _Document_Find_Command_
+  includes _Skill_Install_Command_
+  runs _Skill_Check_
   finds server by _Server_Record_
   starts _Adoc_Server_
-  shows _Plugin_Agent_Guide_
+  shows _Plugin_Skill_
 .contract
-  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
+  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc document list`, `adoc document search`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
+  - Every command of the _Adoc_CLI_, also through the _Adoc_MCP_Tool_, must run the _Skill_Check_ and show what it finds as warnings.
   - Every finite result of the _Adoc_CLI_ must support `--output text`, `--output markdown`, `--output json` and `--output yaml`, with text as the default.
   - A command of the _Adoc_CLI_ that needs the running _Adoc_Server_ must find it through the _Server_Record_ and must fail with a clear error when no _Adoc_Server_ is running.
   - Every command of the _Adoc_CLI_ must answer `--help` with its usage, behavior and an example.
 .remarks
   - Chosen: no command edits a _Document_; the agent edits files directly.
-  - Chosen: `adoc skill` exposes each _Plugin_Agent_Guide_ the way `aterm skill` exposes Skills, plus the guide `adoc` for the assigned agent's workflow and `adoc-plugin-authoring` for writing plugins.
+  - Chosen: `adoc skill` lists, shows and installs every _Agent_Skill_: `adoc` for the assigned agent's workflow, `adoc-plugin-authoring` for writing plugins, and the _Plugin_Skill_ of each _Plugin_.
   - Chosen: `bin/adoc` in the adoc repository runs the command line of that checkout.
 }
 
@@ -151,7 +157,7 @@ concept _Plugin_ in plugin = {
   defines _Document_
   provides _Plugin_Renderer_
   provides _Plugin_Action_Handler_
-  provides _Plugin_Agent_Guide_
+  provides _Plugin_Skill_
   returns _Document_Summary_
   decides form of _Document_Anchor_
   shown as _Plugin_Tab_
@@ -167,7 +173,7 @@ concept _Plugin_ in plugin = {
 }
 
 concept _Plugin_Interface_ in plugin = {
-  The object a _Plugin_ default-exports from its `index.ts` through `definePlugin` of the _Plugin_Kit_: description, layout, summarize, render, the optional renderChanges and actions, and guide.
+  The object a _Plugin_ default-exports from its `index.ts` through `definePlugin` of the _Plugin_Kit_: description, layout, summarize, render, and the optional renderChanges and actions.
 .relations
   references _adoc:Adoc_Web_UI_
   implemented by _Plugin_
@@ -178,7 +184,6 @@ concept _Plugin_Interface_ in plugin = {
   summarize returns _Document_Summary_
   render runs _Plugin_Renderer_
   actions run _Plugin_Action_Handler_
-  guide gives _Plugin_Agent_Guide_
   returns text of _User_Action_Message_
   feeds _Document_Summary_List_
   references _Document_Version_
@@ -189,7 +194,6 @@ concept _Plugin_Interface_ in plugin = {
   - The render function must return the body HTML; a thrown error is the parse error.
   - The optional renderChanges function must receive the current _Document_ and an earlier version of it and return body HTML that shows the changes; without it, the _Adoc_Web_UI_ must show a line diff of the main file.
   - Each function in actions, keyed by action name, must return the new text of the main file, new texts of files of a folder document, and the text of the _User_Action_Message_, each optional; it must not write files itself.
-  - The guide must be Markdown text or the URL of a Markdown file.
   - `definePlugin` must reject a wrong definition with one line per wrong field, and the _Adoc_Server_ must validate every returned summary and action result the same way.
 .remarks
   - Chosen: the _Adoc_Server_ writes the files returned by an action, so that _Document_Version_ checking stays in one place.
@@ -204,7 +208,7 @@ concept _Plugin_Kit_ in plugin = {
   defines _Plugin_Interface_
   writes _Anchor_Markup_Convention_
   renders _Document_Reference_
-  documented by _Plugin_Agent_Guide_
+  documented by _Plugin_Skill_
   styled by _Web_UI_Theme_
 .contract
   - The _Plugin_Kit_ must provide a helper for every attribute of the _Anchor_Markup_Convention_, so that no plugin writes an attribute name by hand.
@@ -216,6 +220,22 @@ concept _Plugin_Kit_ in plugin = {
   - Chosen: highlight.js marks code tokens with its `hljs-*` classes; the _Web_UI_Theme_ colours them.
   - Chosen: a plugin is one folder with `index.ts` and `guide.md`, loaded without a build step through Node's type stripping.
   - Chosen: the authoring guide is shown by `adoc skill view adoc-plugin-authoring`.
+}
+
+concept _Plugin_Directory_ in plugin = {
+  A folder that holds _Plugin_ folders by name: `.adoc/plugins/` of the _Adoc_Workspace_ (project scope) and `adoc/plugins/` in the XDG config directory of the user, usually `~/.config/adoc/plugins/` (user scope).
+.relations
+  references _adoc:Adoc_Workspace_
+  holds _Plugin_
+  inside _Adoc_Home_
+  read by _Adoc_Config_
+  references _Agent_Skill_
+.contract
+  - A plugin source in the _Adoc_Config_ that is a bare name must be looked up as a folder of that name in the project _Plugin_Directory_ first, then in the user _Plugin_Directory_; a path and an npm package name keep working.
+  - A _Plugin_ has the scope of the place it is loaded from: project when it is inside the _Adoc_Workspace_, user otherwise; its _Agent_Skill_ is installed in the same scope.
+  - A _Plugin_ may have its own `package.json` with dependencies installed in its folder; it imports `@adoc/plugin-kit` of the running adoc wherever its folder is.
+.remarks
+  - Chosen: the XDG base directory convention (`$XDG_CONFIG_HOME`, default `~/.config`).
 }
 
 concept _Plugin_Key_ in plugin = {
@@ -305,10 +325,64 @@ concept _Plugin_Tab_ in plugin = {
   - A _Plugin_Tab_ must show documents of its own _Plugin_ only.
 }
 
-concept _Plugin_Agent_Guide_ in plugin = {
-  Help or skill text in which a _Plugin_ tells the _Assigned_Agent_ how to work with its documents, shown by `adoc skill view adoc-<plugin key in lowercase>` and installable as an agent skill.
+concept _Agent_Skill_ in plugin = {
+  A folder `skill/` with a `SKILL.md` in the Agent Skills format inside its owner folder: the core package (`adoc`, the assigned agent's workflow), the _Plugin_Kit_ (`adoc-plugin-authoring`) and each _Plugin_ (its _Plugin_Skill_).
+.relations
+  references _adoc:Plugin_Skill_
+  read by _Assigned_Agent_
+  installed by _Skill_Install_Command_
+  checked by _Skill_Check_
+  shown by _Adoc_CLI_
+  references _Plugin_Kit_
+  references _Plugin_
+.contract
+  - Every _Agent_Skill_ must be the folder `skill/` of its owner folder, so that installing it never copies the owner's code.
+  - `adoc skill view <name>` must show the `SKILL.md` of the _Agent_Skill_ with that name.
+.remarks
+  - Chosen: the Agent Skills format (agentskills.io): a folder with `SKILL.md` whose front matter has `name` and `description`.
+}
+
+procedure _Skill_Install_Command_ in surface = {
+  The `adoc skill install`, `adoc skill update` and `adoc skill uninstall` commands, which install every _Agent_Skill_ for the agents through the Vercel `skills` CLI (`npx skills add`).
+.relations
+  references _adoc:Plugin_
+  references _adoc:Plugin_Kit_
+  references _adoc:Plugin_Skill_
+  part of _Adoc_CLI_
+  installs _Agent_Skill_
+  references _Plugin_Directory_
+  references _Adoc_MCP_Tool_
+.contract
+  - `adoc skill install` must install the skills of the core package and the _Plugin_Kit_ in user scope, and the _Plugin_Skill_ of each _Plugin_ in the scope of that _Plugin_, by running `skills add <folder>`; `--agent` passes the agents on.
+  - `adoc skill update` must do the same, replacing installed copies; `adoc skill uninstall` must remove every _Agent_Skill_ of the workspace through `skills remove`.
+  - The _Adoc_MCP_Tool_ must refuse these commands.
+.remarks
+  - Chosen: the `skills` CLI writes the agent-specific places (`.agents/skills`, `.claude/skills`, …), so adoc supports every agent it supports.
+  - Chosen: `ADOC_SKILLS_CLI` replaces the command (default `npx -y skills@1`), for internal mirrors and tests.
+  - Chosen: whether `skills-lock.json` is committed is the person's decision.
+}
+
+procedure _Skill_Check_ in runtime = {
+  Find every _Agent_Skill_ of the workspace that is not installed or whose installed copy differs from the one of the running adoc and its plugins.
+.relations
+  references _adoc:Adoc_Workspace_
+  checks _Agent_Skill_
+  run by _Adoc_CLI_
+  run by _Adoc_Check_Command_
+  run by _Adoc_Server_
+  references _Skill_Install_Command_
+.contract
+  - _Skill_Check_ must look for each _Agent_Skill_ by name in `.agents/skills` and `.claude/skills` of the _Adoc_Workspace_ and of the user's home, and report it as missing when none has it, or as outdated when its `SKILL.md` differs from the source.
+  - Each finding must be a warning that names the skill and suggests `adoc skill install` or `adoc skill update`.
+.remarks
+  - Chosen: "differs" compares the `SKILL.md` text, so no version field has to be kept in step.
+}
+
+concept _Plugin_Skill_ in plugin = {
+  The _Agent_Skill_ in which a _Plugin_ tells the _Assigned_Agent_ how to work with its documents: `skill/SKILL.md` in the folder of the _Plugin_, named in its front matter, such as `adoc-todo`.
 .relations
   part of _Plugin_
+  is_a _Agent_Skill_
   read by _Assigned_Agent_
   shown by _Adoc_CLI_
   explains _Document_Anchor_
@@ -317,10 +391,11 @@ concept _Plugin_Agent_Guide_ in plugin = {
   explains _User_Action_Message_
   explains _Plugin_Action_Handler_
 .contract
-  - A _Plugin_Agent_Guide_ must explain the file layout and format of the documents of its _Plugin_.
-  - A _Plugin_Agent_Guide_ must let the agent locate any _Document_Anchor_ of its _Plugin_ in the files.
-  - A _Plugin_Agent_Guide_ must state the recommended form of a new _Document_Local_ID_.
-  - A _Plugin_Agent_Guide_ must list each _Document_Action_ name of its _Plugin_, what its _Plugin_Action_Handler_ already does, and what the agent is expected to do on the resulting _User_Action_Message_.
+  - A _Plugin_ must have its _Plugin_Skill_ at `skill/SKILL.md` next to its `index.ts`; a _Plugin_ without it fails to load.
+  - A _Plugin_Skill_ must explain the file layout and format of the documents of its _Plugin_.
+  - A _Plugin_Skill_ must let the agent locate any _Document_Anchor_ of its _Plugin_ in the files.
+  - A _Plugin_Skill_ must state the recommended form of a new _Document_Local_ID_.
+  - A _Plugin_Skill_ must list each _Document_Action_ name of its _Plugin_, what its _Plugin_Action_Handler_ already does, and what the agent is expected to do on the resulting _User_Action_Message_.
 }
 
 concept _Document_ in document = {
@@ -376,7 +451,7 @@ concept _Document_Local_ID_ in document = {
   part of _Document_Key_
   distinguishes _Document_
   unique within _Plugin_
-  explained by _Plugin_Agent_Guide_
+  explained by _Plugin_Skill_
 .contract
   - A _Document_Local_ID_ must use only lowercase letters, digits, hyphens, underscores and dots.
   - A _Document_Local_ID_ must be unique within its _Plugin_.
@@ -394,14 +469,14 @@ concept _Document_Anchor_ in document = {
   points into _Document_
   appended to _Document_Key_
   form decided by _Plugin_
-  explained by _Plugin_Agent_Guide_
+  explained by _Plugin_Skill_
   targeted by _User_Message_
 .contract
   - A _Document_Anchor_ must be written as the _Document_Key_, a hash sign and the anchor value.
   - The form of a _Document_Anchor_ value must be decided by the _Plugin_ of its _Document_.
 .remarks
   - Example: a line number for a Markdown source, a key path for a YAML or JSON source, or an item id.
-  - Chosen: the agent understands the anchor through the _Plugin_Agent_Guide_; adoc does not interpret it.
+  - Chosen: the agent understands the anchor through the _Plugin_Skill_; adoc does not interpret it.
 }
 
 concept _Anchor_Markup_Convention_ in document = {
