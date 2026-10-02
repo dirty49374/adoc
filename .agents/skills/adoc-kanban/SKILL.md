@@ -1,6 +1,6 @@
 ---
 name: adoc-kanban
-description: "KANBAN documents: one board of about ten cards in columns, to see where work stands. Use when the person wants an overview of work in progress, moves a card, or asks to add or remove cards."
+description: "KANBAN documents: one board of about ten cards in columns, to see where work stands. Use when the user wants an overview of work in progress, moves a card, or asks to add or remove cards."
 ---
 
 # KANBAN documents
@@ -9,19 +9,19 @@ Document keys look like `KANBAN-<local id>`. Read the general workflow with `ado
 
 ## Purpose
 
-A KANBAN board is one screen that shows where about ten pieces of work stand, so that the person sees the state of the work at a glance. It keeps no history; git does.
+A KANBAN board is one screen that shows where about ten pieces of work stand, so that the user sees the state of the work at a glance. It keeps no history; git does.
 
 ## States and workflow
 
 - The columns are the states, in the order of `columns`, usually `TODO`, `RUNNING` and `DONE`. A column named `REMOVE` is not a state but a hidden drop target: a card dropped there is to be deleted, never left in it.
-- The person drags a card to another column in the web UI; that reaches you as a request, and you move the card in the file. Move or remove a card only when the person asks for it or agrees.
+- The user drags a card to another column in the web UI; that reaches you as a request, and you move the card in the file. Move or remove a card only when the user asks for it or agrees.
 
 ## Instructions
 
-- Keep the board to about ten cards: when it has more, ask the person whether to remove DONE cards.
+- Keep the board to about ten cards: when it has more, ask the user whether to remove DONE cards.
 - Keep each card one line; refer to the document that holds the details with `[[KEY]]`.
-- Ask the person in your conversation, not in the file: the view shows only the cards.
-- A board is independent: moving a card never changes the documents its text refers to, and changing those documents never moves a card. Update both only when the person asks for it.
+- Ask the user in your conversation, not in the file: the view shows only the cards.
+- A board is independent: moving a card never changes the documents its text refers to, and changing those documents never moves a card. Update both only when the user asks for it.
 - Give a new card an id one higher than any id the board has had; never reuse the id of a removed card (look at the board's git history when the highest card was removed).
 
 ## File
