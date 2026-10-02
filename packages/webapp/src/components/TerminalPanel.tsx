@@ -68,12 +68,25 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       open('control');
     };
     window.addEventListener('adoc:panel-resized', resized);
+    // The wheel scrolls the pane's scrollback through herdr. Catch it before xterm.js, which would otherwise
+    // turn it into arrow keys for full-screen apps and move the agent's input instead of the screen.
+    let pending = 0;
+    let flush: number | undefined;
     const wheel = (e: WheelEvent) => {
-      if (mode.current !== 'control') return;
       e.preventDefault();
-      sendTerminal({ type: 'terminal.scroll', lines: Math.sign(e.deltaY) * -3 });
+      e.stopPropagation();
+      takeControl();
+      pending += e.deltaMode === 1 ? -e.deltaY : -e.deltaY / 40;
+      if (flush === undefined) {
+        flush = window.setTimeout(() => {
+          const lines = Math.trunc(pending) || Math.sign(pending);
+          pending = 0;
+          flush = undefined;
+          if (lines) sendTerminal({ type: 'terminal.scroll', lines: lines * 3 });
+        }, 50);
+      }
     };
-    element.addEventListener('wheel', wheel, { passive: false });
+    element.addEventListener('wheel', wheel, { passive: false, capture: true });
     let timer: number | undefined;
     const observer = new ResizeObserver(() => {
       window.clearTimeout(timer);
@@ -94,7 +107,7 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       window.removeEventListener('focus', takeControl);
       window.clearInterval(refresh);
       window.removeEventListener('adoc:panel-resized', resized);
-      element.removeEventListener('wheel', wheel);
+      element.removeEventListener('wheel', wheel, { capture: true });
       sendTerminal({ type: 'terminal.close' });
       term.dispose();
     };

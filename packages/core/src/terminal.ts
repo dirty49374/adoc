@@ -77,8 +77,10 @@ export class TerminalRelay {
     else this.open(ws, 'observe', cols, rows);
   }
 
+  /** Scrolls the pane's view through its scrollback: positive lines scroll up (back in history), negative down. */
   scroll(ws: WebSocket, lines: number): void {
-    this.command(ws, { type: 'terminal.scroll', lines });
+    if (lines === 0) return;
+    this.command(ws, { type: 'terminal.scroll', direction: lines > 0 ? 'up' : 'down', lines: Math.min(Math.abs(Math.round(lines)), 200) });
   }
 
   /** Stops the stream of a socket; a controller releases the pane first so that it gets its own size back. */
