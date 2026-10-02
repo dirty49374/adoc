@@ -9,6 +9,7 @@
 ## Release
 
 - [ ] Publish adoc as a public npm package; the name is undecided (`adoc` is taken on npm), see [[NOTE-261002-installation]]
+- [ ] Ship the five plugins (NOTE, TODO, TASK, KANBAN, SKETCH) with the adoc package, and let `adoc init` declare them; today they live only in this repository's `plugins/` and `adoc init` writes `plugins: []`, while the `adoc` skill says they come with adoc
 
 ## Web UI
 
