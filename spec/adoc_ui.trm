@@ -212,6 +212,8 @@ label _Document_Header_ in document = {
 panel _Document_Body_ in document = {
   The region of the _Document_Detail_Pane_ that holds the HTML returned by the _adoc:Plugin_Renderer_ and turns its marked elements into anchors, references and actions.
 .relations
+  references _adoc:Plugin_Client_Module_
+  references _adoc_ui:Draft_Chip_List_
   references _adoc:Adoc_Server_
   references _adoc:Document_
   references _adoc:Document_Anchor_
@@ -232,6 +234,7 @@ panel _Document_Body_ in document = {
   - _Document_Body_ must open the _Comment_Popover_ when the user selects text inside it.
   - _Document_Body_ must show the _Reference_Tooltip_ while the pointer is over an element marked as a _adoc:Document_Reference_, and must lead to the referenced _adoc:Document_ when it is clicked.
   - _Document_Body_ must mark each _adoc:Document_Reference_ whose _adoc:Document_ does not exist.
+  - _Document_Body_ must send the `adoc-action` events of the elements of a _adoc:Plugin_Client_Module_ as _adoc:Document_Action_ requests with the shown _adoc:Document_Version_, and must add the draft of an `adoc-draft` event to the _Draft_Chip_List_, replacing the earlier draft of that element's _adoc:Document_.
 .states
   - _Document_Body_ is one of current, pending-update; in pending-update a newer version exists while a comment draft is open, and the user sees a notice that the document changed, with the newer version applied when the draft closes.
 .rules

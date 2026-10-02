@@ -57,7 +57,7 @@ status: OPEN
 
 ## Open questions
 
-- 그림이 바뀌었다는 chip을 일반 draft comment와 같은 것으로 볼까요? 지금 draft는 "대상 + 글"인데, 이 chip은 글이 없고 "변경 알림"입니다. 같은 메커니즘으로 하려면 draft에 "글 없이 변경만 알림" 형태를 허용해야 합니다(추천: 허용. 한 가지 chip 목록, 한 가지 보내기).
+- (없음)
 
 ## Decisions
 
@@ -68,3 +68,6 @@ status: OPEN
   - 그런데 지금 스캔 규칙에서는 `SKETCH-login.png`가 SKETCH 문서의 확장자와 맞지 않아 "layout-mismatch" 경고가 납니다. 그래서 plugin layout에 **companion file**(같은 이름의 짝 파일) 개념을 추가해야 합니다. 예: `layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] }`. companion file은 같은 문서의 일부라서 `doc.files`와 문서 version에 포함됩니다.
 - **plugin key:** `SKETCH`(agent가 골라도 된다고 하셔서 고름. "그림판"을 뜻하는 가장 흔한 영어 단어이고 wireframe 용도에도 맞음).
 - **보내는 방식:** 따로 "보내기" 없이, 평소처럼 composer로 message를 보낼 때 함께 갑니다. 그림이 바뀌면 "그림이 바뀌었다"는 chip이 `_Draft_Chip_List_`에 들어가고, 보내면 그 chip이 message에 실립니다(PNG와 JSON 경로 포함). 그림 안의 영역은 구분하지 않으므로 chip은 문서마다 1개입니다.
+- **변경 chip은 일반 draft로:** "글 없는 draft"라는 새 개념을 만들지 않습니다. plugin의 브라우저 코드가 "그림이 바뀌었다, PNG와 JSON 경로"라는 글을 담은 draft를 문서마다 하나 넣고, 다음 변경 때 그것을 바꿉니다. draft는 계속 "대상 + 글" 하나의 형태입니다. (사람의 위임으로 agent가 정함)
+- **이름:** 브라우저 코드는 plugin 폴더의 `client/`(`index.js`, `index.css`)이고 spec 이름은 `_Plugin_Client_Module_`입니다. 짝 파일은 companion file입니다.
+

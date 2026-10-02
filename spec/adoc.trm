@@ -189,11 +189,12 @@ concept _Plugin_Interface_ in plugin = {
   references _Document_Version_
 .contract
   - Every function of the _Plugin_Interface_ that concerns one _Document_ must receive the _Document_Key_, its plugin key, its local id, its path, its main file, the text of the main file and the texts of all its files.
-  - The layout must be either a file with an extension, such as `.md`, or a folder with an entry file name, such as `bug.yaml`.
+  - The layout must be either a file with an extension, such as `.md`, optionally with companion extensions such as `.png`, or a folder with an entry file name, such as `bug.yaml`.
+  - Companion files must not be handed to the functions of the _Plugin_Interface_, since they may be binary.
   - The summarize function must return one _Document_Summary_; a thrown error is the parse error.
   - The render function must return the body HTML; a thrown error is the parse error.
   - The optional renderChanges function must receive the current _Document_ and an earlier version of it and return body HTML that shows the changes; without it, the _Adoc_Web_UI_ must show a line diff of the main file.
-  - Each function in actions, keyed by action name, must return the new text of the main file, new texts of files of a folder document, and the text of the _User_Action_Message_, each optional; it must not write files itself.
+  - Each function in actions, keyed by action name, must return the new text of the main file, new contents of files of a folder document, new contents of companion files by extension, and the text of the _User_Action_Message_, each optional; a content is text, or `{ base64 }` for binary data; it must not write files itself.
   - `definePlugin` must reject a wrong definition with one line per wrong field, and the _Adoc_Server_ must validate every returned summary and action result the same way.
 .remarks
   - Chosen: the _Adoc_Server_ writes the files returned by an action, so that _Document_Version_ checking stays in one place.
@@ -236,6 +237,28 @@ concept _Plugin_Directory_ in plugin = {
   - A _Plugin_ may have its own `package.json` with dependencies installed in its folder; it imports `@adoc/plugin-kit` of the running adoc wherever its folder is.
 .remarks
   - Chosen: the XDG base directory convention (`$XDG_CONFIG_HOME`, default `~/.config`).
+}
+
+concept _Plugin_Client_Module_ in plugin = {
+  The folder `client/` of a _Plugin_ with an `index.js` (and optionally `index.css`) that the _Adoc_Web_UI_ loads, which defines the custom elements that the output of the _Plugin_Renderer_ uses for screens HTML alone cannot make, such as a drawing board.
+.relations
+  references _adoc:Document_
+  part of _Plugin_
+  loaded by _Adoc_Web_UI_
+  served by _Adoc_Server_
+  used by _Plugin_Renderer_
+  sends _Document_Action_
+  references _User_Comment_
+  references _Document_Version_
+.contract
+  - The _Adoc_Server_ must serve the folder `client/` of every loaded _Plugin_ at `/assets/plugins/<plugin key>/`, and the _Adoc_Web_UI_ must load its `index.js` and `index.css` once.
+  - An element of a _Plugin_Client_Module_ must change files only through a _Document_Action_: it dispatches the DOM event `adoc-action`, which the _Adoc_Web_UI_ sends with the shown _Document_Version_ and answers with the outcome.
+  - An element may dispatch the DOM event `adoc-draft` to put one draft _User_Comment_ on its _Document_; a later one replaces it, so that the element has at most one draft per _Document_.
+  - An element may read the main file of its _Document_ from `/api/documents/<key>/file` and must learn about changes from the window event `adoc-documents-changed`.
+.remarks
+  - Chosen: Web Components, so that the theme tokens, comments and anchors of the page work inside them.
+  - Chosen: the plugin author bundles `client/index.js` with its libraries, so that no build tool runs in the _Adoc_Server_ and it works offline.
+  - Chosen: the render output of such an element should stay the same across versions, so that the page does not replace the element and lose its state.
 }
 
 concept _Plugin_Key_ in plugin = {
@@ -411,6 +434,7 @@ concept _Document_ in document = {
 .contract
   - The file or folder name of a _Document_ must be its _Document_Key_, followed by the file extension when it is a file, such as `TASK-1231.md` or `BUG-42/`.
   - Every file inside the folder of a folder _Document_ must belong to that _Document_.
+  - A file _Document_ may have companion files: files next to it with the same name and another extension that its _Plugin_ declares, such as `SKETCH-login.png` beside `SKETCH-login.excalidraw`; they belong to the _Document_, count for its _Document_Version_ and its last update, and move with it.
   - The git copy of a _Document_ must be its source of truth.
   - A _Document_ must change only through the _Assigned_Agent_, a _Plugin_Action_Handler_ or a direct file edit.
   - An _Adoc_Web_UI_ must not write any file of a _Document_.
