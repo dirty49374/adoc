@@ -8,17 +8,25 @@ A TODO document is a short list of one-line things to do.
 # GUI work
 
 - [ ] Refactor PaymentRepo
+
+## Login screen
+
 - [x] Dark mode for the login screen
+- [ ] Remember the last user name
+
+## Orders
+
 - [ ] Paginate the order list, see [[TASK-260930-order-paging]]
 ```
 
-- One item per line: `- [ ] text` (open) or `- [x] text` (done). Other lines are ignored by the view.
+- One item per line: `- [ ] text` (open) or `- [x] text` (done).
+- Optional groups: a `## Heading` line starts a group; the items below it belong to it until the next `## Heading`. Items before the first heading show without a group. Other lines are ignored by the view.
 - Write `[[KEY]]` to refer to another document.
 - Recommended id: a topic in English words, such as `TODO-gui` or `TODO-backend`.
 
 ## Anchors
 
-The anchor of an item is its 1-based line number: `TODO-gui#5` is line 5.
+The anchor of an item, and of a group heading, is its 1-based line number: `TODO-gui#5` is line 5.
 A message's `quote` holds the item text; if the line moved, find the item by its text.
 
 ## Actions
@@ -31,3 +39,4 @@ A message's `quote` holds the item text; if the line moved, find the item by its
 
 - "more detail" on an item: rewrite that line; keep it one line.
 - "split this": replace the line with several items.
+- "group these": add `## Heading` lines and move the items under them.

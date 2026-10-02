@@ -9,7 +9,7 @@
 - [x] Terminal mouse clicks: forward as `terminal.mouse` once herdr is updated (0.9.1 has no mouse command; docs for 0.9.3 list it), see [[TASK-261002-herdr-integration]]
 - [ ] Terminal scroll speed: wheel scrolling feels slow; tune lines per wheel step and frame latency, see [[TASK-261002-herdr-integration]]
 - [ ] Terminal: Shift+Enter does not work (xterm.js sends a plain Enter; the agent expects its newline sequence)
-- [ ] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list)
+- [x] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list); done: `## Heading` starts a group with a done count, anchor = heading line
 - [ ] Web UI: switch the terminal into the main area (the side panel stays fixed), and back
 - [x] Web UI: tell the terminal from the main area: a subtly different background, or a very thin vertical rule between them; done: the _Panel_Resizer_ shows a 1px rule in --adoc-border-subtle
 - [x] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover; done: fixed two-line title block (line-clamp), the whole title in a fixed floating card over a cut title
