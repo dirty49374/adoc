@@ -20,3 +20,4 @@
 - [ ] Plugin tab order NOTE | TODO | SKETCH | TASK | KANBAN, set in this repository's `.adoc/adoc.yaml` (tabs follow the order of `plugins`)
 - [ ] List pane title: write the skill link as `KANBAN | SKILL.md` (a separator between the plugin key and the link)
 - [ ] Plugin tab click: unfold the list pane and open its top document; fold the list pane again when the pointer leaves both the tab bar and the list pane
+- [ ] Skill view: comments on selected text (the comment popover of a document body) do not work on a SKILL.md yet; only the composer can target `skill <name>`
