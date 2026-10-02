@@ -213,6 +213,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
       )}
       <div
         className="rendered"
+        translate="yes"
         ref={content}
         data-testid="document-body"
         onClick={onClick}

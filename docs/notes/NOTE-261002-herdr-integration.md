@@ -17,6 +17,10 @@ The person wants herdr to be the default way adoc talks to the agent. With the h
 
 ## Ideas
 
+- **Korean IME:** xterm.js takes input through a hidden textarea and handles composition events (`compositionstart` / `compositionend`); `onData` delivers the composed syllables, which adoc sends as text. Known rough edges are the position of the candidate window and duplicated characters in some browser and xterm.js versions, so Korean input needs a test early.
+- **Finding the agent's own pane (from herdr-connect):** a tool shell may run in another process, such as a Codex app-server, whose `HERDR_PANE_ID` belongs to the daemon. hc therefore identifies the agent by its session id (`CLAUDE_CODE_SESSION_ID`, `CODEX_SESSION_ID`), which herdr records per pane as `agent_session.value`. It looks up the pane with that session id across the herdr session sockets, ignores `HERDR_PANE_ID` when the process descends from a shared daemon (`codex app-server`), and otherwise falls back to an explicit binding. `adoc agent claim` can follow the same order: `--pane` given, then session id → pane, then `HERDR_PANE_ID` when no shared daemon is in the process tree.
+- **Right panel (the person's idea, worked out):** the terminal fills the right panel; draft comments move into the content area as margin cards next to their anchors, like comments in a word processor; under the terminal a one-line composer bar shows the drafts as chips (click a chip to jump to its card) with a text field and Send; typing directly in the terminal also works. Pending messages shrink to a badge on the bar, since a herdr push delivers them at once.
+
 - **Mirror:** the adoc server spawns `herdr terminal session observe <agent pane> --cols W --rows H` at the pane's own size and forwards the decoded frames over the existing WebSocket; the web UI renders them with xterm.js in the right panel. No node-pty, no herdr TUI in the browser.
 - **Input:** typing in the mirrored terminal goes to the pane through `pane.send_input` (or a `session control` child without `--takeover`, after testing). Drafts and the composer still exist and are sent with `agent.prompt` in the adoc message format, so structured comments keep working next to free typing.
 - **Claiming the role:** `adoc agent claim` run by the agent inside its pane reads `HERDR_SOCKET_PATH` and its own pane from the environment, and makes that pane the assigned agent; the previous holder loses the role. `adoc server run --agent-pane <pane>` does the same at start.
@@ -26,12 +30,14 @@ The person wants herdr to be the default way adoc talks to the agent. With the h
 
 ## Open questions
 
-- Where does the claim live: in server memory only (lost on restart, re-claimed by the agent), or written into `.adoc/adoc.yaml`?
-- Typing into the terminal: allow full keyboard control from the browser, or keep the browser read-only plus the composer?
-- Should the right panel show only the terminal, or the terminal with the draft list and pending messages around it?
-- Terminal size: render at the pane's size and scale in the browser, or resize the pane to the browser (needs `control`, which affects the person's real terminal)?
+- Is the right-panel layout above what you have in mind?
+- When the browser resizes the pane to its window, the person's real herdr terminal changes size too; is that acceptable while the web UI is in control, with `terminal.release` returning control when the tab closes?
 
 ## Decisions
 
 - herdr integration becomes the default transport and the right panel's content when a herdr pane is assigned.
 - Use herdr's own observe stream rather than a PTY attach or the herdr TUI.
+- The claim is written to a separate file, not to `.adoc/adoc.yaml`.
+- The browser gets full keyboard control of the terminal (`herdr terminal session control`).
+- The terminal follows the size of the browser window.
+- Identify the agent's pane the way herdr-connect does (session id first), so that Codex tool processes work.
