@@ -96,6 +96,7 @@ panel _Warning_Panel_ in shell = {
 list _Plugin_Tab_Bar_ in shell = {
   The row of tabs under the top bar of _App_Shell_, one link per _adoc:Plugin_Tab_.
 .relations
+  references _adoc_ui:Document_List_Pane_
   references _adoc:Adoc_Config_
   references _adoc:Plugin_
   shows _adoc:Plugin_Tab_
@@ -104,6 +105,7 @@ list _Plugin_Tab_Bar_ in shell = {
 .contract
   - _Plugin_Tab_Bar_ must show one row per _adoc:Plugin_ in the order of _adoc:Adoc_Config_, labelled with its _adoc:Plugin_Key_.
   - _Plugin_Tab_Bar_ must lead to `/p/:plugin` when a tab is chosen, and must mark the tab of the current route.
+  - Choosing a tab must keep the _Document_List_Pane_ unfolded until the pointer leaves both the _Plugin_Tab_Bar_ and the _Document_List_Pane_.
   - _Plugin_Tab_Bar_ must mark a tab whose _adoc:Plugin_ failed to load.
 .states
   - _Plugin_Tab_Bar_ is one of empty, showing; in empty the user sees that no plugin is declared in the _adoc:Adoc_Config_.
@@ -160,7 +162,8 @@ list _Document_List_Pane_ in document = {
   - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
   - _Document_List_Pane_ must link, in small text after the plugin key and a separator (`KANBAN | SKILL.md`) in its title row, to the _Skill_View_ of the _adoc:Plugin_Skill_ of its plugin.
   - _Document_List_Pane_ must leave out archived documents, and must show only the archived ones while the person turns on its archive button in the title row.
-  - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
+  - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it or while a chosen plugin tab holds it open, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
+  - At `/p/:plugin` without a document, _Document_List_Pane_ must open its top _adoc:Document_ in the chosen order.
 .states
   - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.
 }

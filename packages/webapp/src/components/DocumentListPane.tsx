@@ -1,6 +1,6 @@
 import { Archive } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { api, type SummaryEntry } from '../api.js';
 import { PinButton } from '../fold.js';
 import { useLive } from '../live.js';
@@ -12,13 +12,16 @@ import { DocumentSortPicker, isDocumentSort, sortEntries, type DocumentSort } fr
 
 const SORT_KEY = 'adoc.list-sort';
 
-type ListState = { phase: 'loading' } | { phase: 'plugin-error'; error: string } | { phase: 'showing'; documents: SummaryEntry[] };
+/** The list of one plugin; `pluginKey` says whose, so that a list fetched for another tab is never used. */
+type ListState = { phase: 'loading' } | { phase: 'plugin-error'; error: string } | { phase: 'showing'; pluginKey: string; documents: SummaryEntry[] };
 
 /**
  * _Document_List_Pane_: one row per document of the plugin, in the order this browser chose (last update first by default),
- * without archived documents unless the archive button shows only them; `onPin` offers pinning while a document is shown.
+ * without archived documents unless the archive button shows only them; `onPin` offers pinning while a document is shown,
+ * `held` keeps it unfolded, and `openTop` opens the top document when none is chosen.
  */
-export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned }: { pluginKey: string; selected?: string; pinned: boolean; onPin?: (pinned: boolean) => void; unpinned: boolean }) {
+export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned, held, openTop }: { pluginKey: string; selected?: string; pinned: boolean; onPin?: (pinned: boolean) => void; unpinned: boolean; held: boolean; openTop: boolean }) {
+  const navigate = useNavigate();
   const skill = useWorkspace()?.plugins.find((p) => p.key === pluginKey)?.skill;
   const { revision } = useLive();
   const [state, setState] = useState<ListState>({ phase: 'loading' });
@@ -36,7 +39,7 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
   useEffect(() => {
     let cancelled = false;
     api.documents(pluginKey).then(
-      (body) => !cancelled && setState(body.error ? { phase: 'plugin-error', error: body.error } : { phase: 'showing', documents: body.documents }),
+      (body) => !cancelled && setState(body.error ? { phase: 'plugin-error', error: body.error } : { phase: 'showing', pluginKey, documents: body.documents }),
       (error: Error) => !cancelled && setState({ phase: 'plugin-error', error: error.message }),
     );
     return () => {
@@ -44,10 +47,16 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
     };
   }, [pluginKey, revision]);
 
-  const shown = state.phase === 'showing' ? state.documents.filter((d) => d.archived === archive) : [];
+  const shown = state.phase === 'showing' && state.pluginKey === pluginKey ? state.documents.filter((d) => d.archived === archive) : [];
+  const sorted = sortEntries(shown, sort);
+  // At /p/:plugin without a document, open the top document in the chosen order.
+  const top = openTop && !archive ? sorted[0]?.key : undefined;
+  useEffect(() => {
+    if (top) navigate(`/p/${pluginKey}/${top}`, { replace: true });
+  }, [top, pluginKey, navigate]);
 
   return (
-    <aside className={`document-list-pane foldable${unpinned ? ' unpinned' : ''}`} data-testid="document-list-pane">
+    <aside className={`document-list-pane foldable${unpinned ? ' unpinned' : ''}${held ? ' held' : ''}`} data-testid="document-list-pane">
       <div className="pane-rail fold-closed">{pluginKey}</div>
       <div className="pane-title fold-open">
         <span className="pane-title-name">
@@ -71,7 +80,7 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
         {state.phase === 'loading' && <p className="muted">Loading…</p>}
         {state.phase === 'plugin-error' && <p className="error">Plugin {pluginKey} failed to load: {state.error}</p>}
         {state.phase === 'showing' && shown.length === 0 && <p className="muted">{archive ? `No archived ${pluginKey} documents.` : `No ${pluginKey} documents yet.`}</p>}
-        {state.phase === 'showing' && sortEntries(shown, sort).map((entry) => <DocumentRow key={entry.key} entry={entry} selected={entry.key === selected} now={now} />)}
+        {state.phase === 'showing' && sorted.map((entry) => <DocumentRow key={entry.key} entry={entry} selected={entry.key === selected} now={now} />)}
       </div>
     </aside>
   );

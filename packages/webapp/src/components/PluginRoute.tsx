@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { usePinned } from '../fold.js';
 import { useWorkspace } from '../workspace.js';
@@ -16,10 +17,25 @@ export function PluginRoute({ view }: { view?: 'skill' }) {
   const [pinned, pin] = usePinned('adoc.list-pinned');
   const shown = Boolean(documentKey) || view === 'skill';
   const unpinned = shown && !pinned;
+  // Held open after a plugin tab was chosen, until the pointer is over neither the tab bar nor the list pane.
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    const hold = () => setHeld(true);
+    window.addEventListener('adoc:hold-list', hold);
+    return () => window.removeEventListener('adoc:hold-list', hold);
+  }, []);
+  useEffect(() => {
+    if (!held) return;
+    const move = (e: PointerEvent) => {
+      if (!(e.target as Element | null)?.closest?.('.plugin-tab-bar, .document-list-pane')) setHeld(false);
+    };
+    window.addEventListener('pointermove', move);
+    return () => window.removeEventListener('pointermove', move);
+  }, [held]);
   return (
     <div className={`plugin-route${unpinned ? ' list-unpinned' : ''}`}>
       <div className="document-list-slot">
-        <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={shown ? pin : undefined} unpinned={unpinned} />
+        <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={shown ? pin : undefined} unpinned={unpinned} held={held} openTop={!shown} />
       </div>
       {view === 'skill' ? (
         skill ? <SkillView name={skill} /> : <div className="pane-placeholder">{pluginKey} has no agent skill.</div>

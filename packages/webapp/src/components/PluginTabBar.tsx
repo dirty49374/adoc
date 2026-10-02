@@ -9,7 +9,11 @@ export function PluginTabBar() {
     <nav className="plugin-tab-bar" data-testid="plugin-tab-bar">
       {workspace.plugins.length === 0 && <span className="muted">No plugin is declared in .adoc/adoc.yaml.</span>}
       {workspace.plugins.map((p) => (
-        <NavLink key={p.key} to={`/p/${p.key}`} className={({ isActive }: { isActive: boolean }) => `plugin-tab${isActive ? ' active' : ''}${p.error ? ' failed' : ''}`} title={p.error ?? p.description}>
+        <NavLink
+          key={p.key}
+          to={`/p/${p.key}`}
+          // A chosen tab holds the list pane open until the pointer leaves the tab bar and the list pane.
+          onClick={() => window.dispatchEvent(new CustomEvent('adoc:hold-list'))} className={({ isActive }: { isActive: boolean }) => `plugin-tab${isActive ? ' active' : ''}${p.error ? ' failed' : ''}`} title={p.error ?? p.description}>
           {p.key}
           <span className="count">{p.error ? '!' : p.documents}</span>
         </NavLink>
