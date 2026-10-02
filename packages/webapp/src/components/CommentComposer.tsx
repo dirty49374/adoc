@@ -1,13 +1,13 @@
-import { ChevronDown, ChevronUp, MessageSquare, SendHorizontal } from 'lucide-react';
+import { MessageSquare, SendHorizontal } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { api, formatTarget, type MessageTarget, type UserComment } from '../api.js';
 import { draftStore, type DraftComment } from '../drafts.js';
+import { PinButton, usePinned } from '../fold.js';
 import { readStored, writeStored } from '../storage.js';
 import { DraftChipList } from './DraftChipList.js';
 
 const TEXT_KEY = 'adoc.composer';
-const FOLDED_KEY = 'adoc.composer-folded';
 
 /** The targets the route allows, narrowest first: document, plugin, workspace. */
 function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[] {
@@ -21,7 +21,9 @@ function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[]
 /**
  * _Comment_Composer_: the one composer. Sends every draft plus its own text on the chosen target
  * as one comment message; clears only after the server accepted. The input starts with three lines and grows with its text.
- * Folded, it is one line with the number of drafts; text and drafts stay.
+ * It floats over the bottom of the main area; unpinned, it folds into one line (see fold.tsx), keeping text and drafts.
+ * Its height, except while unfolded by hover or focus, is published as `--adoc-composer-space` so that the main area
+ * leaves room for it.
  */
 export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const { pluginKey, documentKey } = useParams();
@@ -30,20 +32,33 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const [text, setText] = useState(() => readStored(TEXT_KEY, ''));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
-  const [folded, setFolded] = useState(() => readStored(FOLDED_KEY, false));
+  const [pinned, pin] = usePinned('adoc.composer-pinned');
   useEffect(() => setChosen(0), [pluginKey, documentKey]);
   const area = useRef<HTMLTextAreaElement>(null);
-  const fold = (next: boolean) => {
-    setFolded(next);
-    writeStored(FOLDED_KEY, next || undefined);
-    if (!next) requestAnimationFrame(() => area.current?.focus());
-  };
-  useLayoutEffect(() => {
+  const box = useRef<HTMLDivElement>(null);
+  /** Grows the input with its text; a folded (hidden) input is measured again when it unfolds. */
+  const grow = () => {
     const element = area.current;
-    if (!element) return;
+    if (!element || element.offsetParent === null) return;
     element.style.height = 'auto';
     element.style.height = `${element.scrollHeight}px`;
-  }, [text, folded]);
+  };
+  useLayoutEffect(grow, [text, pinned]);
+  /** Publishes the resting height; skipped while hover or focus unfolds an unpinned composer for now. */
+  const measure = () => {
+    const element = box.current;
+    const shell = element?.parentElement;
+    if (!element || !shell) return;
+    const unfoldedForNow = element.classList.contains('unpinned') && element.matches(':hover, :has(textarea:focus)');
+    if (!unfoldedForNow) shell.style.setProperty('--adoc-composer-space', `${element.offsetHeight}px`);
+  };
+  useEffect(() => {
+    if (!box.current) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(box.current);
+    return () => observer.disconnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(measure, [pinned]); // eslint-disable-line react-hooks/exhaustive-deps
   const target = targets[Math.min(chosen, targets.length - 1)]!;
 
   const update = (value: string) => {
@@ -68,62 +83,53 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
     }
   };
 
-  if (folded) {
-    return (
-      <div className="composer-area">
-        <button className="composer-folded" onClick={() => fold(false)} title="Open the composer" data-testid="composer-unfold">
-          <MessageSquare />
-          <span>Message to the agent</span>
-          {drafts.length > 0 && <span className="adoc-chip adoc-tone-secondary">{drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}</span>}
-          {text.trim() && <span className="adoc-chip">text typed</span>}
-          <span className="spacer" />
-          <ChevronUp />
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="composer-area">
-      <DraftChipList drafts={drafts} />
-      <div className="comment-composer" data-testid="comment-composer">
-        <div className="composer-target">
-          {targets.map((t, i) => (
-            <button key={formatTarget(t)} className={`adoc-chip mono${t === target ? ' active' : ''}`} onClick={() => setChosen(i)} title="Target of the message you type here">
-              {formatTarget(t)}
+    <div ref={box} className={`composer-area foldable${pinned ? '' : ' unpinned'}`} onPointerEnter={grow} onFocus={grow} onPointerLeave={() => requestAnimationFrame(measure)} onBlur={() => requestAnimationFrame(measure)}>
+      <button className="composer-folded fold-closed" onClick={() => area.current?.focus()} data-testid="composer-folded">
+        <MessageSquare />
+        <span>Message to the agent</span>
+        {drafts.length > 0 && <span className="adoc-chip adoc-tone-secondary">{drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}</span>}
+        {text.trim() && <span className="adoc-chip">text typed</span>}
+      </button>
+      <div className="fold-open">
+        <DraftChipList drafts={drafts} />
+        <div className="comment-composer" data-testid="comment-composer">
+          <div className="composer-target">
+            {targets.map((t, i) => (
+              <button key={formatTarget(t)} className={`adoc-chip mono${t === target ? ' active' : ''}`} onClick={() => setChosen(i)} title="Target of the message you type here">
+                {formatTarget(t)}
+              </button>
+            ))}
+            <span className="spacer" />
+            <PinButton pinned={pinned} onPin={pin} what="composer" testId="composer-pin" />
+          </div>
+          <div className="composer-row">
+            <textarea
+              ref={area}
+              value={text}
+              rows={3}
+              placeholder={drafts.length ? `Optional message about ${formatTarget(target)}` : `Message about ${formatTarget(target)}`}
+              onChange={(e) => update(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="primary send-button"
+              disabled={!canSend}
+              onClick={() => void send()}
+              title={`${drafts.length ? `Send with ${drafts.length} ${drafts.length === 1 ? 'draft' : 'drafts'}` : 'Send'} (Ctrl+Enter)`}
+              data-testid="composer-send"
+            >
+              <SendHorizontal />
             </button>
-          ))}
-          <span className="spacer" />
-          <button className="quiet" onClick={() => fold(true)} title="Fold the composer" data-testid="composer-fold">
-            <ChevronDown />
-          </button>
+          </div>
+          {error && <div className="error small">{error}</div>}
         </div>
-        <div className="composer-row">
-          <textarea
-            ref={area}
-            value={text}
-            rows={3}
-            placeholder={drafts.length ? `Optional message about ${formatTarget(target)}` : `Message about ${formatTarget(target)}`}
-            onChange={(e) => update(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="primary send-button"
-            disabled={!canSend}
-            onClick={() => void send()}
-            title={`${drafts.length ? `Send with ${drafts.length} ${drafts.length === 1 ? 'draft' : 'drafts'}` : 'Send'} (Ctrl+Enter)`}
-            data-testid="composer-send"
-          >
-            <SendHorizontal />
-          </button>
-        </div>
-        {error && <div className="error small">{error}</div>}
       </div>
     </div>
   );

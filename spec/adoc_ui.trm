@@ -9,7 +9,7 @@
 }
 
 panel _App_Shell_ in shell = {
-  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area with the _Comment_Composer_ below it, and the _Message_Dock_.
+  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area with the _Comment_Composer_ floating over its bottom, and the _Message_Dock_.
 .relations
   references _adoc_ui:Terminal_Panel_
   references _adoc:Adoc_Web_UI_
@@ -31,7 +31,7 @@ panel _App_Shell_ in shell = {
   - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
   - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
-  - _App_Shell_ must show the _Comment_Composer_ below the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
+  - _App_Shell_ must show the _Comment_Composer_ floating over the bottom of the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
 .states
   - _App_Shell_ is one of connecting, connected, disconnected; in disconnected the user sees the last loaded content and the _Connection_Status_Label_ says the server is unreachable.
 .rules
@@ -123,6 +123,7 @@ panel _Workspace_Home_Panel_ in shell = {
 list _Document_List_Pane_ in document = {
   The left pane of a plugin route that shows one _Document_Row_ per entry of the _adoc:Document_Summary_List_ of the current _adoc:Plugin_.
 .relations
+  references _adoc_ui:Comment_Composer_
   references _adoc_ui:Document_Detail_Pane_
   references _adoc:Document_
   references _adoc:Document_Key_
@@ -133,7 +134,7 @@ list _Document_List_Pane_ in document = {
 .contract
   - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, ordered by _adoc:Document_Key_.
   - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
-  - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it, and stay unfolded when the person pins it.
+  - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
 .states
   - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.
 }
@@ -260,7 +261,7 @@ input _Draft_Comment_Input_ in comment = {
 }
 
 input _Comment_Composer_ in comment = {
-  The single text input with a send button and the _Draft_Chip_List_ above it, below the main area of _App_Shell_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
+  The single text input with a send button and the _Draft_Chip_List_ above it, floating over the bottom of the main area of _App_Shell_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
 .relations
   references _adoc:Document_
   references _adoc:Plugin_
@@ -279,7 +280,8 @@ input _Comment_Composer_ in comment = {
   - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose composer text is its own text on the chosen target, and whose _adoc:User_Comment_ entries are the drafts in their order.
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
-  - _Comment_Composer_ must fold into one line on request and unfold on a click on that line, keeping its text and the drafts; the line shows the number of drafts and whether text is typed, and hides the _Draft_Chip_List_; and the choice is kept across page reloads in the same browser.
+  - _Comment_Composer_ must stay open when the person pins it; unpinned, it must fold into one line that shows the number of drafts and whether text is typed, and unfold while the pointer is on it or its input has focus, keeping its text and the drafts; the pin is kept across page reloads in the same browser.
+  - The main area must leave room below its content for the _Comment_Composer_, so that the end of a document can be scrolled into view above it.
 .rules
   - Through _Comment_Composer_ the user must never send an empty message.
   - Through _Comment_Composer_ the user must never lose typed text or drafts because the page re-rendered.

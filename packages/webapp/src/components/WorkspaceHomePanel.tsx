@@ -6,7 +6,7 @@ export function WorkspaceHomePanel() {
   const workspace = useWorkspace();
   if (!workspace) return <div className="pane-placeholder">Loading…</div>;
   return (
-    <div className="workspace-home" data-testid="workspace-home">
+    <div className="workspace-home main-scroll" data-testid="workspace-home">
       <h1>{workspace.name}</h1>
       <p className="root">{workspace.root}</p>
       <div className="plugin-cards">

@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { useParams } from 'react-router';
-import { readStored, writeStored } from '../storage.js';
+import { usePinned } from '../fold.js';
 import { DocumentDetailPane } from './DocumentDetailPane.js';
 import { DocumentListPane } from './DocumentListPane.js';
 
@@ -10,15 +9,12 @@ import { DocumentListPane } from './DocumentListPane.js';
  */
 export function PluginRoute() {
   const { pluginKey, documentKey } = useParams();
-  const [pinned, setPinned] = useState(() => readStored('adoc.list-pinned', false));
-  const pin = (next: boolean) => {
-    setPinned(next);
-    writeStored('adoc.list-pinned', next || undefined);
-  };
+  const [pinned, pin] = usePinned('adoc.list-pinned');
+  const unpinned = Boolean(documentKey) && !pinned;
   return (
-    <div className={`plugin-route${documentKey && !pinned ? ' folded' : ''}`}>
+    <div className={`plugin-route${unpinned ? ' list-unpinned' : ''}`}>
       <div className="document-list-slot">
-        <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={documentKey ? pin : undefined} />
+        <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={documentKey ? pin : undefined} unpinned={unpinned} />
       </div>
       {documentKey ? <DocumentDetailPane key={documentKey} documentKey={documentKey} /> : <div className="pane-placeholder">Choose a document.</div>}
     </div>

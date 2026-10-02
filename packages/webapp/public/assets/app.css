@@ -151,7 +151,13 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .plugin-tab .count { font-weight: 400; color: var(--adoc-text-muted); font-size: var(--adoc-size-tiny); }
 
 .shell-body { flex: 1; display: flex; min-height: 0; }
-.shell-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.shell-column { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+
+/* pin and fold (fold.tsx): an unpinned foldable shows its fold-closed part, and its fold-open part while the pointer
+   is on it or a text input in it has focus */
+.foldable:not(.unpinned) .fold-closed,
+.foldable.unpinned:is(:hover, :has(textarea:focus)) .fold-closed,
+.foldable.unpinned:not(:hover):not(:has(textarea:focus)) .fold-open { display: none; }
 .shell-main { flex: 1; min-height: 0; overflow: auto; background: var(--adoc-surface); }
 .pane-placeholder { padding: 32px; color: var(--adoc-text-muted); }
 
@@ -170,13 +176,11 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 /* ---- plugin route: list (folds into a rail while a document is shown) + detail ---- */
 .plugin-route { display: flex; height: 100%; position: relative; }
 .document-list-slot { width: 280px; flex-shrink: 0; position: relative; }
-.plugin-route.folded .document-list-slot { width: 0; } /* the rail overlays the detail pane's left padding, so the reading column lines up with the composer */
+.plugin-route.list-unpinned .document-list-slot { width: 0; } /* the rail overlays the detail pane's left padding, so the reading column lines up with the composer */
 .document-list-pane { position: absolute; inset: 0; background: var(--adoc-surface-panel); display: flex; flex-direction: column; z-index: 6; }
-.plugin-route.folded .document-list-pane { width: 32px; overflow: hidden; }
-.plugin-route.folded .document-list-pane:hover { width: 280px; box-shadow: var(--adoc-shadow); }
-.plugin-route.folded .document-list-pane:not(:hover) > :not(.pane-title) { visibility: hidden; }
-.plugin-route.folded .document-list-pane:not(:hover) .pane-title { writing-mode: vertical-rl; padding: 10px 7px; }
-.plugin-route.folded .document-list-pane:not(:hover) .pane-title button { display: none; }
+.document-list-pane.unpinned { width: 32px; }
+.document-list-pane.unpinned:is(:hover, :has(textarea:focus)) { width: 280px; box-shadow: var(--adoc-shadow); }
+.pane-rail { writing-mode: vertical-rl; padding: 10px 7px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; }
 .pane-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px 16px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; white-space: nowrap; }
 .document-rows { flex: 1; overflow: auto; padding: 0 6px 12px; min-width: 268px; }
 .document-rows > p { padding: 0 10px; font-size: var(--adoc-size-small); }
@@ -307,12 +311,14 @@ body.resizing { user-select: none; cursor: col-resize; }
 .draft-chip .chip-remove { color: var(--adoc-text-muted); padding: 0 4px 0 2px; }
 .draft-chip .chip-remove:hover { color: var(--adoc-error); background: transparent; }
 
-/* _Comment_Composer_: below the main area, as wide as the reading column; three lines that grow, on the element surface with
-   the agent's accent bar; folded, one line */
-.composer-area { width: 100%; max-width: var(--adoc-reading-width); margin-inline: auto; padding: 0 32px 10px; }
-.composer-area .spacer, .composer-target .spacer { flex: 1; }
-.composer-folded { width: 100%; margin-top: 6px; padding: 4px 8px 4px calc(10px + var(--adoc-bar)); color: var(--adoc-text-muted); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); }
-.comment-composer { margin-top: 6px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
+/* _Comment_Composer_: floating over the bottom of the main area, as wide as the reading column; three lines that grow, on
+   the element surface with the agent's accent bar; unpinned, one line until hovered or focused */
+.composer-area { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; width: 100%; max-width: var(--adoc-reading-width); margin-inline: auto; padding: 0 32px 12px; pointer-events: none; }
+.composer-area > * { pointer-events: auto; }
+.composer-target .spacer { flex: 1; }
+.composer-folded { width: 100%; padding: 5px 8px 5px calc(10px + var(--adoc-bar)); color: var(--adoc-text-muted); box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); }
+.main-scroll { padding-bottom: calc(var(--adoc-composer-space, 0px) + 16px); }
+.comment-composer { margin-top: 6px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
 .composer-row { display: flex; align-items: flex-end; gap: 6px; }
 .comment-composer textarea { flex: 1; resize: none; border: none; background: transparent; padding: 2px 0; max-height: 30vh; line-height: 1.5; }
 .comment-composer textarea:focus { outline: none; }
