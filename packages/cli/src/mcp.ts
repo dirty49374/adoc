@@ -7,18 +7,23 @@ import { parse } from 'shell-quote';
 import { z } from 'zod';
 import { AdocError, errorMessage, type ServerExtension } from '@adoc/core';
 import type { CommandContext } from './contracts.js';
+import { commands } from './commands.js';
 import { runCommand } from './program.js';
 import { VERSION } from './version.js';
 
 const toolInput = z.object({ cmd: z.string().min(1), stdin: z.string().optional() });
 
-const tool: Tool = {
-  name: 'adoc',
-  description:
-    'Run one adoc CLI command without the leading "adoc", for example {"cmd": "message wait --timeout 600"} or {"cmd": "skill view adoc-todo"}. ' +
-    'Commands: message wait|list, plugin list, skill list|view, check. Use stdin for text the command reads from standard input.',
-  inputSchema: z.toJSONSchema(toolInput) as Tool['inputSchema'],
-};
+/** The tool, described from the command definitions so that its list of commands always matches the CLI. */
+function tool(): Tool {
+  const names = commands.filter((command) => !command.localOnly).map((command) => command.name);
+  return {
+    name: 'adoc',
+    description:
+      'Run one adoc CLI command without the leading "adoc", for example {"cmd": "message wait --timeout 600"} or {"cmd": "skill view adoc-todo"}. ' +
+      `Commands: ${names.join(', ')}. The other commands and --home work only on the command line. Use stdin for text the command reads from standard input.`,
+    inputSchema: z.toJSONSchema(toolInput) as Tool['inputSchema'],
+  };
+}
 
 /** Splits `cmd` like a shell would, refusing operators, globs and comments. */
 export function commandArguments(cmd: string): string[] {
@@ -51,7 +56,7 @@ export async function runCaptured(cmd: string, stdin: string | undefined, base: 
 
 function createConnection(base: Pick<CommandContext, 'cwd' | 'env'>): Server {
   const server = new Server({ name: 'adoc', version: VERSION }, { capabilities: { tools: {} } });
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [tool] }));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [tool()] }));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (request.params.name !== 'adoc') return { content: [{ type: 'text', text: `unknown tool ${request.params.name}` }], isError: true };
     const input = toolInput.safeParse(request.params.arguments ?? {});
