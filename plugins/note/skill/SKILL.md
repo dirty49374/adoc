@@ -7,14 +7,24 @@ description: "NOTE documents: free-form shared notes for ideas, open questions a
 
 Document keys look like `NOTE-<id>`. Read the general workflow with `adoc skill view adoc`.
 
-A NOTE is a free-form shared space for the person and the agent: an idea taken from a conversation and developed with comments, a comparison, meeting notes, or just banter. It has no fixed destination.
+## Purpose
 
-## What notes are for
+A NOTE is the shared space where the person and the agent think together: an idea from a conversation developed with comments, a comparison of options, an explanation, meeting notes, or casual talk. The person refines it with comments instead of re-reading the chat. Not every note has to lead anywhere.
 
-- Summarizing a design conversation so the person can refine it with comments instead of re-reading the chat.
-- Comparing options, collecting open questions, recording decisions as they are made.
-- Anything else worth keeping, including casual talk; not every note has to lead anywhere.
-- When an idea is ready, agree with the person in conversation on what it becomes: a TASK, a proposal or spec change, or an archived record. There is no conversion button; propose it yourself.
+## States and workflow
+
+- `OPEN` while the idea is being developed: items move from **Open questions** to **Decisions** as the person answers.
+- When the idea is ready, agree with the person in the conversation on what it becomes: TODO items, a TASK (which lists the note in `notes:`), a spec change, or nothing. When it went into one document, set `status: MOVED` and `moved_to: <KEY>`.
+- Finished notes are archived like any document (moved into `docs/notes/_archive/`), when the person asks or together with the TASK they led to.
+
+## Instructions
+
+- Write the body in the person's language; keep the section headings as below.
+- When a conversation produced an idea worth keeping, write a note yourself: summarize what was said into the sections, run `adoc check`, commit, and open it for the person with `adoc ui open NOTE-<id>`.
+- Draw state machines, sequences and structures with Mermaid (```` ```mermaid ````) whenever a picture explains faster than prose.
+- Keep **Open questions** and **Decisions** short and current: rewrite instead of appending history (git keeps the history).
+- When the person answers a question, move it to **Decisions** with the answer; say so when you decided on their behalf.
+- Never turn a note into a TASK without the person's agreement; propose it.
 
 ## File
 
@@ -23,7 +33,7 @@ A NOTE is a free-form shared space for the person and the agent: an idea taken f
 ```markdown
 ---
 title: NOTE plugin
-status: OPEN            # OPEN | MOVED | ARCHIVED
+status: OPEN            # OPEN | MOVED
 moved_to: TASK-261003-note-plugin   # only when MOVED
 ---
 
@@ -44,14 +54,9 @@ Why this came up.
 - …
 ```
 
-- Recommended id: today's date and a title, such as `NOTE-261002-note-plugin`.
-- The four sections are the default template for developing an idea; use any sections, or none, when the note is about something else.
-- Developing a note means moving items from **Open questions** to **Decisions**. Keep both lists short and current; rewrite instead of appending history (git keeps history).
+- The four sections are the default for developing an idea; use any sections, or none, when the note is about something else.
 - Write `[[KEY]]` to refer to other documents.
-
-## When you create a note from a conversation
-
-Summarize what was said into the sections, write it, run `adoc check`, commit, then show it to the person with `adoc ui open NOTE-<id>`.
+- Recommended id: today's date and a title, such as `NOTE-261002-note-plugin`.
 
 ## Anchors
 
@@ -59,6 +64,4 @@ The anchor of a section is its heading in lowercase with hyphens: `## Open quest
 
 ## Actions
 
-| action | what adoc already did | what you do |
-|---|---|---|
-| `archive` (value `ARCHIVED`) | nothing | set `status: ARCHIVED` |
+None of its own. The archive button of the document header sends the common `archive` request (see the `adoc` skill).

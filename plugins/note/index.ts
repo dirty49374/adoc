@@ -1,4 +1,4 @@
-import { action, anchor, definePlugin, frontmatter, html, markdown, ref, slug, source } from '@adoc/plugin-kit';
+import { anchor, definePlugin, frontmatter, html, markdown, ref, slug, source } from '@adoc/plugin-kit';
 import type { PluginDocument } from '@adoc/plugin-kit';
 
 interface Section {
@@ -37,9 +37,6 @@ function renderNote(doc: PluginDocument, previous?: PluginDocument) {
     <div class="adoc-toolbar">
       ${note.movedTo ? html`<span class="adoc-muted">moved to ${ref(note.movedTo)}</span>` : ''}
       ${before && before.status !== note.status ? html`<span class="adoc-changed">status: ${before.status} → ${note.status}</span>` : ''}
-      ${note.status === 'OPEN'
-        ? html`<button ${action({ kind: 'click', name: 'archive', value: 'ARCHIVED' })}>→ archive</button>`
-        : ''}
     </div>
     ${note.intro.trim() ? markdown(note.intro, { file: doc.file, line: note.bodyLine }) : ''}
     ${note.sections.map((s) => {
