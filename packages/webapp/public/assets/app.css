@@ -229,6 +229,8 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .rendered ol > li::marker { color: var(--adoc-md-list-enumeration); }
 .rendered :not(pre) > code { color: var(--adoc-md-code); font-size: 0.95em; }
 .rendered pre { background: var(--adoc-surface-panel); color: var(--adoc-md-code-block); padding: 10px 14px; overflow: auto; font-size: var(--adoc-size-small); line-height: 1.5; }
+.rendered pre.adoc-mermaid.drawn:not(.failed) { background: transparent; padding: 8px 0; text-align: center; overflow-x: auto; }
+.rendered pre.adoc-mermaid svg { max-width: 100%; height: auto; }
 .rendered table { border-collapse: collapse; font-size: var(--adoc-size-small); margin: 8px 0; }
 .rendered th, .rendered td { padding: 4px 10px; text-align: left; border-bottom: 1px solid var(--adoc-border-subtle); }
 .rendered th { color: var(--adoc-text-muted); font-weight: 600; }

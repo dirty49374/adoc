@@ -5,6 +5,7 @@ import { api, pluginOf, type ActionRequest, type ActionResponse, type ReferenceI
 import { AnchorCommentButton } from './AnchorCommentButton.js';
 import { CommentPopover, type PopoverRequest } from './CommentPopover.js';
 import { DraftMarkerColumn } from './DraftMarkerColumn.js';
+import { drawDiagrams } from '../diagrams.js';
 import { draftStore, type DraftComment } from '../drafts.js';
 import { ReferenceTooltip } from './ReferenceTooltip.js';
 
@@ -42,6 +43,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     const element = content.current;
     if (!element) return;
     element.innerHTML = shown;
+    void drawDiagrams(element);
     references.current.clear();
     const hash = decodeURIComponent(where.hash.slice(1));
     if (hash) {

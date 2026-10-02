@@ -11,7 +11,11 @@ await cp(new URL('./node_modules/pretendard/dist/web/variable/woff2/PretendardVa
 await cp(new URL('./node_modules/pretendard/dist/LICENSE.txt', import.meta.url).pathname, `${out}assets/fonts/Pretendard-LICENSE.txt`);
 await build({
   entryPoints: [new URL('./src/main.tsx', import.meta.url).pathname],
-  outfile: `${out}assets/app.js`,
+  outdir: `${out}assets/`,
+  entryNames: 'app',
+  // Large libraries that only some pages need, such as Mermaid, load on demand from their own chunks.
+  splitting: true,
+  chunkNames: 'chunks/[name]-[hash]',
   bundle: true,
   platform: 'browser',
   format: 'esm',

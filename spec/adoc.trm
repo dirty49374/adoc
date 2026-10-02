@@ -215,7 +215,7 @@ concept _Plugin_Kit_ in plugin = {
   - The _Plugin_Kit_ must provide a helper for every attribute of the _Anchor_Markup_Convention_, so that no plugin writes an attribute name by hand.
   - The `html` template of the _Plugin_Kit_ must escape every interpolated value except fragments it produced.
   - The Markdown rendering of the _Plugin_Kit_ must turn `[[KEY]]` and `[[KEY#anchor]]` into marked _Document_Reference_ links and must escape raw HTML.
-  - The Markdown rendering of the _Plugin_Kit_ must mark the tokens of a fenced code block with syntax classes when the fence names a known language.
+  - The Markdown rendering of the _Plugin_Kit_ must mark the tokens of a fenced code block with syntax classes when the fence names a known language, and must mark a fenced block of the language `mermaid` as a diagram, keeping its escaped source.
   - The authoring guide of the _Plugin_Kit_ must contain a complete working plugin, the rules that avoid load errors, and the generic classes and design tokens of the _Web_UI_Theme_.
 .remarks
   - Chosen: highlight.js marks code tokens with its `hljs-*` classes; the _Web_UI_Theme_ colours them.

@@ -27,6 +27,14 @@ function createParser(): MarkdownIt {
   const md = markdownIt({ html: false, linkify: true, highlight });
   md.inline.ruler.before('link', 'adoc_ref', referenceRule);
   md.renderer.rules.adoc_ref = (tokens, idx) => ref(tokens[idx]!.content).html;
+  // A ```mermaid fence stays its escaped source, marked for the web UI, which draws it as a diagram.
+  const fence = md.renderer.rules.fence!;
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const token = tokens[idx]!;
+    if (token.info.trim() !== 'mermaid') return fence(tokens, idx, options, env, self);
+    token.attrJoin('class', 'adoc-mermaid');
+    return `<pre${self.renderAttrs(token)}>${md.utils.escapeHtml(token.content)}</pre>\n`;
+  };
   return md;
 }
 
@@ -45,6 +53,7 @@ export interface MarkdownOptions {
  * Renders Markdown to trusted HTML.
  * - `[[KEY]]` and `[[KEY#anchor]]` become reference links.
  * - With `file`, every block element gets its source position, so comments carry `file:line`.
+ * - A fenced block of a known language is syntax-highlighted; a ```mermaid block is drawn as a diagram by the web UI.
  * - Raw HTML in the text is escaped.
  */
 export function markdown(text: string, options: MarkdownOptions = {}): HtmlFragment {

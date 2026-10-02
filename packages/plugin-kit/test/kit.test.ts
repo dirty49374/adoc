@@ -36,6 +36,11 @@ describe('markdown', () => {
     expect(markdown('```\n<b>\n```').html).toContain('&lt;b&gt;');
   });
 
+  it('marks a mermaid fence for the web UI, escaped', () => {
+    const out = markdown('```mermaid\ngraph TD; A-->B<b>\n```', { file: 'x.md' }).html;
+    expect(out).toContain('<pre data-adoc-source="x.md:1" class="adoc-mermaid">graph TD; A--&gt;B&lt;b&gt;');
+  });
+
   it('finds references and splits front matter', () => {
     expect(findReferences('a [[TASK-1]] b [[KANBAN-s#c1]]')).toEqual(['TASK-1', 'KANBAN-s#c1']);
     const fm = frontmatter('---\ntitle: T\nstatus: DONE\n---\n\n## Goal\n');

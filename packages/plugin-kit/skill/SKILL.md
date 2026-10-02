@@ -134,7 +134,7 @@ The web UI styles your HTML; you write no CSS. Its look follows the opencode TUI
 | `adoc-trash` | a removal drop zone |
 | `adoc-added`, `adoc-removed`, `adoc-changed` | marks for `renderChanges` |
 
-Headings, lists, links, tables and code from `markdown()` get the theme's Markdown colours; a fenced code block that names its language (```` ```ts ````) is syntax-highlighted.
+Headings, lists, links, tables and code from `markdown()` get the theme's Markdown colours; a fenced code block that names its language (```` ```ts ````) is syntax-highlighted, and a ```` ```mermaid ```` block is drawn as a diagram.
 
 **Design tokens:** when you need a colour in an inline `style="…"`, use a token instead of a literal, so that light and dark both work: `var(--adoc-text)`, `--adoc-text-muted`, `--adoc-surface`, `--adoc-surface-panel`, `--adoc-surface-element`, `--adoc-primary`, `--adoc-secondary`, `--adoc-accent`, `--adoc-success`, `--adoc-warning`, `--adoc-error`, `--adoc-info`, `--adoc-border`, `--adoc-border-subtle`. Sizes: `--adoc-size-base`, `--adoc-size-small`, `--adoc-size-tiny`; fonts: `--adoc-font-text`, `--adoc-font-mono`.
 
