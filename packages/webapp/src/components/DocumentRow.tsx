@@ -3,14 +3,14 @@ import { Link } from 'react-router';
 import { pluginOf, type SummaryEntry } from '../api.js';
 import { relativeTime } from '../time.js';
 
-/** _Document_Row_: title (two lines, the whole of a cut one on hover), status, key and last update (relative to `now`) of one summary list entry; parse errors show the key and the error. */
+/** _Document_Row_: title (one line, the whole of a cut one on hover), status, key and last update (relative to `now`) of one summary list entry; parse errors show the key and the error. */
 export function DocumentRow({ entry, selected, now }: { entry: SummaryEntry; selected: boolean; now: number }) {
   const [cut, setCut] = useState<{ top: number; left: number; width: number }>();
   const title = entry.summary ? entry.summary.title : entry.key;
-  // fixed position, so the card is not clipped by the scrolling list; shown only when the clamp cuts the title
+  // fixed position, so the card is not clipped by the scrolling list; shown only when the ellipsis cuts the title
   const onTitleEnter = (e: MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
-    if (el.scrollHeight <= el.clientHeight) return;
+    if (el.scrollWidth <= el.clientWidth) return;
     const rect = el.getBoundingClientRect();
     setCut({ top: rect.top, left: rect.left, width: rect.width });
   };

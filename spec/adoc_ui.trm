@@ -169,7 +169,7 @@ card _Document_Row_ in document = {
 .contract
   - _Document_Row_ must show the title and status of the _adoc:Document_Summary_ and the _adoc:Document_Key_.
   - _Document_Row_ must show the last update of its _adoc:Document_ in small text relative to now, such as "updated 5 min ago", with the full date and time on hover, and must keep it current while the page is open.
-  - _Document_Row_ must show the title on exactly two lines, cut with an ellipsis when longer, and must show the whole title in a floating card while the pointer is on a cut title.
+  - _Document_Row_ must keep each of its lines (the title, the status with the key, the last update) on one line, cut with an ellipsis when longer, so that every row has the same height, and must show the whole title in a floating card while the pointer is on a cut title.
   - _Document_Row_ must lead to `/p/:plugin/:document` when chosen, and must be marked when its _adoc:Document_ is the one shown.
 .states
   - _Document_Row_ is one of normal, selected, parse-error; in parse-error the user sees the _adoc:Document_Key_ and the parse error instead of the title.

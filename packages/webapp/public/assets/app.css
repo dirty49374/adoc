@@ -195,11 +195,14 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .document-row:hover { background: var(--adoc-surface-element); }
 .document-row.selected { background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-primary); }
 .document-row.parse-error :is(.row-title, .row-title-tooltip) { color: var(--adoc-error); }
-/* the title always takes two lines, so every row has the same height; a longer one is cut and shown whole in the
+/* the title is one line, so every row has the same height; a longer one ends in an ellipsis and is shown whole in the
    row-title tooltip (floating, below), laid exactly over it */
-.row-title { font-weight: 500; line-height: 1.4; height: 2lh; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.row-title { font-weight: 500; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .document-row.selected :is(.row-title, .row-title-tooltip) { font-weight: 700; }
-.row-meta { display: flex; gap: 8px; align-items: center; font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); }
+.row-meta { display: flex; gap: 8px; align-items: center; font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); white-space: nowrap; }
+/* every line of a row stays one line: a long status or key ends in an ellipsis */
+.row-meta > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.row-meta > .row-key { flex: 1 1 auto; }
 .row-key { font-family: var(--adoc-font-mono); }
 
 .document-detail-pane { flex: 1; min-width: 0; overflow: auto; display: flex; flex-direction: column; }
