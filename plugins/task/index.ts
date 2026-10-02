@@ -1,7 +1,6 @@
-import { action, anchor, definePlugin, frontmatter, html, markdown, ref, slug, source } from '@adoc/plugin-kit';
+import { anchor, definePlugin, frontmatter, html, markdown, ref, slug, source } from '@adoc/plugin-kit';
 import type { PluginDocument } from '@adoc/plugin-kit';
 
-const STATUSES = ['TODO', 'RUNNING', 'REVIEW', 'DONE'];
 
 interface Section {
   heading: string;
@@ -40,13 +39,12 @@ export default definePlugin({
   },
 
   render(doc) {
-    const { status, data, intro, bodyLine, sections } = parse(doc);
+    const { data, intro, bodyLine, sections } = parse(doc);
     return html`
       <div class="adoc-toolbar">
         ${data.assignee ? html`<span class="adoc-muted">assignee: ${String(data.assignee)}</span>` : ''}
         ${Array.isArray(data.notes) ? html`<span class="adoc-muted">notes: ${data.notes.map((k, i) => html`${i ? ', ' : ''}${ref(String(k))}`)}</span>` : ''}
         ${Array.isArray(data.related) ? html`<span class="adoc-muted">related: ${data.related.map((k, i) => html`${i ? ', ' : ''}${ref(String(k))}`)}</span>` : ''}
-        ${STATUSES.filter((s) => s !== status).map((s) => html`<button ${action({ kind: 'click', name: 'set-status', value: s })}>→ ${s}</button>`)}
       </div>
       ${intro.trim() ? markdown(intro, { file: doc.file, line: bodyLine }) : ''}
       ${sections.map(

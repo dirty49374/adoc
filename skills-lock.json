@@ -19,7 +19,7 @@
     "adoc-task": {
       "source": "./plugins/task/skill",
       "sourceType": "local",
-      "computedHash": "8e442f7c4883a97d2fa21fef1cfabcbfb81c33e852ff529214065ad6c7f7a869"
+      "computedHash": "5e288e9a803534fa6bb3b9062103643275656999a357757de3df1d3979486a1f"
     },
     "adoc-todo": {
       "source": "./plugins/todo/skill",

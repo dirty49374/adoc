@@ -48,9 +48,17 @@ A comment also carries `source: <file>:<line>` for the exact line and a `quote` 
 
 ## Actions
 
-| action | what adoc already did | what you do |
-|---|---|---|
-| `set-status` with value `DONE` etc. | nothing (`applied: false`) | set `status:` in the front matter to the value, if the work allows it; otherwise explain in the document |
+None: the person changes a status by telling you, and you edit `status:` in the front matter.
+
+## Review: keep the person told
+
+When you finish a task, set `status: REVIEW`; only the person moves it to DONE.
+
+- **Keep reminding.** Whenever you report to the person in the conversation (after finishing a piece of work, when you go idle), and while any TASK is in REVIEW, end with one line listing them, newest first, at most three keys and then a count:
+  `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`
+  Find them with `adoc document list --plugin TASK` (status REVIEW).
+- **When the person says they will review:** open the first one with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When the person says done (or "ok", "완료"), set `status: DONE`, commit, and open the next one. When they ask for changes, do them in that task and keep it in REVIEW. Stop when none is left or the person stops.
+- **Too many DONE tasks:** when ten or more TASKs are DONE (not archived), ask the person once whether to archive them. If they agree, move each with `git mv` into `_archive/` next to it (`docs/tasks/_archive/TASK-x.md`), run `adoc check`, and commit. Archived tasks keep their keys and references.
 
 ## Typical requests
 
