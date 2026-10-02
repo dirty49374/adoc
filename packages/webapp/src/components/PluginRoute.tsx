@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { usePinned } from '../fold.js';
 import { useWorkspace } from '../workspace.js';
@@ -32,9 +32,23 @@ export function PluginRoute({ view }: { view?: 'skill' }) {
     window.addEventListener('pointermove', move);
     return () => window.removeEventListener('pointermove', move);
   }, [held]);
+  // The width the list pane takes from the main area, published as --adoc-main-inset so that the composer stays
+  // centred on the reading column beside it (0 while the list is folded into its overlaying rail).
+  const slot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = slot.current;
+    const shell = element?.closest<HTMLElement>('.shell-column');
+    if (!element || !shell) return;
+    const observer = new ResizeObserver(() => shell.style.setProperty('--adoc-main-inset', `${element.offsetWidth}px`));
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      shell.style.removeProperty('--adoc-main-inset');
+    };
+  }, []);
   return (
     <div className={`plugin-route${unpinned ? ' list-unpinned' : ''}`}>
-      <div className="document-list-slot">
+      <div className="document-list-slot" ref={slot}>
         <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={shown ? pin : undefined} unpinned={unpinned} held={held} openTop={!shown} />
       </div>
       {view === 'skill' ? (

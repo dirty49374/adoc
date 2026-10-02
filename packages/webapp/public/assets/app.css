@@ -345,7 +345,7 @@ body.resizing { user-select: none; cursor: col-resize; }
 
 /* _Comment_Composer_: floating over the bottom of the main area, as wide as the reading column; three lines that grow, on
    the element surface with the agent's accent bar; unpinned, one line until hovered or focused */
-.composer-area { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; width: 100%; max-width: var(--adoc-reading-width); margin-inline: auto; padding: 0 32px 12px; pointer-events: none; }
+.composer-area { position: absolute; left: var(--adoc-main-inset, 0px); right: 0; bottom: 0; z-index: 7; width: auto; max-width: var(--adoc-reading-width); margin-inline: auto; padding: 0 32px 12px; pointer-events: none; }
 .composer-area > * { pointer-events: auto; }
 .composer-target .spacer { flex: 1; }
 .composer-folded { width: 100%; padding: 5px 8px 5px calc(10px + var(--adoc-bar)); color: var(--adoc-text-muted); box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); }

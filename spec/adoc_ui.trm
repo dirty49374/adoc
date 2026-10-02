@@ -32,7 +32,7 @@ panel _App_Shell_ in shell = {
   - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
   - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`, the _Document_List_Pane_ beside the _Skill_View_ of the plugin's skill at `/p/:plugin/skill`, and the _Skill_View_ of a skill of no plugin at `/skills/:name`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
-  - _App_Shell_ must show the _Comment_Composer_ floating over the bottom of the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
+  - _App_Shell_ must show the _Comment_Composer_ floating over the bottom of the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and centred on it also while a pinned _Document_List_Pane_ takes width, and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
 .states
   - _App_Shell_ is one of connecting, connected, disconnected; in disconnected the user sees the last loaded content and the _Connection_Status_Label_ says the server is unreachable.
 .rules
