@@ -64,4 +64,4 @@ The anchor of a section is its heading in lowercase, with every run of other cha
 
 ## Actions
 
-None of its own.
+None of its own beyond the common `archive` and `unarchive` (see the adoc skill).

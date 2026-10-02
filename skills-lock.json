@@ -9,7 +9,7 @@
     "adoc-note": {
       "source": "./plugins/note/skill",
       "sourceType": "local",
-      "computedHash": "08a2214db7573efc8b8b1637efcc9858d92d8b755f674bf1b907ee9fd8c2f5f4"
+      "computedHash": "b9883163c6a08999d1bb9d0afef62dca83a4a8f3a6961a59f0b88602f05c8221"
     },
     "adoc-sketch": {
       "source": "./plugins/sketch/skill",
@@ -19,12 +19,12 @@
     "adoc-task": {
       "source": "./plugins/task/skill",
       "sourceType": "local",
-      "computedHash": "3cbbcb8adbf6f01cda58b3cbc4699b6914e1d141f551039d840c9792efc283b2"
+      "computedHash": "c04de2fa6740ba5fd4a2256bf6e79fb9ca7defba84006e0467743c8dde188302"
     },
     "adoc-todo": {
       "source": "./plugins/todo/skill",
       "sourceType": "local",
-      "computedHash": "dab38afed9ff303d77a4719a5e11b62788ed88f0e61ed0da1020c6a5609f8411"
+      "computedHash": "863dba6e1a16af3823a4481de6f51737c29d504fbc4e3821e557b1821242a0eb"
     }
   }
 }
