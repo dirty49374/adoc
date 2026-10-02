@@ -29,7 +29,7 @@ A plugin is a folder:
 
 ```
 <plugin>/
-  index.ts          # export default definePlugin({ … }): layout, summarize, render, actions
+  index.ts          # export default definePlugin({ … }): description, layout, summarize, render, actions
   skill/
     SKILL.md        # the plugin's agent skill; `adoc skill install` copies only this folder
   package.json      # optional: npm packages the plugin imports, installed in this folder
@@ -39,7 +39,7 @@ A plugin is a folder:
 Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes from:
 
 - a bare name, looked up in `.adoc/plugins/<name>/` (project) and then `~/.config/adoc/plugins/<name>/` (user);
-- a path from the workspace root, such as `./plugins/todo`;
+- a path from the workspace root, starting with `./` (or `/` for an absolute path), such as `./plugins/todo`;
 - an npm package name.
 
 `adoc plugin list` shows each plugin with its document count or its load error. A running server reloads a plugin when a file at the top of its folder changes (details in `adoc-plugin-authoring`); a change to `.adoc/adoc.yaml` takes effect when the server restarts. Then install its skill with `adoc skill install` (below). Writing a plugin is explained by the skill `adoc-plugin-authoring`.
@@ -109,7 +109,7 @@ $XDG_RUNTIME_DIR/adoc/<hash>.json  # a record of each running adoc server (pid, 
 
 - **Project scope:** inside the workspace. Plugins in `.adoc/plugins/` or at a path inside the workspace; their skills install into the workspace (`.agents/skills/`, `.claude/skills/`, …).
 - **User scope:** for every workspace of this user. Plugins in `~/.config/adoc/plugins/`; their skills, and adoc's own skills `adoc` and `adoc-plugin-authoring`, install into the home (`~/.agents/skills/`, …).
-- `adoc skill install` installs every skill in its scope through the Vercel `skills` CLI (`npx skills add`), for the agents it detects; `adoc skill update` refreshes them after an update. Every adoc command warns while a skill is missing or older than the running adoc.
+- `adoc skill install` installs every skill in its scope through the Vercel `skills` CLI (`npx skills add`), for the agents it detects; `adoc skill update` refreshes them after an update. Every adoc command warns while a skill is missing or its installed copy differs from the one of the running adoc.
 
 ## Using a plugin
 
@@ -124,8 +124,8 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 1. **Talk first.** Before any work, take time with the person to decide how this project will use them: which documents to keep, what goes where, how detailed.
 2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether every change is committed, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
    - Use a **NOTE** to discuss ideas with the person or to help them understand something. Draw state and sequence diagrams with Mermaid (```` ```mermaid ````) wherever they help.
-   - When a good idea comes out of a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`.
-   - Start the work only when the documents it depends on are committed.
+   - When the person agrees on a good idea from a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`.
+   - Start the work only when the documents it depends on are agreed and, if the project commits, committed.
    - The work may go to a subagent or a herdr development agent.
    - When a task is finished, it goes to the person's review (see the TASK skill).
 3. **Change the procedure with the person as you go**, and keep `AGENTS.md` up to date.
@@ -156,7 +156,7 @@ Every command takes `--output text|markdown|json|yaml` and answers `--help`. `ad
 - **In herdr (recommended):** run `adoc agent claim` once at the start of your session. Your pane becomes the assigned agent: the person's messages are pushed into it as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over.
 - **Otherwise:** with the `wait` transport, messages are held until you take them with `adoc message wait`.
 
-The server holds every message until it is delivered: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them.
+The server holds every message until it is delivered or the server stops: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them.
 
 Then read the skills of the plugins you will work with (see "Using a plugin").
 
@@ -165,7 +165,7 @@ Then read the skills of the plugins you will work with (see "Using a plugin").
 1. Receive messages: pushed into your pane (herdr), or with `adoc message wait`.
 2. For each message, read the target document and do what the text asks.
 3. Run `adoc check`; fix every error, and every warning about a document you changed.
-4. Commit (see "Committing").
+4. Commit, unless the project does not (see "Committing").
 5. When you created or substantially changed a document the person should see, open it for them: `adoc ui open <KEY>`.
 6. Go back to 1.
 
@@ -193,7 +193,7 @@ applied: true
 - A target is `workspace`, a plugin key (about the plugin, such as "create a new one"), a document key, a document key with an anchor (the plugin's skill says what an anchor means), or `skill <name>` (about an agent skill: change the `SKILL.md` in the skill's `directory` that `adoc skill list --output json` shows, then run `adoc skill update`, or through MCP ask the person to run it).
 - `source` is the file and line the person pointed at; `quote` is the exact text they selected. If the file changed since, find the place by the quote or the text around it; if you cannot find it, ask (see "Talking to the person").
 - A comment may carry a diff that starts with `I edited <file>:`: the person already changed the file in the web UI. Read the diff, keep the change, and do what the rest of the message asks.
-- An `action` message with `applied: false` is a request: make the change yourself. With `applied: true` the plugin already wrote the change: do not redo it, commit it, and do more only when the text or the plugin's skill asks for it. Every document has the common actions `archive` and `unarchive` (the archive button of its header): they ask you to archive or restore it (see "Plugins and documents"). A plugin's skill lists only its own actions.
+- An `action` message with `applied: false` is a request: make the change yourself. With `applied: true` the plugin already wrote the change: do not redo it, commit it, and do more only when the text or the plugin's skill asks for it. Every document has the common actions `archive` and `unarchive` (the archive button of its header): they ask you to archive or restore it (see "Plugins and documents"). A plugin's skill lists only its own actions. Some actions send no message at all, such as a sketch's `save`; their skill says how the change reaches you.
 
 #### Rules
 
@@ -202,10 +202,9 @@ applied: true
 
 #### Committing
 
-- adoc never commits; you do, with `git add` and `git commit`, naming the document keys in the message, such as `TODO-gui: detail item 3`.
+- adoc never commits. Unless the project's agent instructions say not to commit, or the workspace is not a git repository, you do, with `git add` and `git commit`, naming the document keys in the message, such as `TODO-gui: detail item 3`.
 - Commit each finished piece of work: a message once its attached comments are handled, or work you started yourself, such as a note you wrote or a TASK you start.
-- Stage by path: the files you changed, and the uncommitted changes to documents that you did not make (the person's edits, and what plugin actions wrote, such as a sketch's PNG). Never stage other files you did not change, such as `.adoc/adoc.yaml`.
-- When the project's agent instructions say not to commit, or the workspace is not a git repository, skip committing, and archive with a plain `mv`.
+- Stage by path, and only these: the files you changed, and the uncommitted changes to documents made by the person or by plugin actions (such as a sketch's PNG). Stage nothing else, such as a `.adoc/adoc.yaml` you did not change.
 
 #### Talking to the person
 
