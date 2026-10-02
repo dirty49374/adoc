@@ -79,14 +79,36 @@ Text drawing of the screen for [[NOTE-261002-herdr-integration]]: the right pane
 └──────────────────────────────────────────┘
 ```
 
+## Draft markers (decided)
+
+```text
+│ ## Ideas                                 │ │
+│                                          │ │
+│ - Korean IME: xterm.js takes input       │●│   ← one marker per line that has a draft
+│   through a hidden textarea …            │ │
+│                                          │ │      hover ●:
+│ - Finding the agent's own pane …         │ │      ┌──────────────────────┐
+│                                          │●│ ───▶ │ #ideas               │
+│ - Right panel: the terminal fills …      │ │      │ "composition"        │
+│                                          │ │      │ IME test first?  ✎ ✕ │
+│ ## Open questions                        │ │      └──────────────────────┘
+```
+
+The margin is one character wide; each line that carries a draft shows a dot. Hovering the dot unfolds the card over the text; ✎ edits, ✕ removes.
+
 ## Ideas
 
-- The draft list leaves the right panel: drafts become cards in a margin column of the document body, aligned with their anchor; ✎ edits, ✕ removes.
+- The draft list leaves the right panel: drafts become markers in a one-character margin of the document body, aligned with their anchor, unfolding into a card on hover.
 - The composer bar is the same component with and without herdr; only the area above it changes (terminal or pending messages).
 - The top bar gains the agent pane label (`▣ w2B:p1 idle`), so the assigned agent is visible on every page.
 - Drafts on other documents show as chips too; clicking one opens that document and scrolls to the card.
 
 ## Open questions
 
-- Should the margin column be always visible, or only when the document has drafts?
-- Is the terminal panel's width fixed, or can the person drag the border between the document and the terminal?
+- (none)
+
+## Decisions
+
+- The layout above is accepted.
+- Draft cards shrink to a one-character marker column (a dot per line), unfolding on hover.
+- The border between the document and the terminal panel can be dragged to change the terminal's width.
