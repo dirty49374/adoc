@@ -924,7 +924,8 @@ concept _Agent_Terminal_Stream_ in runtime = {
   controlled by _Browser_Session_
 .contract
   - The _Adoc_Server_ must take the stream from `herdr terminal session control` for the one _Browser_Session_ that controls the terminal, and from `herdr terminal session observe` for every other one.
-  - The controlling _Browser_Session_ is the one that last focused the terminal; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll`.
+  - The controlling _Browser_Session_ is the one the person used last: it takes control when it loads with focus and on any click, key press or focus in its page; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll`.
+  - An observing _Browser_Session_ that receives no frame for three seconds must re-open its stream, because herdr's observe stream can lag behind agent panes.
   - The _Adoc_Server_ must send `terminal.release` when the controlling _Browser_Session_ closes or another one takes control, so that the person's own herdr terminal gets its size back.
   - The _Adoc_Server_ must subscribe to the agent status and the closing of the claimed pane through herdr events and pass them to the _Adoc_Web_UI_.
 .remarks

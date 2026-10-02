@@ -315,7 +315,7 @@ panel _Terminal_Panel_ in message = {
   part of _Message_Dock_
 .contract
   - _Terminal_Panel_ must render the frames of the _adoc:Agent_Terminal_Stream_ and follow the size of the panel.
-  - _Terminal_Panel_ must take control of the stream when the person focuses it, and must then send every key, including keys composed by an input method such as Korean, to the pane.
+  - _Terminal_Panel_ must take control of the stream when its page loads with focus and on any click, key press or focus in the page, and must then send every key, including keys composed by an input method such as Korean, to the pane.
   - _Terminal_Panel_ must show the claimed pane id, the agent kind and the agent status in its header, updated on every change.
 .states
   - _Terminal_Panel_ is one of connecting, observing, controlling, pane-gone; in pane-gone the person sees that the claimed pane closed and that messages are held.

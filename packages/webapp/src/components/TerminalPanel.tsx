@@ -13,8 +13,10 @@ function decode(base64: string): Uint8Array {
 }
 
 /**
- * _Terminal_Panel_: the live terminal of the claimed herdr pane. Observes by default;
- * focusing it takes control, so keys (including input-method composition) and the size go to the pane.
+ * _Terminal_Panel_: the live terminal of the claimed herdr pane. The tab the person is using controls it
+ * (taken on load when focused, and on any click, key press or focus in the page), so keys and the size go
+ * to the pane. Other tabs observe; herdr's observe stream can lag for agent panes, so an idle observer
+ * re-opens its stream every few seconds to get a fresh full frame.
  */
 export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']> }) {
   const { connection } = useLive();
@@ -34,8 +36,10 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       mode.current = wanted;
       sendTerminal({ type: 'terminal.open', mode: wanted, cols: term.cols, rows: term.rows });
     };
+    let lastFrame = Date.now();
     const off = onTerminal((message) => {
       if (message.type === 'terminal.frame' && typeof message.bytes === 'string') {
+        lastFrame = Date.now();
         if (message.full) term.reset();
         term.write(decode(message.bytes));
       } else if (message.type === 'terminal.mode') {
@@ -53,6 +57,12 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       if (mode.current !== 'control') open('control');
     };
     textarea?.addEventListener('focus', takeControl);
+    window.addEventListener('pointerdown', takeControl, true);
+    window.addEventListener('keydown', takeControl, true);
+    window.addEventListener('focus', takeControl);
+    const refresh = window.setInterval(() => {
+      if (mode.current === 'observe' && Date.now() - lastFrame > 3000) open('observe');
+    }, 1000);
     const resized = () => {
       fit.fit();
       open('control');
@@ -73,12 +83,16 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       }, 120);
     });
     observer.observe(element);
-    open('observe');
+    open(document.hasFocus() ? 'control' : 'observe');
     return () => {
       off();
       data.dispose();
       observer.disconnect();
       textarea?.removeEventListener('focus', takeControl);
+      window.removeEventListener('pointerdown', takeControl, true);
+      window.removeEventListener('keydown', takeControl, true);
+      window.removeEventListener('focus', takeControl);
+      window.clearInterval(refresh);
       window.removeEventListener('adoc:panel-resized', resized);
       element.removeEventListener('wheel', wheel);
       sendTerminal({ type: 'terminal.close' });
@@ -93,7 +107,7 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
           ▣ <strong>{claim.pane}</strong>
           <span className="muted"> · {claim.agent ?? 'pane'} · {claim.herdrSession}</span>
         </span>
-        <span className={`terminal-phase ${phase}`}>{phase === 'control' ? '⌨ controlling (this tab sets the size)' : phase === 'observe' ? 'observing · click to control' : phase}</span>
+        <span className={`terminal-phase ${phase}`}>{phase === 'control' ? '⌨ this tab controls the terminal' : phase === 'observe' ? 'observing · another tab controls · click to take over' : phase}</span>
         <span className={`agent-status ${claim.status ?? ''}`}>{claim.status ?? ''}</span>
       </div>
       <div className="terminal-host" ref={host} />
