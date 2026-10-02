@@ -207,7 +207,7 @@ export const commands: readonly CommandDefinition[] = [
     name: 'plugin list',
     options: [],
     summary: 'List the plugins declared in adoc.yaml.',
-    behavior: 'Shows each plugin key, its source, its document layout, its number of documents and its load error, if any.',
+    behavior: 'Shows each plugin key, its number of documents (archived ones left out), its document layout and its description, or its load error.',
     example: 'adoc plugin list',
     async run(_args, options, context) {
       const plugins = (await openWorkspace(options, context)).pluginInfos();
