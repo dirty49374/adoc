@@ -9,3 +9,6 @@
 - [x] Terminal mouse clicks: forward as `terminal.mouse` once herdr is updated (0.9.1 has no mouse command; docs for 0.9.3 list it), see [[TASK-261002-herdr-integration]]
 - [ ] Terminal scroll speed: wheel scrolling feels slow; tune lines per wheel step and frame latency, see [[TASK-261002-herdr-integration]]
 - [ ] Terminal: Shift+Enter does not work (xterm.js sends a plain Enter; the agent expects its newline sequence)
+- [ ] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list)
+- [ ] Web UI: switch the terminal into the main area (the side panel stays fixed), and back
+- [ ] Web UI: tell the terminal from the main area: a subtly different background, or a very thin horizontal rule between them
