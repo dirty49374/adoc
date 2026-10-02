@@ -324,6 +324,11 @@ export class AdocServer {
       const base = url.searchParams.get('base');
       return sendJson(response, 200, base && base !== view.version ? { ...view, changes: ws.changes(key, base) } : view);
     }
+    match = /^\/api\/documents\/([^/]+)\/versions$/.exec(path);
+    if (match && method === 'GET') {
+      const versions = ws.storedVersions(decodeURIComponent(match[1]!));
+      return versions ? sendJson(response, 200, { versions }) : sendJson(response, 404, { error: `${match[1]} does not exist` });
+    }
     if (path === '/api/ui/sessions' && method === 'GET') return sendJson(response, 200, { sessions: this.browserSessions() });
     if (path === '/api/ui/open' && method === 'POST') {
       const parsed = openSchema.safeParse(await readBody(request));

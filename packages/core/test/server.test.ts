@@ -65,6 +65,11 @@ describe('AdocServer', () => {
     expect(view.changes.available).toBe(true);
     expect(view.changes.html).toContain('<div class="adoc-added" data-adoc-source="docs/TODO-gui.md:4">');
     expect((await json(`${server.url}/api/documents/TODO-gui?base=0000`)).changes.available).toBe(false);
+    const { versions } = await json(`${server.url}/api/documents/TODO-gui/versions`);
+    expect(versions.map((v: { version: string; current: boolean }) => [v.version === first.version, v.current])).toEqual([
+      [false, true],
+      [true, false],
+    ]);
   });
 
   it('tracks browser sessions and sends the latest one to a document', async () => {

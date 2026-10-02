@@ -4,7 +4,7 @@ export { readConfig, configSchema, CONFIG_TEMPLATE, type AdocConfig, type Transp
 export { PLUGIN_KEY_PATTERN, LOCAL_ID_PATTERN, parseDocumentTarget } from './names.js';
 export { loadPlugins, readGuide, type LoadedPlugin } from './plugins.js';
 export { scanDocuments, readDocument, type DocumentRecord, type ScanProblem } from './scan.js';
-export { Workspace, type SummaryEntry, type DocumentView, type CheckEntry, type PluginInfo, type ActionOutcome, type DocumentChanges } from './workspace.js';
+export { Workspace, type SummaryEntry, type DocumentView, type CheckEntry, type PluginInfo, type ActionOutcome, type DocumentChanges, type StoredVersion } from './workspace.js';
 export { MessageQueue, formatMessage, formatMessages, formatTarget, messageFields, type UserMessage, type UserComment, type MessageTarget } from './messages.js';
 export { createTransport, attachTransport, type MessageTransport, type CommandRunner } from './transports.js';
 export { AdocServer, PROTOCOL, publicMessage, type BrowserSession, type ServerExtension, type ServerOptions } from './server.js';

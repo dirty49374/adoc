@@ -863,7 +863,8 @@ concept _Document_Version_Store_ in runtime = {
 .contract
   - The _Document_Version_Store_ must keep at least the last twenty versions of each _Document_ seen since the _Adoc_Server_ started.
   - A request for the changes of a _Document_ must name the base _Document_Version_; when the store no longer holds it, the _Adoc_Web_UI_ must say that the changes are unavailable.
+  - The _Document_Version_Store_ must list the versions it holds for a _Document_, newest first, each with the time it was first seen.
 .remarks
-  - Chosen: the base is the version the browser showed last, so the person sees everything that changed since they last looked.
+  - Chosen: the default base is the version the browser showed last, so the person sees everything that changed since they last looked; any other version in the store can be chosen.
   - Chosen: memory only, so changes from before a restart are not available; git keeps the full history.
 }

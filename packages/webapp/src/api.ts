@@ -123,6 +123,7 @@ export const api = {
   workspace: () => request<WorkspaceInfo>('/api/workspace'),
   documents: (pluginKey: string) => request<{ pluginKey: string; error?: string; documents: SummaryEntry[] }>(`/api/plugins/${pluginKey}/documents`),
   document: (key: string, base?: string) => request<DocumentView>(`/api/documents/${encodeURIComponent(key)}${base ? `?base=${base}` : ''}`),
+  versions: (key: string) => request<{ versions: Array<{ version: string; seenAt: string; current: boolean }> }>(`/api/documents/${encodeURIComponent(key)}/versions`),
   references: (targets: string[]) => request<{ references: ReferenceInfo[] }>(`/api/references?targets=${targets.map(encodeURIComponent).join(',')}`),
   sendComments: (comments: UserComment[]) => request<{ message: PublicMessage }>('/api/messages', post({ comments })),
   sendAction: (body: ActionRequest) => request<ActionResponse>('/api/actions', post(body)),

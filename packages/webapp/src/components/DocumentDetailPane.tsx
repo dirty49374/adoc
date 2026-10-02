@@ -18,6 +18,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
   const [notice, setNotice] = useState<string>();
   const [changesOn, setChangesOn] = useState(false);
   const base = useRef<string | undefined>(undefined);
+  const [versions, setVersions] = useState<Array<{ version: string; seenAt: string }>>([]);
 
   const load = useCallback(() => {
     const seen = seenVersions.get(documentKey);
@@ -30,6 +31,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
           seenVersions.set(documentKey, view.version);
         }
         setState({ phase: 'showing', view });
+        api.versions(documentKey).then((r) => setVersions(r.versions.filter((v) => !v.current)), () => setVersions([]));
       },
       (error: Error) => setState(error instanceof HttpError && error.status === 404 ? { phase: 'missing' } : { phase: 'failed', error: error.message }),
     );
@@ -50,6 +52,13 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
       setState({ phase: 'showing', view });
       setChangesOn(true);
     }
+  };
+
+  const pick = async (version: string) => {
+    base.current = version;
+    const view = await api.document(documentKey, version);
+    setState({ phase: 'showing', view });
+    setChangesOn(true);
   };
 
   const onAction = async (request: Omit<ActionRequest, 'key' | 'version'>) => {
@@ -76,7 +85,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
   const html = showChanges ? changes.html : view.html;
   return (
     <section className="document-detail-pane" data-testid="document-detail-pane">
-      <DocumentHeader view={view} changeState={changeState} changesOn={showChanges} onToggleChanges={() => void toggle()} />
+      <DocumentHeader view={view} changeState={changeState} changesOn={showChanges} onToggleChanges={() => void toggle()} versions={versions} base={base.current} onPickBase={(v) => void pick(v)} />
       {notice && <ActionNotice text={notice} onDismiss={() => setNotice(undefined)} />}
       {showChanges && changes.error && <ActionNotice text={`renderChanges failed: ${changes.error}`} onDismiss={() => undefined} />}
       {html !== undefined ? (

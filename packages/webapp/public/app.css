@@ -196,7 +196,7 @@ button.secondary { background: transparent; color: var(--text); border-color: va
 .draft-comment-input textarea { font: inherit; resize: vertical; width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
 
 /* Change_Toggle and diffs */
-.change-toggle { background: transparent; color: var(--accent); border: 1px solid var(--accent); font-size: 11px; padding: 0 8px; border-radius: 999px; }
+.change-toggle { white-space: nowrap; background: transparent; color: var(--accent); border: 1px solid var(--accent); font-size: 11px; padding: 0 8px; border-radius: 999px; }
 .change-toggle.on { background: var(--accent); color: #fff; }
 .change-toggle.unavailable { color: var(--muted); font-size: 11px; }
 .adoc-diff { font-family: ui-monospace, monospace; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; overflow: auto; background: var(--panel); }
@@ -207,3 +207,5 @@ button.secondary { background: transparent; color: var(--text); border-color: va
 .adoc-changed { box-shadow: inset 3px 0 0 #e8a33a; background: color-mix(in srgb, #e8a33a 10%, transparent); }
 .adoc-flash { animation: adoc-flash 1.6s ease-out; }
 @keyframes adoc-flash { from { background: color-mix(in srgb, var(--accent) 35%, transparent); } to { background: transparent; } }
+
+.change-base-picker { font: inherit; font-size: 11px; padding: 0 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); }

@@ -50,6 +50,13 @@ export interface DocumentChanges {
 
 const VERSIONS_KEPT = 20;
 
+/** One version held by the _Document_Version_Store_. */
+export interface StoredVersion {
+  version: string;
+  seenAt: string;
+  current: boolean;
+}
+
 /** One entry of the report of _Adoc_Check_Command_. */
 export interface CheckEntry {
   level: 'error' | 'warning';
@@ -99,7 +106,7 @@ export class Workspace {
   private problems: ScanProblem[] = [];
   private cache = new Map<string, { version: string; doc: PluginDocument; summary?: DocumentSummary; summaryError?: string; html?: string; renderError?: string }>();
   /** _Document_Version_Store_: recent versions of each document, oldest first. */
-  private versions = new Map<string, Map<string, PluginDocument>>();
+  private versions = new Map<string, Map<string, { doc: PluginDocument; seenAt: string }>>();
   private changeCache = new Map<string, { html?: string; error?: string }>();
   revision = 0;
   /** Whether the workspace is inside a git repository, checked on every refresh. */
@@ -156,9 +163,10 @@ export class Workspace {
   }
 
   private remember(key: string, version: string, doc: PluginDocument): void {
-    const kept = this.versions.get(key) ?? new Map<string, PluginDocument>();
+    const kept = this.versions.get(key) ?? new Map<string, { doc: PluginDocument; seenAt: string }>();
+    const seenAt = kept.get(version)?.seenAt ?? new Date().toISOString();
     kept.delete(version);
-    kept.set(version, doc);
+    kept.set(version, { doc, seenAt });
     while (kept.size > VERSIONS_KEPT) kept.delete(kept.keys().next().value!);
     this.versions.set(key, kept);
   }
@@ -167,7 +175,7 @@ export class Workspace {
   changes(key: string, base: string): DocumentChanges | undefined {
     const entry = this.entry(key);
     if (!entry) return undefined;
-    const previous = this.versions.get(key)?.get(base);
+    const previous = this.versions.get(key)?.get(base)?.doc;
     if (!previous) return { base, available: false };
     const cacheKey = `${key}|${base}|${entry.cached.version}`;
     let result = this.changeCache.get(cacheKey);
@@ -183,6 +191,15 @@ export class Workspace {
       this.changeCache.set(cacheKey, result);
     }
     return { base, available: true, ...result };
+  }
+
+  /** The versions of a document in the _Document_Version_Store_, newest first. */
+  storedVersions(key: string): StoredVersion[] | undefined {
+    const entry = this.entry(key);
+    if (!entry) return undefined;
+    return [...(this.versions.get(key)?.entries() ?? [])]
+      .map(([version, { seenAt }]) => ({ version, seenAt, current: version === entry.cached.version }))
+      .reverse();
   }
 
   pluginInfos(): PluginInfo[] {

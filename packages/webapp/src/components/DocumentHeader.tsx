@@ -1,4 +1,5 @@
 import type { DocumentView } from '../api.js';
+import { ChangeBasePicker } from './ChangeBasePicker.js';
 import { ChangeToggle } from './ChangeToggle.js';
 
 interface Props {
@@ -6,10 +7,13 @@ interface Props {
   changeState: 'none' | 'available' | 'unavailable';
   changesOn: boolean;
   onToggleChanges: () => void;
+  versions: Array<{ version: string; seenAt: string }>;
+  base?: string;
+  onPickBase: (version: string) => void;
 }
 
-/** _Document_Header_: key, title, status, file path and the _Change_Toggle_. */
-export function DocumentHeader({ view, changeState, changesOn, onToggleChanges }: Props) {
+/** _Document_Header_: key, title, status, file path, the _Change_Toggle_ and the _Change_Base_Picker_. */
+export function DocumentHeader({ view, changeState, changesOn, onToggleChanges, versions, base, onPickBase }: Props) {
   return (
     <div className="document-header" data-testid="document-header">
       <div className="header-key">{view.key}</div>
@@ -18,6 +22,7 @@ export function DocumentHeader({ view, changeState, changesOn, onToggleChanges }
         {view.summary ? <span className="badge">{view.summary.status}</span> : <span className="badge error">summary failed: {view.summaryError}</span>}
         <span className="muted">{view.path}</span>
         <ChangeToggle state={changeState} on={changesOn} onToggle={onToggleChanges} />
+        <ChangeBasePicker versions={versions} base={versions.some((v) => v.version === base) ? base : undefined} onPick={onPickBase} />
       </div>
     </div>
   );
