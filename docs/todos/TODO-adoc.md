@@ -12,7 +12,7 @@
 - [ ] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list)
 - [ ] Web UI: switch the terminal into the main area (the side panel stays fixed), and back
 - [x] Web UI: tell the terminal from the main area: a subtly different background, or a very thin vertical rule between them; done: the _Panel_Resizer_ shows a 1px rule in --adoc-border-subtle
-- [ ] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover
+- [x] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover; done: fixed two-line title block (line-clamp), the whole title in a fixed floating card over a cut title
 - [ ] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status)
 - [ ] Document list pane: show the last update in small text, relative ("updated 5 min ago")
 - [ ] Web UI: horizontal and vertical scrollbars always show on the page (new, since the UI polish); not reproduced in the demo, which has no terminal panel, so suspect the terminal panel (xterm.js sizing) first

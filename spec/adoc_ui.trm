@@ -150,6 +150,7 @@ card _Document_Row_ in document = {
   part of _Document_List_Pane_
 .contract
   - _Document_Row_ must show the title and status of the _adoc:Document_Summary_ and the _adoc:Document_Key_.
+  - _Document_Row_ must show the title on exactly two lines, cut with an ellipsis when longer, and must show the whole title in a floating card while the pointer is on a cut title.
   - _Document_Row_ must lead to `/p/:plugin/:document` when chosen, and must be marked when its _adoc:Document_ is the one shown.
 .states
   - _Document_Row_ is one of normal, selected, parse-error; in parse-error the user sees the _adoc:Document_Key_ and the parse error instead of the title.
