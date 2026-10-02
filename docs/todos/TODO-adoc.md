@@ -15,3 +15,4 @@
 - [ ] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover
 - [ ] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status)
 - [ ] Document list pane: show the last update in small text, relative ("updated 5 min ago")
+- [ ] Web UI: horizontal and vertical scrollbars always show on the page (new, since the UI polish); not reproduced in the demo, which has no terminal panel, so suspect the terminal panel (xterm.js sizing) first
