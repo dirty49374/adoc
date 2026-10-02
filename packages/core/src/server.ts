@@ -3,6 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve } from 'node:path';
+import { markdown } from '@adoc/plugin-kit';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { z } from 'zod';
 import { AdocError, errorMessage } from './errors.js';
@@ -10,7 +11,7 @@ import { formatMessage, messageFields, MessageQueue, type MessageTarget, type Us
 import { LOCAL_ID_PATTERN, PLUGIN_KEY_PATTERN, parseDocumentTarget } from './names.js';
 import { attachTransport, createTransport, type MessageTransport } from './transports.js';
 import { formatCheck } from './report.js';
-import { checkSkills } from './skills.js';
+import { checkSkills, listSkills, viewSkill } from './skills.js';
 import { readServerRecord, removeServerRecord, writeServerRecord } from './registry.js';
 import { readClaim, CLAIM_FILE, type AgentClaim } from './claim.js';
 import { herdrPanes, herdrSubscribe } from './herdr.js';
@@ -443,6 +444,20 @@ export class AdocServer {
     if (match && method === 'GET') {
       const versions = ws.storedVersions(decodeURIComponent(match[1]!));
       return versions ? sendJson(response, 200, { versions }) : sendJson(response, 404, { error: `${match[1]} does not exist` });
+    }
+    if (path === '/api/skills' && method === 'GET') {
+      const skills = await listSkills(ws);
+      return sendJson(response, 200, { skills: skills.map(({ name, description, scope, pluginKey }) => ({ name, description, scope, pluginKey })) });
+    }
+    match = /^\/api\/skills\/([\w.-]+)$/.exec(path);
+    if (match && method === 'GET') {
+      // The _Skill_View_: the SKILL.md rendered with the plugin-kit Markdown, like a document body.
+      try {
+        const { entry, body } = await viewSkill(ws, match[1]!);
+        return sendJson(response, 200, { name: entry.name, description: entry.description, scope: entry.scope, pluginKey: entry.pluginKey, html: markdown(body).html });
+      } catch (error) {
+        return sendJson(response, 404, { error: errorMessage(error) });
+      }
     }
     if (path === '/api/ui/sessions' && method === 'GET') return sendJson(response, 200, { sessions: this.browserSessions() });
     if (path === '/api/ui/open' && method === 'POST') {

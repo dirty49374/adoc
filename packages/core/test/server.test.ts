@@ -51,6 +51,16 @@ describe('AdocServer', () => {
     await expect.poll(async () => (await json(`${server.url}/api/plugins/TODO/documents`)).documents.length, { timeout: 3000 }).toBe(2);
   });
 
+  it('lists the agent skills and renders one for the skill view', async () => {
+    const { server } = await start();
+    const { skills } = await json(`${server.url}/api/skills`);
+    expect(skills.map((s: { name: string }) => s.name)).toEqual(expect.arrayContaining(['adoc', 'adoc-plugin-authoring', 'adoc-todo']));
+    expect(skills.find((s: { name: string }) => s.name === 'adoc-todo')).toMatchObject({ pluginKey: 'TODO' });
+    const todo = await json(`${server.url}/api/skills/adoc-todo`);
+    expect(todo.html).toContain('<h1>TODO documents</h1>');
+    expect((await fetch(`${server.url}/api/skills/nope`)).status).toBe(404);
+  });
+
   it('writes an edited main file when its version is current, with the diff since the first unsent edit', async () => {
     const { server, f } = await start();
     const file = await json(`${server.url}/api/documents/TODO-gui/file`);

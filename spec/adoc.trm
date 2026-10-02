@@ -351,6 +351,7 @@ concept _Plugin_Tab_ in plugin = {
 concept _Agent_Skill_ in plugin = {
   A folder `skill/` with a `SKILL.md` in the Agent Skills format inside its owner folder: the core package (`adoc`, the assigned agent's workflow), the _Plugin_Kit_ (`adoc-plugin-authoring`) and each _Plugin_ (its _Plugin_Skill_).
 .relations
+  references _adoc:Adoc_Web_UI_
   references _adoc:Plugin_Skill_
   read by _Assigned_Agent_
   installed by _Skill_Install_Command_
@@ -361,6 +362,7 @@ concept _Agent_Skill_ in plugin = {
 .contract
   - Every _Agent_Skill_ must be the folder `skill/` of its owner folder, so that installing it never copies the owner's code.
   - `adoc skill view <name>` must show the `SKILL.md` of the _Agent_Skill_ with that name.
+  - The _Adoc_Web_UI_ must show every _Agent_Skill_ read-only, rendered like a document body, so that the person reads what the agent reads.
 .remarks
   - Chosen: the Agent Skills format (agentskills.io): a folder with `SKILL.md` whose front matter has `name` and `description`.
 }

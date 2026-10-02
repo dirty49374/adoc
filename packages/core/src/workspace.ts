@@ -80,6 +80,8 @@ export interface PluginInfo {
   /** The plugin folder and the scope of the place it was loaded from (_Plugin_Directory_). */
   directory?: string;
   scope?: Scope;
+  /** The name of the _Plugin_Skill_, such as `adoc-kanban`. */
+  skill?: string;
   /** The _Plugin_Client_Module_, when the plugin has one: whether it has a stylesheet too. */
   client?: { style: boolean };
   error?: string;
@@ -224,7 +226,10 @@ export class Workspace {
       if (p.directory) info.directory = p.directory;
       // Looked up on every call: a plugin may build its client module while the server runs.
       if (p.definition && p.directory && existsSync(join(p.directory, 'client', 'index.js'))) info.client = { style: existsSync(join(p.directory, 'client', 'index.css')) };
-      if (p.skill) info.scope = p.skill.scope;
+      if (p.skill) {
+        info.scope = p.skill.scope;
+        info.skill = p.skill.name;
+      }
       if (p.error) info.error = p.error;
       return info;
     });

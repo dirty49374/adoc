@@ -1,8 +1,10 @@
 import { Archive } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { api, type SummaryEntry } from '../api.js';
 import { PinButton } from '../fold.js';
 import { useLive } from '../live.js';
+import { useWorkspace } from '../workspace.js';
 import { readStored, writeStored } from '../storage.js';
 import { useClock } from '../time.js';
 import { DocumentRow } from './DocumentRow.js';
@@ -17,6 +19,7 @@ type ListState = { phase: 'loading' } | { phase: 'plugin-error'; error: string }
  * without archived documents unless the archive button shows only them; `onPin` offers pinning while a document is shown.
  */
 export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned }: { pluginKey: string; selected?: string; pinned: boolean; onPin?: (pinned: boolean) => void; unpinned: boolean }) {
+  const skill = useWorkspace()?.plugins.find((p) => p.key === pluginKey)?.skill;
   const { revision } = useLive();
   const [state, setState] = useState<ListState>({ phase: 'loading' });
   const [sort, setSort] = useState<DocumentSort>(() => {
@@ -47,7 +50,14 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
     <aside className={`document-list-pane foldable${unpinned ? ' unpinned' : ''}`} data-testid="document-list-pane">
       <div className="pane-rail fold-closed">{pluginKey}</div>
       <div className="pane-title fold-open">
-        {archive ? `${pluginKey} · ARCHIVE` : pluginKey}
+        <span className="pane-title-name">
+          {archive ? `${pluginKey} · ARCHIVE` : pluginKey}
+          {skill && (
+            <Link className="skill-link" to={`/skills/${skill}`} title={`The agent skill of ${pluginKey}: how the agent works with these documents`} data-testid="skill-link">
+              SKILL.md
+            </Link>
+          )}
+        </span>
         <span className="pane-title-controls">
           <DocumentSortPicker sort={sort} onPick={pickSort} />
           <button className={`quiet${archive ? ' active' : ''}`} onClick={() => setArchive(!archive)} title={archive ? 'Back to the documents' : 'Show only archived documents'} data-testid="list-archive">

@@ -13,6 +13,8 @@ export interface PluginInfo {
   documents: number;
   /** The plugin's client module (`client/index.js`), and whether it has a stylesheet. */
   client?: { style: boolean };
+  /** The name of the plugin's agent skill, such as `adoc-kanban`. */
+  skill?: string;
 }
 
 export interface CheckEntry {
@@ -107,6 +109,13 @@ export interface ActionRequest {
 
 export type ActionResponse = { status: 'applied' | 'sent'; version?: string; message?: PublicMessage } | { status: 'refused'; reason: string } | { status: 'failed'; error: string };
 
+export interface SkillInfo {
+  name: string;
+  description: string;
+  scope: 'project' | 'user';
+  pluginKey?: string;
+}
+
 export type EditResponse = { status: 'applied'; version: string; diff: string } | { status: 'refused'; reason: string };
 
 export class HttpError extends Error {
@@ -135,6 +144,8 @@ export const api = {
   references: (targets: string[]) => request<{ references: ReferenceInfo[] }>(`/api/references?targets=${targets.map(encodeURIComponent).join(',')}`),
   sendComments: (body: { target?: MessageTarget; text?: string; comments: UserComment[] }) => request<{ message: PublicMessage }>('/api/messages', post(body)),
   sendAction: (body: ActionRequest) => request<ActionResponse>('/api/actions', post(body)),
+  skills: () => request<{ skills: SkillInfo[] }>('/api/skills'),
+  skill: (name: string) => request<SkillInfo & { html: string }>(`/api/skills/${encodeURIComponent(name)}`),
   file: (key: string) => request<{ key: string; version: string; file: string; text: string }>(`/api/documents/${encodeURIComponent(key)}/file`),
   editFile: (key: string, body: { version: string; text: string; since?: string }) =>
     request<EditResponse>(`/api/documents/${encodeURIComponent(key)}/file`, post(body)),
