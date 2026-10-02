@@ -68,3 +68,16 @@ adoc을 다른 프로젝트나 다른 사람이 쓰려면 설치 방법이 필�
 - **설치 시점:** skill 설치는 `adoc skill install`로 따로 합니다. `adoc init`은 skill이 설치되어 있는지 한 번 검사해서 없으면 경고합니다.
 - **plugin 위치:** 사용자별 adoc 설정 디렉터리와 프로젝트별 디렉터리, 양쪽에 둘 수 있게 합니다.
 - **plugin 업데이트:** plugin에 GitHub URL 등 출처를 등록하면 업데이트할 수 있게 합니다. 나중 일이라 TODO로 넘깁니다.
+- **plugin별 skill:** plugin은 SKILL.md와 코드로 이루어집니다. 지금의 `guide.md`는 SKILL.md로 바뀝니다. user scope plugin의 skill은 user scope skill로, project scope plugin의 skill은 project scope skill로 설치합니다. 코드는 skill 디렉터리로 옮기지 않습니다.
+- **검사:** adoc을 쓸 때마다 skill이 없거나(missing) 프로그램보다 오래되었는지(outdated) 항상 검사해서 알려 줍니다.
+- **plugin 디렉터리:** 관례를 그대로 따릅니다(XDG: `~/.config/adoc/plugins/`, 프로젝트: `.adoc/plugins/`).
+- **패키지 이름:** 더 고민합니다(npm의 `adoc`은 다른 패키지가 쓰고 있음).
+
+## Findings: Vercel `skills` 실험
+
+2026-10-02, `skills@1.7.0`. SKILL.md와 index.ts가 한 폴더에 있는 plugin을 `npx skills add ../plugin-todo -a claude-code -y`로 설치했습니다.
+
+- SKILL.md가 있는 **폴더 전체가 복사**되었습니다: `.claude/skills/adoc-todo/SKILL.md`와 함께 `index.ts`도 들어갔습니다. 따라서 "코드는 skill 디렉터리로 옮기지 않는다"를 지키려면, plugin 폴더 안에서 SKILL.md를 하위 폴더에 따로 두어야 합니다(예: `plugins/todo/skill/SKILL.md`).
+- 프로젝트 루트에 `skills-lock.json`이 생깁니다. commit할지 정해야 합니다.
+- agent가 하나(`claude-code`)뿐이라 symlink 대신 복사로 설치되었습니다.
+
