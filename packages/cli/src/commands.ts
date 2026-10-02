@@ -375,7 +375,7 @@ export const groups: Record<string, string> = {
   message: 'Receive user messages',
   plugin: 'Inspect declared plugins',
   document: 'Find documents',
-  skill: 'Show and install agent guides',
+  skill: 'Show and install agent skills',
   ui: 'Inspect and control browser sessions of the web UI',
   agent: 'Claim and show the assigned agent',
 };
