@@ -1,0 +1,17 @@
+# adoc demo workspace. Plugins come from the adoc repository.
+plugins:
+  - key: TODO
+    from: ../../plugins/todo
+  - key: TASK
+    from: ../../plugins/task
+  - key: KANBAN
+    from: ../../plugins/kanban
+watch:
+  - docs
+agent:
+  name: demo-agent
+  transport:
+    kind: wait
+server:
+  host: 0.0.0.0
+  port: 7701

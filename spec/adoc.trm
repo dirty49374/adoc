@@ -1,0 +1,869 @@
+@knowledge adoc
+@viewpoints specification
+@description {
+  Concepts and operations of adoc, a harness-independent framework in which an agent edits plugin-defined documents kept in git, a user reads the rendered documents in a web UI, and the user's comments and actions reach the agent as one-time messages, with plugin code optionally changing documents on the user's actions.
+}
+@scope {
+  Cover the workspace, its home directory and configuration, the command line and MCP surfaces, plugins and the interface they implement, documents and their identifiers and versions, references between documents, rendering markup and actions, user messages with their format and delivery, the server and web UI, and the checks and warnings.
+  Exclude concrete plugins such as TODO, TASK or KANBAN, the visual layout of the web UI, change history, authentication and real-time concurrent editing.
+}
+
+concept _Adoc_Workspace_ in workspace = {
+  A directory that adoc manages, normally a git repository, holding one _Adoc_Home_.
+.relations
+  references _Document_Version_
+  holds _Adoc_Home_
+  contains _Document_
+  git shown by _Adoc_Web_UI_
+  git checked by _Adoc_Check_Command_
+  served by _Adoc_Server_
+.contract
+  - Git must be the version control of every _Document_ in an _Adoc_Workspace_; adoc itself must not require git to run.
+  - An _Adoc_Web_UI_ must show whether the _Adoc_Workspace_ is inside a git repository, and _Adoc_Check_Command_ must report a warning when it is not.
+  - An _Adoc_Workspace_ must not keep change history apart from git commits.
+.remarks
+  - Chosen: git commit messages stand in for change history and comment threads.
+  - Chosen: a missing git repository is shown, not refused, because adoc never calls git; a future git-related field, such as a commit hash, shows "no git" instead.
+  - Non-goal: real-time concurrent editing. Conflicting writes are refused through _Document_Version_, not merged.
+}
+
+concept _Adoc_Home_ in workspace = {
+  The `.adoc` directory of an _Adoc_Workspace_, which holds the _Adoc_Config_ and selects the workspace for every command.
+.relations
+  part of _Adoc_Workspace_
+  holds _Adoc_Config_
+  selected by _Adoc_CLI_
+.contract
+  - The _Adoc_CLI_ must select the _Adoc_Home_ from the `--home` option first, then the `ADOC_HOME` environment variable, then the nearest `.adoc` directory from the current directory upward.
+  - The _Adoc_CLI_ must refuse a workspace command when no _Adoc_Home_ is found, and name the `adoc init` command.
+.remarks
+  - Chosen: the same discovery order as aterm.
+}
+
+concept _Adoc_Config_ in workspace = {
+  The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, and the server address of one _Adoc_Workspace_.
+.relations
+  configures _Adoc_Workspace_
+  inside _Adoc_Home_
+  declares _Plugin_
+  assigns _Plugin_Key_
+  declares _Watch_Path_
+  declares _Assigned_Agent_
+  configures _User_Message_Transport_
+  configures _Adoc_Server_
+.contract
+  - Each _Plugin_ declared in an _Adoc_Config_ must name its source as a local path or an npm package, and the _Plugin_Key_ under which it is used.
+  - An _Adoc_Config_ must declare exactly one _Assigned_Agent_ with a name and one _User_Message_Transport_ with the settings of its kind.
+  - An _Adoc_Config_ must declare the host and port of the _Adoc_Server_.
+.remarks
+  - Chosen: the _Adoc_Config_ assigns the _Plugin_Key_, so one plugin package may serve two keys in one workspace.
+  - Example: `plugins: [{key: TODO, from: ./.adoc/plugins/todo}]`, `watch: [docs]`, `agent: {name: adoc-dev, transport: {kind: hc, target: mldev:ahq-dev/adoc-dev}}`, `server: {host: 0.0.0.0, port: 7700}`.
+}
+
+concept _Watch_Path_ in workspace = {
+  A directory declared in _Adoc_Config_ under which the _Adoc_Server_ watches files to find and track every _Document_.
+.relations
+  filtered by _Plugin_Key_
+  inspected by _Adoc_Check_Command_
+  declared in _Adoc_Config_
+  watched by _Adoc_Server_
+  holds _Document_
+.contract
+  - A _Document_ outside every _Watch_Path_ must not be visible to adoc.
+  - A file under two overlapping _Watch_Path_ entries must count once.
+  - A file under a _Watch_Path_ whose name does not start with a declared _Plugin_Key_ and a hyphen must be ignored, except as stated by _Adoc_Check_Command_.
+.remarks
+  - Chosen: the location of a _Document_ is not fixed. A directory per plugin under docs, such as `docs/tasks/`, is recommended.
+}
+
+concept _Assigned_Agent_ in workspace = {
+  The single agent that receives every _User_Message_ of an _Adoc_Workspace_ and edits its documents.
+.relations
+  belongs to _Adoc_Workspace_
+  receives _User_Message_
+  edits _Document_
+  reads _Plugin_Agent_Guide_
+  commits changes of _Plugin_Action_Handler_
+.contract
+  - An _Adoc_Workspace_ must have exactly one _Assigned_Agent_.
+  - An _Assigned_Agent_ must change a _Document_ by editing its files directly.
+  - An _Assigned_Agent_ must read the current file of a _Document_ before editing it, because a _Plugin_Action_Handler_ may have changed it.
+  - An _Assigned_Agent_ must commit its changes to git explicitly, together with any uncommitted change made by a _Plugin_Action_Handler_.
+.remarks
+  - Chosen: adoc provides no generic editing operation and no editing command for the agent.
+  - Chosen: adoc never commits on its own.
+  - Chosen: one agent for now. Several agents may be allowed later.
+}
+
+concept _Adoc_CLI_ in surface = {
+  The `adoc` command line, whose commands take the form `adoc <noun> <verb>` in the manner of aterm and serve both people and the _Assigned_Agent_.
+.relations
+  serves _Assigned_Agent_
+  references _Document_
+  selects _Adoc_Home_
+  shared with _Adoc_MCP_Tool_
+  includes _User_Message_Wait_Command_
+  includes _Adoc_Check_Command_
+  includes _Browser_Open_Command_
+  finds server by _Server_Record_
+  starts _Adoc_Server_
+  shows _Plugin_Agent_Guide_
+.contract
+  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open` and `adoc check`.
+  - Every finite result of the _Adoc_CLI_ must support `--output text`, `--output markdown`, `--output json` and `--output yaml`, with text as the default.
+  - A command of the _Adoc_CLI_ that needs the running _Adoc_Server_ must find it through the _Server_Record_ and must fail with a clear error when no _Adoc_Server_ is running.
+  - Every command of the _Adoc_CLI_ must answer `--help` with its usage, behavior and an example.
+.remarks
+  - Chosen: no command edits a _Document_; the agent edits files directly.
+  - Chosen: `adoc skill` exposes each _Plugin_Agent_Guide_ the way `aterm skill` exposes Skills, plus the guide `adoc` for the assigned agent's workflow and `adoc-plugin-authoring` for writing plugins.
+  - Chosen: `bin/adoc` in the adoc repository runs the command line of that checkout.
+}
+
+concept _Adoc_MCP_Tool_ in surface = {
+  The single MCP tool `adoc` with the arguments `cmd` and `stdin`, which runs any command of the _Adoc_CLI_ without the executable prefix, in the manner of aterm.
+.relations
+  mirrors _Adoc_CLI_
+  served by _Adoc_Server_
+  started by _Adoc_CLI_
+.contract
+  - The _Adoc_MCP_Tool_ must accept `cmd` as an _Adoc_CLI_ command line without the leading `adoc`, and `stdin` as the text that the command would read from standard input.
+  - The _Adoc_MCP_Tool_ must return the same result as the same command of the _Adoc_CLI_.
+  - `adoc mcp run` must serve the _Adoc_MCP_Tool_ over stdio, and with `--with-server` must also host the _Adoc_Server_ in the same process.
+  - An _Adoc_Server_ must serve the _Adoc_MCP_Tool_ over HTTP at `/mcp`.
+  - Over stdio, standard output must carry only MCP messages, and diagnostics must go to standard error.
+  - The _Adoc_MCP_Tool_ must refuse process and installation commands, such as `server run`, `mcp run` and `skill install`.
+.remarks
+  - Example: `adoc({cmd: "message wait"})`.
+}
+
+concept _Plugin_ in plugin = {
+  A package that defines one kind of _Document_ by implementing the _Plugin_Interface_, and that an _Adoc_Config_ binds to one _Plugin_Key_.
+.relations
+  bound by _Adoc_Config_
+  implements _Plugin_Interface_
+  identified by _Plugin_Key_
+  defines _Document_
+  provides _Plugin_Renderer_
+  provides _Plugin_Action_Handler_
+  provides _Plugin_Agent_Guide_
+  returns _Document_Summary_
+  decides form of _Document_Anchor_
+  shown as _Plugin_Tab_
+  permits _Document_Reference_
+  loaded by _Adoc_Server_
+.contract
+  - A _Plugin_ must decide whether each of its documents is one file or one folder, and in which file format.
+  - A _Plugin_ must decide the form of the _Document_Anchor_ values of its documents.
+  - A _Plugin_ must not read or embed data of another _Plugin_; a _Document_Reference_ is the only connection allowed.
+  - When a _Plugin_ fails to load, the _Adoc_Server_ must still start, and its _Plugin_Tab_ must show the load error.
+.remarks
+  - Example: a TODO plugin and a specification plugin may both store Markdown and still be different plugins.
+}
+
+concept _Plugin_Interface_ in plugin = {
+  The object a _Plugin_ default-exports from its `index.ts` through `definePlugin` of the _Plugin_Kit_: description, layout, summarize, render, the optional renderChanges and actions, and guide.
+.relations
+  references _adoc:Adoc_Web_UI_
+  implemented by _Plugin_
+  declared with _Plugin_Kit_
+  called by _Adoc_Server_
+  takes _Document_
+  receives _Document_Key_
+  summarize returns _Document_Summary_
+  render runs _Plugin_Renderer_
+  actions run _Plugin_Action_Handler_
+  guide gives _Plugin_Agent_Guide_
+  returns text of _User_Action_Message_
+  feeds _Document_Summary_List_
+  references _Document_Version_
+.contract
+  - Every function of the _Plugin_Interface_ that concerns one _Document_ must receive the _Document_Key_, its plugin key, its local id, its path, its main file, the text of the main file and the texts of all its files.
+  - The layout must be either a file with an extension, such as `.md`, or a folder with an entry file name, such as `bug.yaml`.
+  - The summarize function must return one _Document_Summary_; a thrown error is the parse error.
+  - The render function must return the body HTML; a thrown error is the parse error.
+  - The optional renderChanges function must receive the current _Document_ and an earlier version of it and return body HTML that shows the changes; without it, the _Adoc_Web_UI_ must show a line diff of the main file.
+  - Each function in actions, keyed by action name, must return the new text of the main file, new texts of files of a folder document, and the text of the _User_Action_Message_, each optional; it must not write files itself.
+  - The guide must be Markdown text or the URL of a Markdown file.
+  - `definePlugin` must reject a wrong definition with one line per wrong field, and the _Adoc_Server_ must validate every returned summary and action result the same way.
+.remarks
+  - Chosen: the _Adoc_Server_ writes the files returned by an action, so that _Document_Version_ checking stays in one place.
+  - Chosen: the _Adoc_Server_ builds the _Document_Summary_List_ by calling summarize for each _Document_; a _Plugin_ has no separate list function.
+  - Chosen: a thrown error becomes the parse error, so plugins need no try/catch.
+}
+
+concept _Plugin_Kit_ in plugin = {
+  The package `@adoc/plugin-kit`, the only package a _Plugin_ imports, which provides `definePlugin`, the `html` template, Markdown rendering with references and source positions, and helpers that write the _Anchor_Markup_Convention_.
+.relations
+  used by _Plugin_
+  defines _Plugin_Interface_
+  writes _Anchor_Markup_Convention_
+  renders _Document_Reference_
+  documented by _Plugin_Agent_Guide_
+  styled by _Adoc_Web_UI_
+.contract
+  - The _Plugin_Kit_ must provide a helper for every attribute of the _Anchor_Markup_Convention_, so that no plugin writes an attribute name by hand.
+  - The `html` template of the _Plugin_Kit_ must escape every interpolated value except fragments it produced.
+  - The Markdown rendering of the _Plugin_Kit_ must turn `[[KEY]]` and `[[KEY#anchor]]` into marked _Document_Reference_ links and must escape raw HTML.
+  - The _Adoc_Web_UI_ must style the generic `adoc-*` classes listed in the authoring guide, so that a plugin needs no CSS of its own.
+  - The authoring guide of the _Plugin_Kit_ must contain a complete working plugin and the rules that avoid load errors.
+.remarks
+  - Chosen: a plugin is one folder with `index.ts` and `guide.md`, loaded without a build step through Node's type stripping.
+  - Chosen: the authoring guide is shown by `adoc skill view adoc-plugin-authoring`.
+}
+
+concept _Plugin_Key_ in plugin = {
+  The identifier under which an _Adoc_Config_ uses a _Plugin_, written in uppercase letters only, such as TASK.
+.relations
+  identifies _Plugin_
+  assigned by _Adoc_Config_
+  unique within _Adoc_Workspace_
+  prefixes _Document_Key_
+.contract
+  - A _Plugin_Key_ must consist of the uppercase letters A to Z only.
+  - Each _Plugin_ in an _Adoc_Workspace_ must have a distinct _Plugin_Key_.
+.remarks
+  - Chosen: a _Plugin_Key_ has no hyphen, so the first hyphen of a _Document_Key_ always separates its parts.
+}
+
+concept _Plugin_Renderer_ in plugin = {
+  The part of a _Plugin_ that renders one of its documents into an HTML string that becomes the body of a _Document_Detail_View_, marked by _Anchor_Markup_Convention_.
+.relations
+  part of _Plugin_
+  renders body of _Document_Detail_View_
+  follows _Anchor_Markup_Convention_
+  marks _Document_Anchor_
+  marks control of _Document_Action_
+  recognizes _Document_Reference_
+  parses _Document_
+  runs on _Adoc_Server_
+  output shown by _Adoc_Web_UI_
+.contract
+  - A _Plugin_Renderer_ must mark every _Document_Anchor_, every _Document_Reference_ and every control of a _Document_Action_ by _Anchor_Markup_Convention_.
+  - A _Plugin_Renderer_ must recognize the _Document_Reference_ notation of its documents.
+  - A _Plugin_Renderer_ must return an error message when it cannot parse a _Document_, and the _Adoc_Web_UI_ must show that error in place of the body.
+  - A _Plugin_Renderer_ must run on the _Adoc_Server_ and return the body as an HTML string.
+  - A _Plugin_Renderer_ must not ship scripts; every user operation must be a _Document_Action_ declared by _Anchor_Markup_Convention_.
+.remarks
+  - Chosen: plugin code runs only on the _Adoc_Server_, so plugins cannot diverge in browser behavior and stay cheap to write.
+}
+
+concept _Plugin_Action_Handler_ in plugin = {
+  The part of a _Plugin_ that runs on the _Adoc_Server_ when a _Document_Action_ occurs, and that may change the _Document_, send a _User_Action_Message_, or both.
+.relations
+  part of _Plugin_
+  handles _Document_Action_
+  runs on _Adoc_Server_
+  may change _Document_
+  may send _User_Action_Message_
+  checked against _Document_Version_
+  replaced by _Default_Action_Handler_
+  errors shown in _Adoc_Web_UI_
+  leaves commit to _Assigned_Agent_
+.contract
+  - The _Adoc_Server_ must refuse to apply a change from a _Plugin_Action_Handler_ when the current _Document_Version_ differs from the one carried by the _Document_Action_, and the _Adoc_Web_UI_ must show the refusal.
+  - A refused change must not send its _User_Action_Message_ either.
+  - When a _Plugin_Action_Handler_ fails, the _Adoc_Web_UI_ must show the error, and nothing must be changed or sent.
+  - A change made through a _Plugin_Action_Handler_ must stay uncommitted until the _Assigned_Agent_ commits.
+.remarks
+  - Example: clicking a TODO checkbox stores the done flag in the file and sends "TODO-gui#123 checked" to the agent.
+  - Chosen: one path for every browser interaction. Program-driven changes and messages to the agent are two optional effects of the same handler, not two mechanisms.
+  - Chosen: optimistic concurrency, so that a stale write never silently overwrites a change by the agent.
+}
+
+concept _Default_Action_Handler_ in plugin = {
+  The handler of adoc itself that takes a _Document_Action_ that its _Plugin_ has no handler for, changes nothing, and sends a _User_Action_Message_ requesting the action.
+.relations
+  replaces _Plugin_Action_Handler_
+  handles _Document_Action_
+  sends _User_Action_Message_
+  serves _Plugin_
+  references _Document_
+.contract
+  - The _Default_Action_Handler_ must handle every _Document_Action_ whose name has no handler in the actions of its _Plugin_.
+  - The _Default_Action_Handler_ must not change any _Document_.
+  - The text of its _User_Action_Message_ must be `user request: <action name> <value>`, where the value of a toggle is the new checked state and the value of a drag is `<value> to <drop value>`.
+.remarks
+  - Example: the TASK status buttons have no handler and send "user request: set-status DONE".
+}
+
+concept _Plugin_Tab_ in plugin = {
+  The _Adoc_Web_UI_ tab of one _Plugin_, made of its _Document_List_View_ and its _Document_Detail_View_.
+.relations
+  shows _Plugin_
+  part of _Adoc_Web_UI_
+  has_part _Document_List_View_
+  has_part _Document_Detail_View_
+.contract
+  - An _Adoc_Web_UI_ must show one _Plugin_Tab_ per _Plugin_.
+  - A _Plugin_Tab_ must show documents of its own _Plugin_ only.
+}
+
+concept _Plugin_Agent_Guide_ in plugin = {
+  Help or skill text in which a _Plugin_ tells the _Assigned_Agent_ how to work with its documents, shown by `adoc skill view adoc-<plugin key in lowercase>` and installable as an agent skill.
+.relations
+  part of _Plugin_
+  read by _Assigned_Agent_
+  shown by _Adoc_CLI_
+  explains _Document_Anchor_
+  explains _Document_Local_ID_
+  explains _Document_Action_
+  explains _User_Action_Message_
+  explains _Plugin_Action_Handler_
+.contract
+  - A _Plugin_Agent_Guide_ must explain the file layout and format of the documents of its _Plugin_.
+  - A _Plugin_Agent_Guide_ must let the agent locate any _Document_Anchor_ of its _Plugin_ in the files.
+  - A _Plugin_Agent_Guide_ must state the recommended form of a new _Document_Local_ID_.
+  - A _Plugin_Agent_Guide_ must list each _Document_Action_ name of its _Plugin_, what its _Plugin_Action_Handler_ already does, and what the agent is expected to do on the resulting _User_Action_Message_.
+}
+
+concept _Document_ in document = {
+  One unit of content of one _Plugin_, stored as one file or one folder in an _Adoc_Workspace_ and identified by one _Document_Key_.
+.relations
+  defined by _Plugin_
+  identified by _Document_Key_
+  versioned by _Document_Version_
+  stored in _Adoc_Workspace_
+  changed by _Assigned_Agent_
+  changed by _Plugin_Action_Handler_
+  shown in _Adoc_Web_UI_
+.contract
+  - The file or folder name of a _Document_ must be its _Document_Key_, followed by the file extension when it is a file, such as `TASK-1231.md` or `BUG-42/`.
+  - Every file inside the folder of a folder _Document_ must belong to that _Document_.
+  - The git copy of a _Document_ must be its source of truth.
+  - A _Document_ must change only through the _Assigned_Agent_, a _Plugin_Action_Handler_ or a direct file edit.
+  - An _Adoc_Web_UI_ must not write any file of a _Document_.
+.remarks
+  - Chosen: direct file edits by people are allowed but not recommended.
+}
+
+concept _Document_Version_ in document = {
+  A hash of the contents of a _Document_ that changes whenever any of its files changes, used to detect stale writes.
+.relations
+  versions _Document_
+  carried by _Document_Action_
+  guards _Plugin_Action_Handler_
+.contract
+  - The _Document_Version_ of a file _Document_ must be the hash of the file contents.
+  - The _Document_Version_ of a folder _Document_ must be the hash of the relative paths and contents of all its files.
+  - The _Document_Version_ must not depend on file times.
+}
+
+concept _Document_Key_ in document = {
+  The canonical identifier of a _Document_, made of its _Plugin_Key_, a hyphen and its _Document_Local_ID_, such as TASK-1231.
+.relations
+  identifies _Document_
+  composed of _Plugin_Key_
+  composed of _Document_Local_ID_
+  written in _Document_Reference_
+  written in _User_Message_
+  shown in _Adoc_Web_UI_
+  checked by _Duplicate_Document_Key_Warning_
+.contract
+  - A _Document_Key_ must be the only written form of a document identity, in file names, in a _Document_Reference_, in a _User_Message_ and in the _Adoc_Web_UI_.
+  - The first hyphen of a _Document_Key_ must separate the _Plugin_Key_ from the _Document_Local_ID_.
+}
+
+concept _Document_Local_ID_ in document = {
+  The part of a _Document_Key_ after its first hyphen, which distinguishes documents within one _Plugin_, such as 260930-order-paging or gui.
+.relations
+  part of _Document_Key_
+  distinguishes _Document_
+  unique within _Plugin_
+  explained by _Plugin_Agent_Guide_
+.contract
+  - A _Document_Local_ID_ must use only lowercase letters, digits, hyphens, underscores and dots.
+  - A _Document_Local_ID_ must be unique within its _Plugin_.
+  - adoc must not generate a _Document_Local_ID_; the person or agent that creates the _Document_ chooses it.
+.remarks
+  - Chosen: lowercase only, so that case-insensitive file systems cannot merge two documents.
+  - Chosen: Korean or other non-ASCII titles are not allowed; a title is written in English words.
+  - Chosen: the recommended forms are a date and a title (yymmdd-title) or a title alone, because sequential numbers collide across git branches. Sequential numbers are acceptable for solo work.
+  - Chosen: an individual _Plugin_ may still offer a numbering function of its own.
+}
+
+concept _Document_Anchor_ in document = {
+  A position inside a _Document_ that a _User_Message_ can target, written after a hash sign that follows the _Document_Key_, such as TODO-gui#123.
+.relations
+  points into _Document_
+  appended to _Document_Key_
+  form decided by _Plugin_
+  explained by _Plugin_Agent_Guide_
+  targeted by _User_Message_
+.contract
+  - A _Document_Anchor_ must be written as the _Document_Key_, a hash sign and the anchor value.
+  - The form of a _Document_Anchor_ value must be decided by the _Plugin_ of its _Document_.
+.remarks
+  - Example: a line number for a Markdown source, a key path for a YAML or JSON source, or an item id.
+  - Chosen: the agent understands the anchor through the _Plugin_Agent_Guide_; adoc does not interpret it.
+}
+
+concept _Anchor_Markup_Convention_ in document = {
+  The rule by which a _Plugin_Renderer_ marks rendered elements with data attributes so that the _Adoc_Web_UI_ can recognize anchors, source positions, references and each _Document_Action_.
+.relations
+  references _adoc:Document_
+  references _adoc:Document_Detail_View_
+  followed by _Plugin_Renderer_
+  written by _Plugin_Kit_
+  read by _Adoc_Web_UI_
+  marks _Document_Anchor_
+  marks _Document_Reference_
+  carries _Document_Key_
+  declares _Document_Action_
+  supplies position to _User_Comment_
+.contract
+  - A rendered element of a _Document_Anchor_ must carry the anchor value in `data-adoc-anchor`.
+  - A rendered element may carry its source position, written as `file:line`, in `data-adoc-source`, and the _Adoc_Web_UI_ must put the nearest one into a _User_Comment_ on that element or text.
+  - A rendered _Document_Reference_ must carry the referenced _Document_Key_, optionally with `#anchor`, in `data-adoc-ref`.
+  - A rendered control of a _Document_Action_ must carry the action name in `data-adoc-action`, the kind in `data-adoc-kind` and the value in `data-adoc-value`.
+  - A drop zone of a drag action must carry the action name in `data-adoc-drop` and its value in `data-adoc-drop-value`.
+.remarks
+  - Chosen: data attributes rather than class names, because class names serve styling.
+  - Chosen: the body never carries the _Document_Key_ itself, because a _Document_Detail_View_ shows one _Document_ and its frame knows the key.
+}
+
+concept _Document_Action_ in document = {
+  A user operation on a control in the body of a _Document_Detail_View_, declared by _Anchor_Markup_Convention_ and handled by a _Plugin_Action_Handler_ or the _Default_Action_Handler_.
+.relations
+  declared by _Anchor_Markup_Convention_
+  occurs in _Document_Detail_View_
+  handled by _Plugin_Action_Handler_
+  handled by _Default_Action_Handler_
+  sent by _Adoc_Web_UI_
+  received by _Adoc_Server_
+  carries _Document_Version_
+  may carry _Document_Anchor_
+.contract
+  - A _Document_Action_ must be one of the kinds click, toggle and drag-and-drop.
+  - A new kind of _Document_Action_ must be added to _Anchor_Markup_Convention_ for all plugins, never inside one plugin.
+  - An _Adoc_Web_UI_ must send each _Document_Action_ to the _Adoc_Server_ with its kind, its name, its value, the new checked state for a toggle, the drop value for a drag, its _Document_Anchor_ if any, and the _Document_Version_ that was rendered.
+  - A click on a control of a _Document_Action_ must never start a comment; commenting on an element must use a separate comment control of the _Adoc_Web_UI_.
+.remarks
+  - Chosen: click, toggle and drag-and-drop cover the TODO, TASK and KANBAN plugins.
+}
+
+concept _Document_Reference_ in document = {
+  A link written in the content of one _Document_ that points to another _Document_, or to a _Document_Anchor_ in it, by its _Document_Key_, such as `[[TASK-1231]]` in Markdown.
+.relations
+  points to _Document_
+  may point to _Document_Anchor_
+  written with _Document_Key_
+  crosses _Plugin_
+  notation recognized by _Plugin_Renderer_
+  resolved by _Document_Reference_Resolution_
+  checked by _Broken_Document_Reference_Warning_
+  shows _Document_Summary_
+  shown in _Adoc_Web_UI_
+.contract
+  - A _Document_Reference_ may point to a _Document_ of any _Plugin_.
+  - The notation of a _Document_Reference_ must be recognized by the _Plugin_Renderer_ of the containing _Document_.
+  - An _Adoc_Web_UI_ must show the _Document_Summary_ of the referenced _Document_ as the tooltip of a _Document_Reference_, and must open that _Document_ when the reference is followed.
+.remarks
+  - Chosen: a _Document_Reference_ is a function of adoc itself, so it does not mix plugins.
+  - Chosen: the recommended notation in Markdown is the _Document_Key_ enclosed in double square brackets; a _Plugin_Renderer_ may define another notation, including for YAML or JSON values.
+  - Chosen: pointing to a _Document_Anchor_, such as TASK-1231#method, is desirable but optional.
+}
+
+concept _Document_Summary_ in document = {
+  The small object that the summarize function of a _Plugin_ returns for one _Document_, made of its title, its status and any free fields.
+.relations
+  describes _Document_
+  returned by _Plugin_
+  shown in _Adoc_Web_UI_
+.contract
+  - A _Document_Summary_ must contain a title and a status.
+  - A _Document_Summary_ may contain free fields, and the _Adoc_Web_UI_ must show them as a table.
+  - The status of a _Document_Summary_ must be free text that adoc shows as is and never interprets.
+.remarks
+  - Example: a tooltip reading "Improve xyz service (DONE)" above a table of the free fields.
+  - Chosen: no common status category for now.
+}
+
+concept _Document_Summary_List_ in document = {
+  The list that the _Adoc_Server_ builds for one _Plugin_ with one entry for each of its documents, which is the _Document_Summary_ or, when summarize fails, the _Document_Key_ with the parse error.
+.relations
+  built by _Adoc_Server_
+  has_member _Document_Summary_
+  covers _Document_
+  covers _Watch_Path_
+  for _Plugin_
+  shows _Document_Key_
+  used by _Document_List_View_
+.contract
+  - A _Document_Summary_List_ must contain exactly one entry for each _Document_ of its _Plugin_ under every _Watch_Path_.
+  - An entry whose summarize failed must show the _Document_Key_ and the parse error instead of a _Document_Summary_.
+}
+
+concept _Document_List_View_ in document = {
+  The part of a _Plugin_Tab_ that the _Adoc_Web_UI_ renders as a plain list of the documents of its _Plugin_ from a _Document_Summary_List_.
+.relations
+  part of _Plugin_Tab_
+  rendered by _Adoc_Web_UI_
+  lists _Plugin_
+  uses _Document_Summary_List_
+  references _Plugin_Renderer_
+.contract
+  - A _Document_List_View_ must be rendered by the _Adoc_Web_UI_ alone, without a _Plugin_Renderer_.
+}
+
+concept _Document_Detail_View_ in document = {
+  The part of a _Plugin_Tab_ that shows one _Document_, with a frame rendered by the _Adoc_Web_UI_ around a body rendered by the _Plugin_Renderer_.
+.relations
+  part of _Plugin_Tab_
+  hosted by _Adoc_Web_UI_
+  body rendered by _Plugin_Renderer_
+  shows _Document_
+  frame shows _Document_Key_
+  frame shows _Document_Summary_
+  frame shows _Document_Reference_
+  comments on _Document_Anchor_
+  collects _User_Comment_
+  reads _Anchor_Markup_Convention_
+  contains _Document_Action_
+  sends to _Adoc_Server_
+.contract
+  - The body of a _Document_Detail_View_ must be the HTML string returned by the _Plugin_Renderer_.
+  - The _Adoc_Web_UI_ must render the frame around the body: the header with the _Document_Key_ and the title and status from the _Document_Summary_, a comment control on each marked _Document_Anchor_, a comment input on selected text that adds a draft _User_Comment_, the tooltip and broken mark of each _Document_Reference_, and errors and warnings.
+  - The _Adoc_Web_UI_ must send every _Document_Action_ in the body to the _Adoc_Server_.
+}
+
+concept _User_Message_ in message = {
+  A one-time message to the _Assigned_Agent_ about something the user did in the _Adoc_Web_UI_, either a _User_Comment_Message_ composed in the _Adoc_Web_UI_ or a _User_Action_Message_ produced by a handler on the _Adoc_Server_.
+.relations
+  originates in _Adoc_Web_UI_
+  held by _Adoc_Server_
+  delivered to _Assigned_Agent_
+  delivered by _User_Message_Transport_
+  written in _User_Message_Format_
+  aims at _User_Message_Target_
+  has_member _User_Comment_Message_
+  has_member _User_Action_Message_
+  names _Document_Key_
+  names _Document_Anchor_
+  references _User_Comment_
+.contract
+  - A _User_Message_ must be either a _User_Comment_Message_ or a _User_Action_Message_.
+  - An _Adoc_Server_ must hold a _User_Message_ until the _User_Message_Transport_ delivers it, and must forget it after delivery.
+  - An _Adoc_Server_ must deliver held messages in the order they were created.
+  - An _Adoc_Web_UI_ must show every _User_Message_ that has not been delivered yet.
+  - A _User_Action_Message_ and each _User_Comment_ of a _User_Comment_Message_ must name its _User_Message_Target_ by _Document_Key_ and _Document_Anchor_ where the target level has them.
+.remarks
+  - Chosen: a _User_Message_ is equivalent to input typed into the agent's chat.
+  - Chosen: the agent reacts by editing documents or doing the requested work.
+  - Chosen: there is no channel from the agent back to the user for now; the user watches the agent window. Copying the herdr window into the web UI may be considered later.
+  - Chosen: held messages may be lost when the _Adoc_Server_ restarts.
+}
+
+concept _User_Comment_Message_ in message = {
+  A _User_Message_ that carries one or more _User_Comment_ entries the user collected in the _Adoc_Web_UI_ and sent together.
+.relations
+  is_a _User_Message_
+  composed in _Adoc_Web_UI_
+  has_member _User_Comment_
+.contract
+  - A _User_Comment_Message_ must carry at least one _User_Comment_, in the order the user added them.
+  - A single comment must be sent as a _User_Comment_Message_ with one _User_Comment_, never in another shape.
+.remarks
+  - Chosen: comments are collected as drafts and sent together, like the comments of one code review, so that the agent handles related requests in one turn.
+  - Chosen: attachments are not supported for now.
+}
+
+concept _User_Comment_ in message = {
+  One comment inside a _User_Comment_Message_: text about one _User_Message_Target_, with the selected text and source position when there are any.
+.relations
+  member of _User_Comment_Message_
+  aims at _User_Message_Target_
+  carries _User_Comment_Quote_
+  position from _Anchor_Markup_Convention_
+  about _Document_
+  about _Plugin_
+.contract
+  - A _User_Comment_ must carry its _User_Message_Target_ and non-empty text.
+  - A _User_Comment_ must carry the _User_Comment_Quote_ when the user selected text.
+  - A _User_Comment_ must carry the source position when the commented element or text carries one.
+}
+
+concept _User_Comment_Quote_ in message = {
+  The text the user selected by dragging in a _Document_Detail_View_, carried in a _User_Comment_ so that the agent can find the position even after the _Document_ has changed.
+.relations
+  carried by _User_Comment_
+  selected in _Document_Detail_View_
+  locates text in _Document_
+  references _Document_Version_
+.remarks
+  - Chosen: no _Document_Version_ is carried; the agent locates the position by the quote.
+}
+
+concept _User_Action_Message_ in message = {
+  A _User_Message_ that a _Plugin_Action_Handler_ or the _Default_Action_Handler_ produces to tell the agent about a _Document_Action_, either as a request or as a notice of a change already made.
+.relations
+  is_a _User_Message_
+  produced by _Plugin_Action_Handler_
+  produced by _Default_Action_Handler_
+  reports _Document_Action_
+  may report change of _Document_
+.contract
+  - A _User_Action_Message_ must carry the action name, its value and the text written by its handler.
+  - A _User_Action_Message_ must state whether its handler has already changed the _Document_.
+}
+
+concept _User_Message_Target_ in message = {
+  What a _User_Message_ is about, at one of four levels: the whole _Adoc_Workspace_, one _Plugin_, one _Document_ or one _Document_Anchor_.
+.relations
+  scope of _User_Message_
+  may be _Adoc_Workspace_
+  may be _Plugin_
+  may be _Document_
+  may be _Document_Anchor_
+  composed in _Adoc_Web_UI_
+  composed as _User_Comment_
+.contract
+  - A _User_Message_Target_ must be exactly one of the workspace, plugin, document and anchor levels.
+  - An _Adoc_Web_UI_ must let the user give a _User_Comment_ any of the four levels.
+.remarks
+  - Example: "create a new issue" targets a _Plugin_ because no _Document_ exists yet.
+}
+
+concept _User_Message_Format_ in message = {
+  The text form in which every _User_Message_ reaches the agent: a header line with the message number and kind, followed by YAML fields.
+.relations
+  fields from _Adoc_Web_UI_
+  formats _User_Message_
+  used by _User_Message_Transport_
+  used by _User_Message_Wait_Command_
+  names _User_Message_Target_
+  lists _User_Comment_
+  includes _User_Comment_Quote_
+  states target with _Document_Key_
+  states target with _Plugin_Key_
+  states target with _Document_Anchor_
+  reports change of _Document_
+  run of _Adoc_Server_
+.contract
+  - A message in _User_Message_Format_ must start with the line `[adoc message <number>] <kind>`, where kind is comment or action and the number increases within one run of the _Adoc_Server_.
+  - A target in _User_Message_Format_ must be written as `workspace`, a _Plugin_Key_, a _Document_Key_ or a _Document_Key_ with a _Document_Anchor_.
+  - A message of kind comment must carry the field comments, a list with one entry per _User_Comment_, each with the fields target and text and, when present, quote and source.
+  - A message of kind action must carry the field target.
+  - A message of kind action must carry the fields action, value, applied and text, and the field to for a drag, where applied is true when the handler has already changed the _Document_.
+  - Multi-line values in _User_Message_Format_ must use YAML block scalars.
+  - With `--output json` or `--output yaml`, the same fields must be returned as structured data.
+.remarks
+  - Example of a comment: `[adoc message 17] comment`, then `comments:` with entries such as `- target: TASK-1231#method`, `source: docs/tasks/TASK-1231.md:19`, `quote: infinite scroll`, `text: use page numbers instead of infinite scroll`.
+  - Example of an action: `[adoc message 18] action`, then `target: TODO-gui#123`, `action: toggle`, `value: true`, `applied: true` and `text: TODO-gui#123 checked`.
+  - Chosen: the plugin writes only the text of an action; adoc writes every other field, because those come from the _Adoc_Web_UI_.
+}
+
+concept _User_Message_Transport_ in message = {
+  The integration through which a _User_Message_ reaches the _Assigned_Agent_, configured in _Adoc_Config_ and kept separate from the message content.
+.relations
+  delivers _User_Message_
+  delivers to _Assigned_Agent_
+  configured by _Adoc_Config_
+  uses _User_Message_Format_
+  has_part _User_Message_Wait_Command_
+.contract
+  - All kinds of _User_Message_Transport_ must share one interface, so that a new kind can be added without changing the rest of adoc.
+  - adoc must provide the wait, hc and herdr kinds of _User_Message_Transport_.
+  - The wait kind of _User_Message_Transport_ must be the default.
+  - Every kind of _User_Message_Transport_ must deliver the same text in _User_Message_Format_.
+  - A push kind, such as hc or herdr, must deliver each _User_Message_ as soon as it is created, and must keep it held when delivery fails.
+}
+
+concept _Adoc_Server_ in runtime = {
+  The local adoc process of one _Adoc_Workspace_ that loads plugins, watches files, writes changes returned by handlers, serves the _Adoc_Web_UI_ and the _Adoc_MCP_Tool_, and holds every _User_Message_ until delivery.
+.relations
+  serves _Adoc_Workspace_
+  configured by _Adoc_Config_
+  loads _Plugin_
+  watches _Watch_Path_
+  builds _Document_Summary_List_
+  serves _Adoc_Web_UI_
+  serves _Adoc_MCP_Tool_
+  holds _User_Message_
+  started by _Adoc_CLI_
+  writes _Server_Record_
+  tracks _Browser_Session_
+  keeps _Document_Version_Store_
+.contract
+  - An _Adoc_Server_ must run locally, one per _Adoc_Workspace_, in the foreground of `adoc server run` or inside `adoc mcp run --with-server`.
+  - An _Adoc_Server_ must accept remote connections within an internal network without authentication.
+  - An _Adoc_Server_ must refuse to start on a port that is already in use.
+  - An _Adoc_Server_ must write its _Server_Record_ when it starts and remove it when it stops, and must refuse to start while the _Server_Record_ of the same _Adoc_Workspace_ names a running process.
+  - An _Adoc_Server_ must reload a _Plugin_ loaded from a local path whenever a file in its folder changes, and refresh the _Adoc_Web_UI_.
+  - An _Adoc_Server_ must remove scripts and inline event attributes from every body HTML before serving it.
+.remarks
+  - Chosen: implemented in TypeScript.
+  - Chosen: plugin reloading shortens the loop of writing a plugin to editing `index.ts` and looking at the page.
+  - Non-goal: authentication.
+}
+
+concept _Adoc_Web_UI_ in runtime = {
+  The browser interface served by the _Adoc_Server_ where the user reads rendered documents, composes a _User_Comment_Message_ and triggers each _Document_Action_.
+.relations
+  served by _Adoc_Server_
+  has_part _Plugin_Tab_
+  composes _User_Comment_Message_
+  collects _User_Comment_
+  sends _Document_Action_
+.contract
+  - An _Adoc_Web_UI_ must offer one composer, outside every _Plugin_Tab_, that sends the collected draft _User_Comment_ entries and an optional comment on the current target as one _User_Comment_Message_.
+  - An _Adoc_Web_UI_ must keep draft _User_Comment_ entries across navigation until they are sent or removed.
+}
+
+procedure _User_Message_Wait_Command_ in message = {
+  The `adoc message wait` command with which the _Assigned_Agent_ blocks until at least one _User_Message_ is held, then receives every held message.
+.relations
+  part of _Adoc_CLI_
+  invoked by _Assigned_Agent_
+  returns _User_Message_
+  uses _User_Message_Format_
+  part of _User_Message_Transport_
+  needs _Adoc_Server_
+.contract
+  - _User_Message_Wait_Command_ must return all held messages in creation order, each in _User_Message_Format_, and the _Adoc_Server_ must treat them as delivered.
+  - _User_Message_Wait_Command_ must return with no message when the `--timeout` option expires.
+  - _User_Message_Wait_Command_ must fail with a clear error when no _Adoc_Server_ is running.
+.remarks
+  - Chosen: `adoc message list` shows held messages without delivering them.
+}
+
+procedure _Adoc_Check_Command_ in runtime = {
+  The `adoc check` command that reports every warning and error of an _Adoc_Workspace_ without changing anything.
+.relations
+  part of _Adoc_CLI_
+  checks _Adoc_Workspace_
+  runs _Duplicate_Document_Key_Warning_
+  runs _Broken_Document_Reference_Warning_
+  reports parse errors of _Document_
+  reports load errors of _Plugin_
+  reports names under _Watch_Path_
+  compares with _Plugin_Key_
+  output repeated by _Adoc_Server_
+.contract
+  - _Adoc_Check_Command_ must report duplicate document keys, broken document references, documents that fail to parse and plugins that fail to load.
+  - _Adoc_Check_Command_ must report a file under a _Watch_Path_ whose name looks like a document key but whose prefix is not a declared _Plugin_Key_.
+  - _Adoc_Check_Command_ must report a warning when the _Adoc_Workspace_ is not inside a git repository.
+  - _Adoc_Check_Command_ must exit with a nonzero status when it reports an error.
+  - An _Adoc_Server_ must print the same report when it starts.
+.remarks
+  - Chosen: the agent runs it after editing, like `aterm corpus check`.
+}
+
+procedure _Document_Change_Notification_ in runtime = {
+  Detect the creation, change, deletion or renaming of a file under a _Watch_Path_, find the owning _Document_ and _Plugin_, and refresh the _Adoc_Web_UI_.
+.relations
+  run by _Adoc_Server_
+  watches _Watch_Path_
+  finds _Document_
+  notifies _Plugin_
+  owner found by _Plugin_Key_
+  refreshes _Adoc_Web_UI_
+  updates _Document_Summary_List_
+  reacts to _Plugin_Action_Handler_
+  preserves draft of _User_Comment_
+.contract
+  - _Document_Change_Notification_ must find the owning _Plugin_ from the _Plugin_Key_ at the start of the file or folder name.
+  - _Document_Change_Notification_ must react to direct file edits as well as to edits by the agent and by a _Plugin_Action_Handler_.
+  - _Document_Change_Notification_ must update the _Document_Summary_List_ when a _Document_ is created, deleted or renamed.
+  - _Document_Change_Notification_ must keep, as far as possible, the user's text selection and every draft _User_Comment_ not yet sent when the _Adoc_Web_UI_ re-renders.
+}
+
+procedure _Document_Reference_Resolution_ in document = {
+  Find the _Document_ that a _Document_Reference_ points to and return its _Document_Summary_ from its _Plugin_.
+.relations
+  resolves _Document_Reference_
+  finds _Document_
+  reads _Document_Key_
+  selects by _Plugin_Key_
+  asks _Plugin_
+  returns _Document_Summary_
+  reports to _Broken_Document_Reference_Warning_
+.contract
+  - _Document_Reference_Resolution_ must select the _Plugin_ by the _Plugin_Key_ of the referenced _Document_Key_.
+  - _Document_Reference_Resolution_ must report a missing _Document_ instead of returning a _Document_Summary_.
+}
+
+procedure _Duplicate_Document_Key_Warning_ in runtime = {
+  Warn the user when two files or folders under the watch paths carry the same _Document_Key_.
+.relations
+  run by _Adoc_Server_
+  run by _Adoc_Check_Command_
+  checks _Document_Key_
+  covers _Watch_Path_
+  shown in _Adoc_Web_UI_
+.contract
+  - _Duplicate_Document_Key_Warning_ must show a warning in the _Adoc_Web_UI_ that names every conflicting file or folder.
+}
+
+procedure _Broken_Document_Reference_Warning_ in runtime = {
+  Warn the user when a _Document_Reference_ points to a _Document_ that does not exist.
+.relations
+  run by _Adoc_Server_
+  run by _Adoc_Check_Command_
+  checks _Document_Reference_
+  uses _Document_Reference_Resolution_
+  detects missing _Document_
+  shown in _Adoc_Web_UI_
+.contract
+  - _Broken_Document_Reference_Warning_ must mark each broken _Document_Reference_ where the _Adoc_Web_UI_ shows it.
+}
+
+concept _Server_Record_ in runtime = {
+  The small file outside the _Adoc_Workspace_, in the runtime directory of the computer, in which a running _Adoc_Server_ records its process id, URL and workspace.
+.relations
+  written by _Adoc_Server_
+  read by _Adoc_CLI_
+  names _Adoc_Workspace_
+.contract
+  - A _Server_Record_ must be keyed by the absolute path of its _Adoc_Workspace_, so that one computer runs at most one _Adoc_Server_ per workspace.
+  - A _Server_Record_ whose process no longer runs must be treated as absent.
+.remarks
+  - Chosen: the record lives in `$XDG_RUNTIME_DIR/adoc/`, or the system temporary directory, never in the repository.
+}
+
+concept _Browser_Session_ in runtime = {
+  One browser tab of the _Adoc_Web_UI_ connected to the _Adoc_Server_, identified by an id that the tab keeps for its lifetime.
+.relations
+  connects to _Adoc_Server_
+  part of _Adoc_Web_UI_
+  moved by _Browser_Open_Command_
+.contract
+  - An _Adoc_Server_ must track for each _Browser_Session_ its id, whether it is connected, the time of its last access and its current location.
+  - The last access of a _Browser_Session_ must be updated on every navigation, click, key press and focus in that tab.
+  - A _Browser_Session_ must survive a reload of its tab and keep its id.
+.remarks
+  - Chosen: sessions are kept in memory and forgotten when the _Adoc_Server_ restarts.
+}
+
+procedure _Browser_Open_Command_ in surface = {
+  The `adoc ui open` command with which the _Assigned_Agent_ sends a _Browser_Session_ to a _Document_, a _Document_Anchor_ or a _Plugin_; `adoc ui list` lists the sessions.
+.relations
+  part of _Adoc_CLI_
+  invoked by _Assigned_Agent_
+  moves _Browser_Session_
+  opens _Document_
+  opens _Document_Anchor_
+  opens _Plugin_
+.contract
+  - _Browser_Open_Command_ must send the connected _Browser_Session_ with the latest last access, unless `--session` names another.
+  - _Browser_Open_Command_ must fail with a clear error when no _Browser_Session_ is connected.
+  - `adoc ui list` must show each _Browser_Session_ with its id, connection state, last access and location, most recent first.
+.remarks
+  - Chosen: the name follows `aterm ui`.
+  - Example: after writing a NOTE, the agent runs `adoc ui open NOTE-261002-note-plugin` so that the person sees it.
+}
+
+concept _Document_Version_Store_ in runtime = {
+  The memory in which the _Adoc_Server_ keeps the files of recent versions of each _Document_, so that the changes since an earlier _Document_Version_ can be shown.
+.relations
+  references _adoc:Adoc_Web_UI_
+  references _adoc:Document_
+  kept by _Adoc_Server_
+  stores _Document_Version_
+  feeds _Plugin_Interface_
+.contract
+  - The _Document_Version_Store_ must keep at least the last twenty versions of each _Document_ seen since the _Adoc_Server_ started.
+  - A request for the changes of a _Document_ must name the base _Document_Version_; when the store no longer holds it, the _Adoc_Web_UI_ must say that the changes are unavailable.
+.remarks
+  - Chosen: the base is the version the browser showed last, so the person sees everything that changed since they last looked.
+  - Chosen: memory only, so changes from before a restart are not available; git keeps the full history.
+}

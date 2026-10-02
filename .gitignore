@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.playwright-mcp/
+.aterm/usage.jsonl
+*.swp

@@ -1,0 +1,15 @@
+title: Sprint 12
+columns: [TODO, RUNNING, DONE, REMOVE]
+cards:
+  - id: c1
+    text: Paginate the order list [[TASK-260930-order-paging]]
+    column: DONE
+  - id: c2
+    text: Payment status sync [[TASK-261001-payment-sync]]
+    column: TODO
+  - id: c3
+    text: Dark mode for the login screen
+    column: DONE
+  - id: c4
+    text: Review the legacy report API
+    column: RUNNING

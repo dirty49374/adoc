@@ -1,0 +1,363 @@
+@knowledge adoc_ui
+@viewpoints ui
+@description {
+  The regions of the adoc web UI, element by element, each tied to the adoc Terms it shows or invokes.
+}
+@scope {
+  Cover every region and control of _adoc:Adoc_Web_UI_: the shell, the plugin tabs, the document list and detail panes, the comment composer at every target level, reference tooltips, the message dock, action notices and warnings.
+  Exclude colours, typography and exact wording, which belong in remarks.
+}
+
+panel _App_Shell_ in shell = {
+  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area and the _Message_Dock_.
+.relations
+  references _adoc:Adoc_Web_UI_
+  references _adoc:Document_
+  shows _adoc:Adoc_Workspace_
+  contains _Plugin_Tab_Bar_
+  contains _Connection_Status_Label_
+  contains _Git_Status_Label_
+  contains _Warning_Link_
+  contains _Message_Dock_
+  contains _Workspace_Home_Panel_
+  contains _Document_List_Pane_
+  contains _Document_Detail_Pane_
+.contract
+  - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
+  - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`.
+  - _App_Shell_ must show the _Message_Dock_ at every route.
+.states
+  - _App_Shell_ is one of connecting, connected, disconnected; in disconnected the user sees the last loaded content and the _Connection_Status_Label_ says the server is unreachable.
+.rules
+  - Through _App_Shell_ the user must never write a _adoc:Document_ file directly.
+.remarks
+  - Chosen: three columns on wide screens (list, detail, dock); the dock collapses to a bottom drawer on narrow screens.
+}
+
+label _Connection_Status_Label_ in shell = {
+  The label in the top bar of _App_Shell_ that shows whether the browser is connected to the _adoc:Adoc_Server_.
+.relations
+  shows _adoc:Adoc_Server_
+  part of _App_Shell_
+.contract
+  - _Connection_Status_Label_ must show connected while the live event channel of the _adoc:Adoc_Server_ is open, and disconnected otherwise, updated on every change.
+}
+
+label _Git_Status_Label_ in shell = {
+  The label in the top bar of _App_Shell_, beside the _Connection_Status_Label_, that shows with a git icon whether the _adoc:Adoc_Workspace_ is inside a git repository.
+.relations
+  shows _adoc:Adoc_Workspace_
+  beside _Connection_Status_Label_
+  part of _App_Shell_
+.contract
+  - _Git_Status_Label_ must show "git" when the _adoc:Adoc_Workspace_ is inside a git repository and "no git" otherwise, updated whenever the workspace is reloaded.
+}
+
+link _Warning_Link_ in shell = {
+  The link in the top bar of _App_Shell_ that shows the number of warnings and errors and leads to the _Warning_Panel_.
+.relations
+  leads to _Warning_Panel_
+  counts _adoc:Adoc_Check_Command_
+  part of _App_Shell_
+.contract
+  - _Warning_Link_ must show the number of entries of the report of _adoc:Adoc_Check_Command_, and must be hidden when the number is zero.
+  - _Warning_Link_ must lead to the _Warning_Panel_.
+}
+
+panel _Warning_Panel_ in shell = {
+  The panel opened from the _Warning_Link_ that lists every warning and error of the workspace.
+.relations
+  shows _adoc:Adoc_Check_Command_
+  shows _adoc:Duplicate_Document_Key_Warning_
+  shows _adoc:Broken_Document_Reference_Warning_
+  opened by _Warning_Link_
+.contract
+  - _Warning_Panel_ must show the same entries as _adoc:Adoc_Check_Command_, each with its kind, its message and the file path it concerns.
+.states
+  - _Warning_Panel_ is one of empty, showing; in empty the user sees that there is nothing to report.
+}
+
+list _Plugin_Tab_Bar_ in shell = {
+  The row of tabs under the top bar of _App_Shell_, one link per _adoc:Plugin_Tab_.
+.relations
+  references _adoc:Adoc_Config_
+  references _adoc:Plugin_
+  shows _adoc:Plugin_Tab_
+  shows _adoc:Plugin_Key_
+  part of _App_Shell_
+.contract
+  - _Plugin_Tab_Bar_ must show one row per _adoc:Plugin_ in the order of _adoc:Adoc_Config_, labelled with its _adoc:Plugin_Key_.
+  - _Plugin_Tab_Bar_ must lead to `/p/:plugin` when a tab is chosen, and must mark the tab of the current route.
+  - _Plugin_Tab_Bar_ must mark a tab whose _adoc:Plugin_ failed to load.
+.states
+  - _Plugin_Tab_Bar_ is one of empty, showing; in empty the user sees that no plugin is declared in the _adoc:Adoc_Config_.
+}
+
+panel _Workspace_Home_Panel_ in shell = {
+  The main area of _App_Shell_ at the route `/`, which introduces the workspace and its plugins.
+.relations
+  references _adoc:Plugin_Key_
+  shows _adoc:Plugin_
+  part of _App_Shell_
+.contract
+  - _Workspace_Home_Panel_ must show each _adoc:Plugin_ with its _adoc:Plugin_Key_, its number of documents and its load error, if any.
+.states
+  - _Workspace_Home_Panel_ is one of loading, showing.
+}
+
+list _Document_List_Pane_ in document = {
+  The left pane of a plugin route that shows one _Document_Row_ per entry of the _adoc:Document_Summary_List_ of the current _adoc:Plugin_.
+.relations
+  references _adoc:Document_
+  references _adoc:Document_Key_
+  references _adoc:Plugin_
+  shows _adoc:Document_Summary_List_
+  realizes _adoc:Document_List_View_
+  contains _Document_Row_
+.contract
+  - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, ordered by _adoc:Document_Key_.
+  - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
+.states
+  - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.
+}
+
+card _Document_Row_ in document = {
+  One row of the _Document_List_Pane_ that presents one entry of the _adoc:Document_Summary_List_.
+.relations
+  references _adoc:Document_
+  references _adoc:Document_Summary_List_
+  shows _adoc:Document_Summary_
+  shows _adoc:Document_Key_
+  leads to _Document_Detail_Pane_
+  part of _Document_List_Pane_
+.contract
+  - _Document_Row_ must show the title and status of the _adoc:Document_Summary_ and the _adoc:Document_Key_.
+  - _Document_Row_ must lead to `/p/:plugin/:document` when chosen, and must be marked when its _adoc:Document_ is the one shown.
+.states
+  - _Document_Row_ is one of normal, selected, parse-error; in parse-error the user sees the _adoc:Document_Key_ and the parse error instead of the title.
+}
+
+panel _Document_Detail_Pane_ in document = {
+  The right pane of a document route that shows one _adoc:Document_: the _Document_Header_ and the _Document_Body_.
+.relations
+  references _adoc:Document_Change_Notification_
+  references _adoc:Plugin_Renderer_
+  realizes _adoc:Document_Detail_View_
+  shows _adoc:Document_
+  contains _Document_Header_
+  contains _Document_Body_
+  contains _Action_Notice_
+.contract
+  - _Document_Detail_Pane_ must reload the _Document_Body_ when _adoc:Document_Change_Notification_ reports a change of the shown _adoc:Document_.
+.states
+  - _Document_Detail_Pane_ is one of loading, showing, parse-error, missing; in parse-error the user sees the error from the _adoc:Plugin_Renderer_ in place of the _Document_Body_; in missing the user sees that the _adoc:Document_ no longer exists.
+.rules
+  - Through _Document_Detail_Pane_ the user must never lose an open comment input when the _adoc:Document_ re-renders.
+}
+
+label _Document_Header_ in document = {
+  The header at the top of the _Document_Detail_Pane_ that shows the identity and state of the shown _adoc:Document_.
+.relations
+  references _adoc:Document_
+  shows _adoc:Document_Key_
+  shows _adoc:Document_Summary_
+  contains _Change_Toggle_
+  part of _Document_Detail_Pane_
+.contract
+  - _Document_Header_ must show the _adoc:Document_Key_, the title and the status of the _adoc:Document_Summary_, and the file path, updated on every change.
+  - _Document_Header_ must contain the _Change_Toggle_.
+}
+
+panel _Document_Body_ in document = {
+  The region of the _Document_Detail_Pane_ that holds the HTML returned by the _adoc:Plugin_Renderer_ and turns its marked elements into anchors, references and actions.
+.relations
+  references _adoc:Adoc_Server_
+  references _adoc:Document_
+  references _adoc:Document_Anchor_
+  references _adoc:Document_Reference_
+  references _adoc:Document_Version_
+  references _adoc_ui:Document_Detail_Pane_
+  shows _adoc:Plugin_Renderer_
+  reads _adoc:Anchor_Markup_Convention_
+  sends _adoc:Document_Action_
+  contains _Anchor_Comment_Button_
+  contains _Comment_Popover_
+  contains _Reference_Tooltip_
+.contract
+  - _Document_Body_ must show the HTML returned by the _adoc:Plugin_Renderer_ unchanged, except for removing scripts.
+  - _Document_Body_ must send a _adoc:Document_Action_ to the _adoc:Adoc_Server_ with the shown _adoc:Document_Version_ when a marked control is clicked, toggled or dropped onto a marked drop target.
+  - _Document_Body_ must show an _Anchor_Comment_Button_ beside each element marked as a _adoc:Document_Anchor_ while the pointer is over it.
+  - _Document_Body_ must open the _Comment_Popover_ when the user selects text inside it.
+  - _Document_Body_ must show the _Reference_Tooltip_ while the pointer is over an element marked as a _adoc:Document_Reference_, and must lead to the referenced _adoc:Document_ when it is clicked.
+  - _Document_Body_ must mark each _adoc:Document_Reference_ whose _adoc:Document_ does not exist.
+.states
+  - _Document_Body_ is one of current, pending-update; in pending-update a newer version exists while a comment draft is open, and the user sees a notice that the document changed, with the newer version applied when the draft closes.
+.rules
+  - Through _Document_Body_ the user must never start a comment by clicking a control of a _adoc:Document_Action_.
+  - Through _Document_Body_ the user must never send two _adoc:Document_Action_ requests for one click.
+}
+
+button _Anchor_Comment_Button_ in comment = {
+  The small button that appears beside an element marked as a _adoc:Document_Anchor_ in the _Document_Body_ and opens the _Comment_Popover_ for that anchor.
+.relations
+  opens _Comment_Popover_
+  targets _adoc:Document_Anchor_
+  part of _Document_Body_
+.contract
+  - _Anchor_Comment_Button_ must open the _Comment_Popover_ with the _adoc:Document_Anchor_ of its element as the target, and with the source position of that element when it carries one.
+}
+
+panel _Comment_Popover_ in comment = {
+  The popover in the _Document_Body_ that holds a _Draft_Comment_Input_ for one anchor or one piece of selected text, opened by the _Anchor_Comment_Button_ or by selecting text.
+.relations
+  references _adoc:Document_
+  references _adoc:Document_Anchor_
+  contains _Draft_Comment_Input_
+  carries _adoc:User_Comment_Quote_
+  opened by _Anchor_Comment_Button_
+  part of _Document_Body_
+.contract
+  - When opened by selecting text, _Comment_Popover_ must target the nearest enclosing _adoc:Document_Anchor_ of the selection, or the shown _adoc:Document_ when there is none, and must carry the selected text as the _adoc:User_Comment_Quote_.
+  - When opened by the _Anchor_Comment_Button_, _Comment_Popover_ must target that _adoc:Document_Anchor_ and carry no quote.
+  - _Comment_Popover_ must carry the source position of the nearest enclosing element that carries one.
+.states
+  - _Comment_Popover_ is one of closed, open; it stays open until the draft is added or cancelled, even when the _Document_Body_ has a newer version.
+.rules
+  - Through _Comment_Popover_ the user must never lose typed text by leaving the page: when the person or the agent navigates away, the popover must open again with the same text when the person returns to that _adoc:Document_.
+}
+
+input _Draft_Comment_Input_ in comment = {
+  The text input with an Add button inside the _Comment_Popover_ that adds one draft _adoc:User_Comment_ to the _Draft_Comment_List_ without sending anything.
+.relations
+  part of _Comment_Popover_
+  adds to _Draft_Comment_List_
+  composes _adoc:User_Comment_
+.contract
+  - _Draft_Comment_Input_ takes multi-line text; it refuses to add text that is empty after trimming.
+  - _Draft_Comment_Input_ must show its target and quote above the text.
+  - _Draft_Comment_Input_ must add the text with the target, quote and source position of its _Comment_Popover_ as one draft, then close the popover.
+.remarks
+  - Chosen: Ctrl+Enter or Cmd+Enter adds.
+}
+
+list _Draft_Comment_List_ in comment = {
+  The list in the _Message_Dock_, above the _Comment_Composer_, with one row per draft _adoc:User_Comment_ that is not sent yet.
+.relations
+  shows _adoc:User_Comment_
+  part of _Message_Dock_
+  filled by _Draft_Comment_Input_
+  sent by _Comment_Composer_
+.contract
+  - _Draft_Comment_List_ must show one row per draft, in the order added, with its target, quote and text, and a control to remove it.
+  - _Draft_Comment_List_ must keep its drafts across navigation and page reloads in the same browser until they are sent or removed.
+.states
+  - _Draft_Comment_List_ is one of empty, showing; in empty it is hidden.
+.remarks
+  - Chosen: drafts live in the browser only, like an unsent chat input; the server sees them only when they are sent.
+}
+
+input _Comment_Composer_ in comment = {
+  The single text input with a send button, at the bottom of the _Message_Dock_, that sends every draft in the _Draft_Comment_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
+.relations
+  references _adoc:Document_
+  references _adoc:Plugin_
+  references _adoc:User_Comment_
+  references _adoc:User_Message_Format_
+  composes _adoc:User_Comment_Message_
+  targets _adoc:User_Message_Target_
+  sends _Draft_Comment_List_
+  sends to _adoc:Adoc_Server_
+  placed in _Message_Dock_
+.contract
+  - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.
+  - _Comment_Composer_ must let the user widen its target from document to plugin to workspace, and must show the chosen target, written as in _adoc:User_Message_Format_.
+  - _Comment_Composer_ takes multi-line text; it is enabled when the text is not empty after trimming or the _Draft_Comment_List_ is not empty.
+  - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose _adoc:User_Comment_ entries are the drafts in their order, followed by its own text on the chosen target when there is text.
+  - _Comment_Composer_ must clear its text and the _Draft_Comment_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
+  - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
+.rules
+  - Through _Comment_Composer_ the user must never send an empty message.
+  - Through _Comment_Composer_ the user must never lose typed text or drafts because the page re-rendered.
+.remarks
+  - Chosen: one composer for every message, so that sending is one place and one mechanism; targets come from where the user is.
+  - Chosen: Ctrl+Enter or Cmd+Enter sends.
+}
+
+card _Reference_Tooltip_ in document = {
+  The card that appears over an element marked as a _adoc:Document_Reference_ and presents the _adoc:Document_Summary_ of the referenced _adoc:Document_.
+.relations
+  references _adoc:Document_
+  references _adoc:Document_Reference_
+  shows _adoc:Document_Summary_
+  shows _adoc:Document_Key_
+  uses _adoc:Document_Reference_Resolution_
+  part of _Document_Body_
+.contract
+  - _Reference_Tooltip_ must show the title and the status of the referenced _adoc:Document_Summary_ as "title (status)", and every free field as a row of a table.
+.states
+  - _Reference_Tooltip_ is one of loading, showing, broken; in broken the user sees that the referenced _adoc:Document_Key_ does not exist.
+}
+
+panel _Message_Dock_ in message = {
+  The side panel of _App_Shell_ that shows every _adoc:User_Message_ not yet delivered, the _Draft_Comment_List_ and the one _Comment_Composer_.
+.relations
+  references _adoc:Assigned_Agent_
+  references _adoc:User_Message_Transport_
+  shows _adoc:User_Message_
+  contains _Pending_Message_List_
+  contains _Draft_Comment_List_
+  contains _Comment_Composer_
+  part of _App_Shell_
+.contract
+  - _Message_Dock_ must show the _adoc:Assigned_Agent_ name and the kind of _adoc:User_Message_Transport_.
+  - _Message_Dock_ must show the _Pending_Message_List_, then the _Draft_Comment_List_, then the _Comment_Composer_.
+.states
+  - _Message_Dock_ is one of expanded, collapsed; collapsed shows only the number of undelivered messages and drafts.
+}
+
+list _Pending_Message_List_ in message = {
+  The list in the _Message_Dock_ with one row per _adoc:User_Message_ that the _adoc:Adoc_Server_ still holds.
+.relations
+  references _adoc:User_Comment_
+  references _adoc:Adoc_Server_
+  shows _adoc:User_Message_
+  shows _adoc:User_Message_Format_
+  part of _Message_Dock_
+.contract
+  - _Pending_Message_List_ must show one row per held _adoc:User_Message_, ordered by message number, with its number and kind, and the target and text of the action or of each _adoc:User_Comment_.
+  - _Pending_Message_List_ must remove a row as soon as its message is delivered.
+.states
+  - _Pending_Message_List_ is one of empty, showing; in empty the user sees that the agent has received everything.
+}
+
+label _Action_Notice_ in document = {
+  The notice at the top of the _Document_Detail_Pane_ that reports the outcome of the last _adoc:Document_Action_ when it was refused or failed.
+.relations
+  references _adoc:Adoc_Server_
+  references _adoc:Document_Action_
+  references _adoc_ui:Document_Body_
+  shows _adoc:Plugin_Action_Handler_
+  shows _adoc:Document_Version_
+  part of _Document_Detail_Pane_
+.contract
+  - _Action_Notice_ must show that the change was refused because the _adoc:Document_Version_ changed, when the _adoc:Adoc_Server_ refuses it, and the _Document_Body_ must reload.
+  - _Action_Notice_ must show the error of the _adoc:Plugin_Action_Handler_ when it fails.
+  - _Action_Notice_ must disappear on the next successful _adoc:Document_Action_ or when dismissed.
+}
+
+button _Change_Toggle_ in document = {
+  The toggle in the _Document_Header_ that switches the _Document_Body_ between the current version and the changes since the version this browser showed last.
+.relations
+  references _adoc:Document_
+  references _adoc_ui:Document_Body_
+  part of _Document_Header_
+  uses _adoc:Document_Version_Store_
+  shows _adoc:Plugin_Renderer_
+.contract
+  - _Change_Toggle_ must turn on by itself when the shown _adoc:Document_ has a newer version than the one this browser showed last, including when the person opens it after the change.
+  - _Change_Toggle_ must let the person turn the changes off and on.
+  - With the changes on, the _Document_Body_ must show the HTML from renderChanges of the plugin, or a line diff of the main file when the plugin has none.
+  - _Change_Toggle_ must show that changes are unavailable when the base version is no longer in the _adoc:Document_Version_Store_.
+.remarks
+  - Chosen: the base version is remembered per browser and per document.
+}

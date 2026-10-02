@@ -1,0 +1,19 @@
+# adoc for the adoc repository itself. Plugins come from ./plugins.
+plugins:
+  - key: TODO
+    from: ./plugins/todo
+  - key: TASK
+    from: ./plugins/task
+  - key: KANBAN
+    from: ./plugins/kanban
+  - key: NOTE
+    from: ./plugins/note
+watch:
+  - docs
+agent:
+  name: adoc-dev
+  transport:
+    kind: wait
+server:
+  host: 0.0.0.0
+  port: 7700

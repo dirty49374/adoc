@@ -1,0 +1,12 @@
+title: adoc
+columns: [TODO, RUNNING, DONE, REMOVE]
+cards:
+  - id: c1
+    text: Folder layout cleanup
+    column: DONE
+  - id: c2
+    text: Use adoc to develop adoc [[TODO-adoc]]
+    column: RUNNING
+  - id: c3
+    text: Verify hc delivery to another agent
+    column: TODO

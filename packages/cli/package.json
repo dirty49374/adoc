@@ -1,0 +1,30 @@
+{
+  "name": "@adoc/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "adoc": "./dist/entry.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@adoc/core": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.30.1",
+    "commander": "15.0.0",
+    "shell-quote": "1.10.0",
+    "yaml": "2.9.0",
+    "zod": "4.5.4"
+  },
+  "scripts": {
+    "build": "tsc -b && node build.mjs",
+    "check": "tsc -b && tsc -p test",
+    "test": "vitest run --testTimeout 20000"
+  },
+  "devDependencies": {
+    "@types/shell-quote": "1.7.5"
+  }
+}

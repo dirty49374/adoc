@@ -1,0 +1,11 @@
+{
+  "directory": ".claude/skills",
+  "names": [
+    "adoc",
+    "adoc-plugin-authoring",
+    "adoc-todo",
+    "adoc-task",
+    "adoc-kanban",
+    "adoc-note"
+  ]
+}

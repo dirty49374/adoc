@@ -1,0 +1,392 @@
+import { watch, type FSWatcher } from 'node:fs';
+import { readFile, stat } from 'node:fs/promises';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { createRequire } from 'node:module';
+import { dirname, extname, join, resolve } from 'node:path';
+import { WebSocketServer, type WebSocket } from 'ws';
+import { z } from 'zod';
+import { AdocError, errorMessage } from './errors.js';
+import { formatMessage, messageFields, MessageQueue, type MessageTarget, type UserComment, type UserMessage } from './messages.js';
+import { LOCAL_ID_PATTERN, PLUGIN_KEY_PATTERN, parseDocumentTarget } from './names.js';
+import { attachTransport, createTransport, type MessageTransport } from './transports.js';
+import { formatCheck } from './report.js';
+import { readServerRecord, removeServerRecord, writeServerRecord } from './registry.js';
+import type { Workspace } from './workspace.js';
+
+export const PROTOCOL = 'adoc/1';
+
+/** A _Browser_Session_ as the server tracks it. */
+export interface BrowserSession {
+  id: string;
+  connected: boolean;
+  lastAccess: string;
+  location: string;
+}
+
+/** Handles a request outside adoc's own routes, such as `/mcp`. Returns true when it handled the request. */
+export type ServerExtension = (request: IncomingMessage, response: ServerResponse) => Promise<boolean>;
+
+export interface ServerOptions {
+  host?: string;
+  port?: number;
+  extensions?: ServerExtension[];
+  log?: (line: string) => void;
+  debounceMs?: number;
+}
+
+const targetSchema = z.discriminatedUnion('level', [
+  z.object({ level: z.literal('workspace') }),
+  z.object({ level: z.literal('plugin'), pluginKey: z.string().regex(PLUGIN_KEY_PATTERN) }),
+  z.object({ level: z.literal('document'), key: z.string() }),
+  z.object({ level: z.literal('anchor'), key: z.string(), anchor: z.string().min(1) }),
+]);
+
+const commentSchema = z.object({
+  comments: z
+    .array(
+      z.object({
+        target: targetSchema,
+        text: z.string().refine((t) => t.trim() !== '', 'a comment must not be empty'),
+        quote: z.string().optional(),
+        source: z.string().optional(),
+      }),
+    )
+    .min(1, 'a comment message needs at least one comment'),
+});
+
+const actionSchema = z.object({
+  key: z.string(),
+  version: z.string(),
+  event: z.object({
+    kind: z.enum(['click', 'toggle', 'drag']),
+    name: z.string().min(1),
+    value: z.string(),
+    checked: z.boolean().optional(),
+    to: z.string().optional(),
+    anchor: z.string().optional(),
+  }),
+});
+
+const openSchema = z.object({ target: z.string().min(1), session: z.string().optional() });
+
+const WEBAPP_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.map': 'application/json',
+  '.svg': 'image/svg+xml',
+};
+
+function sendJson(response: ServerResponse, status: number, body: unknown): void {
+  response.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache' });
+  response.end(JSON.stringify(body));
+}
+
+async function readBody(request: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += (chunk as Buffer).length;
+    if (size > 1_000_000) throw new AdocError('request.too-large', 'request body is larger than 1 MB');
+    chunks.push(chunk as Buffer);
+  }
+  return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {};
+}
+
+function validTarget(target: MessageTarget, workspace: Workspace): string | undefined {
+  if (target.level === 'plugin' && !workspace.plugin(target.pluginKey)) return `no plugin ${target.pluginKey}`;
+  if (target.level === 'document' || target.level === 'anchor') {
+    const parsed = parseDocumentTarget(target.key);
+    if (!parsed || parsed.anchor !== undefined || !LOCAL_ID_PATTERN.test(parsed.localId)) return `${target.key} is not a document key`;
+  }
+  return undefined;
+}
+
+export function publicMessage(message: UserMessage) {
+  return { ...messageFields(message), formatted: formatMessage(message) };
+}
+
+/**
+ * _Adoc_Server_: serves the _Adoc_Web_UI_, the REST API and live events for one workspace,
+ * watches its files and holds every _User_Message_ until delivery.
+ */
+export class AdocServer {
+  readonly queue = new MessageQueue();
+  readonly transport: MessageTransport;
+  private readonly listener: Server;
+  private readonly sockets: WebSocketServer;
+  private watchers: FSWatcher[] = [];
+  private readonly sessions = new Map<string, BrowserSession & { sockets: Set<WebSocket> }>();
+  private debounce: NodeJS.Timeout | undefined;
+  private chain: Promise<unknown> = Promise.resolve();
+  private readonly host: string;
+  private readonly port: number;
+  private readonly log: (line: string) => void;
+  private readonly webappDirectory = join(dirname(createRequire(import.meta.url).resolve('@adoc/webapp/package.json')), 'dist');
+
+  constructor(
+    readonly workspace: Workspace,
+    private readonly options: ServerOptions = {},
+  ) {
+    this.host = options.host ?? workspace.config.server.host;
+    this.port = options.port ?? workspace.config.server.port;
+    this.log = options.log ?? ((line) => process.stderr.write(line + '\n'));
+    this.transport = createTransport(workspace.config.agent.transport);
+    attachTransport(this.queue, this.transport, this.log);
+    this.listener = createServer((request, response) => {
+      void this.handle(request, response).catch((error) => {
+        if (!response.headersSent) sendJson(response, error instanceof AdocError ? 400 : 500, { error: errorMessage(error) });
+        else response.end();
+      });
+    });
+    this.sockets = new WebSocketServer({ noServer: true });
+    this.listener.on('upgrade', (request, socket, head) => {
+      if (request.url?.split('?')[0] !== '/api/events') return socket.destroy();
+      const session = new URL(request.url ?? '/', 'http://localhost').searchParams.get('session') ?? '';
+      this.sockets.handleUpgrade(request, socket, head, (ws) => this.welcome(ws, session));
+    });
+    this.queue.on('change', () => this.broadcast({ type: 'messages', messages: this.queue.list().map(publicMessage) }));
+  }
+
+  get url(): string {
+    const host = this.host === '0.0.0.0' || this.host === '::' ? '127.0.0.1' : this.host;
+    return `http://${host}:${this.port}`;
+  }
+
+  async start(): Promise<void> {
+    const running = await readServerRecord(this.workspace.root);
+    if (running) throw new AdocError('server.running', `An adoc server for ${this.workspace.root} is already running at ${running.url} (pid ${running.pid}).`);
+    try {
+      await new Promise<void>((resolveListen, reject) => {
+        this.listener.once('error', reject);
+        this.listener.listen(this.port, this.host, () => {
+          this.listener.off('error', reject);
+          resolveListen();
+        });
+      });
+    } catch (error) {
+      throw new AdocError('server.listen', `Cannot listen at ${this.host}:${this.port}: ${errorMessage(error)}`);
+    }
+    await writeServerRecord({ pid: process.pid, url: this.url, workspace: this.workspace.root });
+    for (const path of this.workspace.config.watch) {
+      const absolute = resolve(this.workspace.root, path);
+      try {
+        if (!(await stat(absolute)).isDirectory()) continue;
+        this.watchers.push(watch(absolute, { recursive: true }, () => this.schedule()));
+      } catch {
+        this.log(`adoc: watch path ${path} does not exist`);
+      }
+    }
+    for (const plugin of this.workspace.config.plugins) {
+      if (!plugin.from.startsWith('.') && !plugin.from.startsWith('/')) continue;
+      try {
+        const directory = resolve(this.workspace.root, plugin.from);
+        if ((await stat(directory)).isDirectory()) this.watchers.push(watch(directory, { recursive: true }, () => this.schedulePluginReload()));
+      } catch {
+        // A missing plugin folder is already reported as a load error.
+      }
+    }
+    const report = this.workspace.check();
+    this.log(report.length ? formatCheck(report) : 'adoc check: no problems');
+    const git = this.workspace.git ? 'git' : 'no git';
+    this.log(`adoc server for ${this.workspace.root} at ${this.url} (transport: ${this.transport.kind}, ${git})`);
+  }
+
+  async stop(): Promise<void> {
+    clearTimeout(this.debounce);
+    clearTimeout(this.pluginDebounce);
+    for (const watcher of this.watchers) watcher.close();
+    for (const client of this.sockets.clients) client.terminate();
+    this.sockets.close();
+    const closed = new Promise<void>((done) => this.listener.close(() => done()));
+    this.listener.closeAllConnections();
+    await closed;
+    await removeServerRecord(this.workspace.root);
+  }
+
+  /** Serializes workspace work so that rescans and actions never overlap. */
+  private run<T>(task: () => Promise<T>): Promise<T> {
+    const next = this.chain.then(task, task);
+    this.chain = next.catch(() => undefined);
+    return next;
+  }
+
+  private pluginDebounce: NodeJS.Timeout | undefined;
+
+  private schedulePluginReload(): void {
+    clearTimeout(this.pluginDebounce);
+    this.pluginDebounce = setTimeout(() => {
+      void this.run(() => this.workspace.reloadPlugins()).then(() => {
+        this.log('adoc: plugins reloaded');
+        this.broadcast({ type: 'documents', revision: this.workspace.revision, changed: ['*'] });
+      });
+    }, 200);
+  }
+
+  private schedule(): void {
+    clearTimeout(this.debounce);
+    this.debounce = setTimeout(() => void this.rescan(), this.options.debounceMs ?? 120);
+  }
+
+  /** _Document_Change_Notification_: rescans and tells browsers which documents changed. */
+  async rescan(): Promise<void> {
+    const changed = await this.run(() => this.workspace.refresh());
+    if (changed.length) this.broadcast({ type: 'documents', revision: this.workspace.revision, changed });
+  }
+
+  private welcome(ws: WebSocket, id: string): void {
+    if (id) {
+      const session = this.sessions.get(id) ?? { id, connected: true, lastAccess: new Date().toISOString(), location: '/', sockets: new Set<WebSocket>() };
+      session.sockets.add(ws);
+      session.connected = true;
+      this.sessions.set(id, session);
+      ws.on('message', (data) => {
+        try {
+          const event = JSON.parse(String(data)) as { type?: string; location?: string };
+          if (event.type === 'activity') {
+            session.lastAccess = new Date().toISOString();
+            if (typeof event.location === 'string') session.location = event.location;
+          }
+        } catch {
+          // Ignore malformed browser events.
+        }
+      });
+      ws.on('close', () => {
+        session.sockets.delete(ws);
+        session.connected = session.sockets.size > 0;
+      });
+    }
+    ws.send(JSON.stringify({ type: 'hello', revision: this.workspace.revision, messages: this.queue.list().map(publicMessage) }));
+  }
+
+  /** Every _Browser_Session_, most recent access first. */
+  browserSessions(): BrowserSession[] {
+    return [...this.sessions.values()]
+      .map(({ sockets: _sockets, ...session }) => session)
+      .sort((a, b) => b.lastAccess.localeCompare(a.lastAccess));
+  }
+
+  /** Sends a browser session to a document, an anchor or a plugin; by default the connected session accessed last. */
+  openInBrowser(target: string, sessionId?: string): { session: string; location: string } {
+    let location: string;
+    if (PLUGIN_KEY_PATTERN.test(target)) {
+      if (!this.workspace.plugin(target)) throw new AdocError('ui.target', `No plugin ${target}.`);
+      location = `/p/${target}`;
+    } else {
+      const parsed = parseDocumentTarget(target);
+      if (!parsed || !this.workspace.record(parsed.key)) throw new AdocError('ui.target', `${target} is neither a plugin key nor an existing document.`);
+      location = `/p/${parsed.pluginKey}/${parsed.key}${parsed.anchor ? `#${encodeURIComponent(parsed.anchor)}` : ''}`;
+    }
+    const candidates = this.browserSessions().filter((s) => s.connected && (!sessionId || s.id === sessionId));
+    const chosen = candidates[0];
+    if (!chosen) throw new AdocError('ui.session', sessionId ? `No connected browser session ${sessionId}.` : 'No browser session is connected; open the adoc web UI first.');
+    const session = this.sessions.get(chosen.id)!;
+    for (const socket of session.sockets) socket.send(JSON.stringify({ type: 'navigate', location }));
+    session.location = location;
+    return { session: chosen.id, location };
+  }
+
+  private broadcast(event: unknown): void {
+    const text = JSON.stringify(event);
+    for (const client of this.sockets.clients) if (client.readyState === client.OPEN) client.send(text);
+  }
+
+  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    for (const extension of this.options.extensions ?? []) if (await extension(request, response)) return;
+    const url = new URL(request.url ?? '/', 'http://localhost');
+    const path = url.pathname;
+    const method = request.method ?? 'GET';
+    const ws = this.workspace;
+
+    if (path === '/api/health') return sendJson(response, 200, { protocol: PROTOCOL, workspace: ws.root, name: ws.name, revision: ws.revision });
+    if (path === '/api/workspace' && method === 'GET') {
+      return sendJson(response, 200, {
+        name: ws.name,
+        root: ws.root,
+        revision: ws.revision,
+        agent: { name: ws.config.agent.name, transport: this.transport.kind },
+        git: ws.git,
+        plugins: ws.pluginInfos(),
+        check: ws.check(),
+      });
+    }
+    let match = /^\/api\/plugins\/([A-Z]+)\/documents$/.exec(path);
+    if (match && method === 'GET') {
+      const plugin = ws.plugin(match[1]!);
+      if (!plugin) return sendJson(response, 404, { error: `no plugin ${match[1]}` });
+      return sendJson(response, 200, { pluginKey: plugin.key, error: plugin.error, documents: plugin.error ? [] : ws.summaryList(plugin.key) });
+    }
+    match = /^\/api\/documents\/([^/]+)$/.exec(path);
+    if (match && method === 'GET') {
+      const key = decodeURIComponent(match[1]!);
+      const view = ws.view(key);
+      if (!view) return sendJson(response, 404, { error: `${match[1]} does not exist` });
+      const base = url.searchParams.get('base');
+      return sendJson(response, 200, base && base !== view.version ? { ...view, changes: ws.changes(key, base) } : view);
+    }
+    if (path === '/api/ui/sessions' && method === 'GET') return sendJson(response, 200, { sessions: this.browserSessions() });
+    if (path === '/api/ui/open' && method === 'POST') {
+      const parsed = openSchema.safeParse(await readBody(request));
+      if (!parsed.success) return sendJson(response, 400, { error: 'ui open needs a target' });
+      try {
+        return sendJson(response, 200, this.openInBrowser(parsed.data.target, parsed.data.session));
+      } catch (error) {
+        return sendJson(response, 409, { error: errorMessage(error) });
+      }
+    }
+    if (path === '/api/references' && method === 'GET') {
+      const targets = (url.searchParams.get('targets') ?? '').split(',').filter(Boolean);
+      return sendJson(response, 200, { references: targets.map((t) => ({ target: t, ...ws.resolve(t) })) });
+    }
+    if (path === '/api/messages' && method === 'GET') return sendJson(response, 200, { messages: this.queue.list().map(publicMessage) });
+    if (path === '/api/messages' && method === 'POST') {
+      const parsed = commentSchema.safeParse(await readBody(request));
+      if (!parsed.success) return sendJson(response, 400, { error: parsed.error.issues.map((i) => i.message).join('; ') });
+      const problem = parsed.data.comments.map((c) => validTarget(c.target, ws)).find(Boolean);
+      if (problem) return sendJson(response, 400, { error: problem });
+      const comments: UserComment[] = parsed.data.comments.map((c) => {
+        const comment: UserComment = { target: c.target, text: c.text };
+        if (c.quote) comment.quote = c.quote;
+        if (c.source) comment.source = c.source;
+        return comment;
+      });
+      const message = this.queue.add({ kind: 'comment', comments });
+      return sendJson(response, 201, { message: publicMessage(message) });
+    }
+    if (path === '/api/messages/wait' && method === 'GET') {
+      const timeout = url.searchParams.has('timeout') ? Number(url.searchParams.get('timeout')) : undefined;
+      const abort = new AbortController();
+      response.on('close', () => abort.abort());
+      const messages = await this.queue.wait(timeout, abort.signal);
+      if (abort.signal.aborted && !response.writableEnded && response.destroyed) return;
+      return sendJson(response, 200, { messages: messages.map(publicMessage) });
+    }
+    if (path === '/api/actions' && method === 'POST') {
+      const parsed = actionSchema.safeParse(await readBody(request));
+      if (!parsed.success) return sendJson(response, 400, { error: parsed.error.issues.map((i) => i.message).join('; ') });
+      const { key, version, event } = parsed.data;
+      const actionEvent = Object.fromEntries(Object.entries(event).filter(([, v]) => v !== undefined)) as typeof event;
+      const outcome = await this.run(() => ws.applyAction(key, actionEvent, version));
+      if (outcome.status === 'applied' || outcome.status === 'sent') {
+        const message = outcome.message ? this.queue.add({ kind: 'action', ...outcome.message }) : undefined;
+        if (outcome.status === 'applied') this.broadcast({ type: 'documents', revision: ws.revision, changed: [key] });
+        return sendJson(response, 200, { status: outcome.status, message: message && publicMessage(message) });
+      }
+      return sendJson(response, outcome.status === 'refused' ? 409 : 422, outcome);
+    }
+    if (path.startsWith('/api/')) return sendJson(response, 404, { error: `no route ${method} ${path}` });
+    return this.serveWebapp(path, response);
+  }
+
+  private async serveWebapp(path: string, response: ServerResponse): Promise<void> {
+    const file = /^\/(app\.js|app\.css|app\.js\.map)$/.test(path) ? path.slice(1) : 'index.html';
+    try {
+      const body = await readFile(join(this.webappDirectory, file));
+      response.writeHead(200, { 'content-type': WEBAPP_TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
+      response.end(body);
+    } catch {
+      response.writeHead(503, { 'content-type': 'text/plain; charset=utf-8' });
+      response.end('The adoc web UI is not built; run pnpm build in the adoc repository.');
+    }
+  }
+}

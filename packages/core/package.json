@@ -1,0 +1,27 @@
+{
+  "name": "@adoc/core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "adoc workspace, plugins, documents, messages, transports and server.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@adoc/plugin-kit": "workspace:*",
+    "ws": "8.21.3",
+    "yaml": "2.9.0",
+    "zod": "4.5.4",
+    "@adoc/webapp": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "check": "tsc -b && tsc -p test",
+    "test": "vitest run --testTimeout 20000"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.1"
+  }
+}

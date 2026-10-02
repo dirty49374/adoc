@@ -1,0 +1,32 @@
+{
+  "name": "adoc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@10.26.2",
+  "bin": {
+    "adoc": "packages/cli/dist/entry.js"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "check": "pnpm -r run check && tsc -p plugins",
+    "test": "pnpm build && pnpm -r run test",
+    "adoc": "node packages/cli/dist/entry.js"
+  },
+  "dependencies": {
+    "@adoc/plugin-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
