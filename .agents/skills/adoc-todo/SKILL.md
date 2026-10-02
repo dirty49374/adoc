@@ -14,14 +14,14 @@ A TODO list keeps small things to do, each one line, so that nothing small gets 
 ## States and workflow
 
 - An item is open (`- [ ]`) or done (`- [x]`). The person checks items in the web UI, or you check them when you finish them.
-- Group related items under `## Heading` lines when the list grows; keep done items in their group so that the group shows its progress.
+- Group related items under `## Heading` lines when the list has more than about ten items; keep done items in their group so that the group shows its progress.
 
 ## Instructions
 
-- Keep every item one line. When an item needs more than a line, it is a TASK: propose one.
-- When you finish an item, check it and add a short "done: …" clause that says what was done and where, such as a commit or a document key.
+- Keep every item one line. When an item needs more than a line, it is a TASK: propose one in your conversation; once the person agrees, create the TASK and point the item to it: `- [ ] Rework the auth layer: [[TASK-261010-auth]]`.
+- When you finish an item, check it and append `; done: …`, saying what was done and where, such as a commit or a document key.
 - When the person asks to add something "to the TODO", add one item in the right group; create a group when none fits.
-- Never delete an item the person wrote without asking; check it or rewrite it.
+- Never delete or reword an item the person wrote without asking; you only check it and append the `done:` clause.
 
 ## File
 
@@ -50,4 +50,4 @@ The anchor of an item, and of a group heading, is its 1-based line number: `TODO
 
 | action | what adoc already did | what you do |
 |---|---|---|
-| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing, or follow up if checking the item implies work; commit with your next change |
+| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing: the person marked the item done, or open again; it is not a request to do the work. Commit it with your next change |

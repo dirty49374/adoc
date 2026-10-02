@@ -16,11 +16,11 @@ A TASK is the work order for one piece of work that needs a design and a plan: w
 `TODO` → `RUNNING` → `REVIEW` → `DONE`, then archived.
 
 - Write the TASK and agree on it with the person before you start; it usually comes from a NOTE.
-- Set `RUNNING` when you start, and log progress in `## Log`.
-- When you finish, set `REVIEW`. **Only the person moves a task to DONE.**
-- **Keep the person told.** Whenever you report to the person in the conversation (after finishing a piece of work, when you go idle), and while any TASK is in REVIEW, end with one line listing them, newest first, at most three keys and then a count: `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`. Find them with `adoc document list --plugin TASK`.
-- **When the person says they will review:** open the first one with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When they say done, set `status: DONE`, commit, and open the next one. When they ask for changes, make them and keep the task in REVIEW. Stop when none is left or the person stops.
-- **When ten or more TASKs are DONE** (not archived), ask the person once whether to archive them. If they agree, move each with `git mv` into `docs/tasks/_archive/`, and the NOTEs listed in their `notes:` into `docs/notes/_archive/`; run `adoc check` and commit.
+- Set `RUNNING` and commit when you start, and log progress in `## Log`.
+- When you finish, set `REVIEW`. **Only the person decides that a task is DONE;** you then set the status.
+- **Keep the person told.** Whenever you report to the person in the conversation (after finishing a piece of work, when you go idle), and while any TASK is in REVIEW, end with one line listing them in the order of `adoc document list --plugin TASK` (the most recently changed first): at most three keys, then the number of the others, if any: `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`.
+- **When the person says they will review:** open the first one of that order with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When they approve it, set `status: DONE`, commit, and open the next one. When they ask for changes, make them and keep the task in REVIEW. Stop when none is left or the person stops.
+- **When ten or more TASKs are DONE** (not archived), ask the person whether to archive them; when they decline, ask again only after ten more. If they agree, archive each, and the NOTEs listed in their `notes:` unless a task that stays lists them too; run `adoc check` and commit.
 
 ## Instructions
 
@@ -70,4 +70,4 @@ The anchor of a section is its heading in lowercase with hyphens: `## Done when`
 
 ## Actions
 
-None: the person changes a status by telling you, and you edit `status:` in the front matter.
+None: the person asks for a status change in a comment or in the conversation, and you edit `status:` in the front matter.
