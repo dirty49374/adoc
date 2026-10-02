@@ -115,20 +115,21 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
       window.addEventListener('adoc:panel-resized', resized);
       // The wheel scrolls the pane's scrollback through herdr. Catch it before xterm.js, which would otherwise
       // turn it into arrow keys for full-screen apps and move the agent's input instead of the screen.
+      // One wheel notch (100 px, or 3 lines in line mode) scrolls 10 lines; touchpad deltas add up; sent once per frame.
       let pending = 0;
       let flush: number | undefined;
       const wheel = (e: WheelEvent) => {
         e.preventDefault();
         e.stopPropagation();
         takeControl();
-        pending += e.deltaMode === 1 ? -e.deltaY : -e.deltaY / 40;
+        pending += e.deltaMode === 1 ? (-e.deltaY * 10) / 3 : -e.deltaY / 10;
         if (flush === undefined) {
-          flush = window.setTimeout(() => {
-            const lines = Math.trunc(pending) || Math.sign(pending);
-            pending = 0;
+          flush = window.requestAnimationFrame(() => {
+            const lines = Math.trunc(pending);
+            pending -= lines;
             flush = undefined;
-            if (lines) sendTerminal({ type: 'terminal.scroll', lines: lines * 3 });
-          }, 50);
+            if (lines) sendTerminal({ type: 'terminal.scroll', lines });
+          });
         }
       };
       element.addEventListener('wheel', wheel, { passive: false, capture: true });
