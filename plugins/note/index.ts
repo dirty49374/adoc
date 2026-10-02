@@ -38,8 +38,7 @@ function renderNote(doc: PluginDocument, previous?: PluginDocument) {
       ${note.movedTo ? html`<span class="adoc-muted">moved to ${ref(note.movedTo)}</span>` : ''}
       ${before && before.status !== note.status ? html`<span class="adoc-changed">status: ${before.status} → ${note.status}</span>` : ''}
       ${note.status === 'OPEN'
-        ? html`<button ${action({ kind: 'click', name: 'convert', value: 'TASK' })}>→ TASK</button>
-            <button ${action({ kind: 'click', name: 'archive', value: 'ARCHIVED' })}>→ archive</button>`
+        ? html`<button ${action({ kind: 'click', name: 'archive', value: 'ARCHIVED' })}>→ archive</button>`
         : ''}
     </div>
     ${note.intro.trim() ? markdown(note.intro, { file: doc.file, line: note.bodyLine }) : ''}
@@ -62,7 +61,7 @@ function renderNote(doc: PluginDocument, previous?: PluginDocument) {
 }
 
 export default definePlugin({
-  description: 'A working note that develops an idea from a conversation until it becomes a TASK or is archived.',
+  description: 'A free-form shared note: ideas from a conversation, open questions, decisions, or anything the two of you want to keep.',
   layout: { kind: 'file', extension: '.md' },
 
   summarize(doc) {

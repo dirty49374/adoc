@@ -1,10 +1,11 @@
-A NOTE is a working note: it captures an idea from a conversation and develops it until it is ready to become something else.
+A NOTE is a free-form shared space for the person and the agent: an idea taken from a conversation and developed with comments, a comparison, meeting notes, or just banter. It has no fixed destination.
 
 ## What notes are for
 
 - Summarizing a design conversation so the person can refine it with comments instead of re-reading the chat.
 - Comparing options, collecting open questions, recording decisions as they are made.
-- When the open questions are gone, agree with the person on what the note becomes: usually a TASK, sometimes a proposal or spec change, or just an archived record. That choice is yours to propose; adoc has no dedicated conversion feature.
+- Anything else worth keeping, including casual talk; not every note has to lead anywhere.
+- When an idea is ready, agree with the person in conversation on what it becomes: a TASK, a proposal or spec change, or an archived record. There is no conversion button; propose it yourself.
 
 ## File
 
@@ -35,7 +36,7 @@ Why this came up.
 ```
 
 - Recommended id: today's date and a title, such as `NOTE-261002-note-plugin`.
-- The four sections are the default template; add or rename sections when the topic needs it.
+- The four sections are the default template for developing an idea; use any sections, or none, when the note is about something else.
 - Developing a note means moving items from **Open questions** to **Decisions**. Keep both lists short and current; rewrite instead of appending history (git keeps history).
 - Write `[[KEY]]` to refer to other documents.
 
@@ -51,5 +52,4 @@ The anchor of a section is its heading in lowercase with hyphens: `## Open quest
 
 | action | what adoc already did | what you do |
 |---|---|---|
-| `convert` (value `TASK`) | nothing (`applied: false`) | create a `TASK-<id>.md` from the note's decisions, set the note's `status: MOVED` and `moved_to: <TASK key>`, then `adoc ui open` the new task |
 | `archive` (value `ARCHIVED`) | nothing | set `status: ARCHIVED` |
