@@ -1,9 +1,12 @@
 import { useState, type MouseEvent } from 'react';
 import { Link } from 'react-router';
 import { pluginOf, type SummaryEntry } from '../api.js';
-import { relativeTime } from '../time.js';
+import { isRecent, relativeTime } from '../time.js';
 
-/** _Document_Row_: title (one line, the whole of a cut one on hover), status, key and last update (relative to `now`) of one summary list entry; parse errors show the key and the error. */
+/**
+ * _Document_Row_: status and last update (relative to `now`, highlighted when recent), title (the whole of a cut one on
+ * hover) and key of one summary list entry, each on one line; a parse error shows the error in place of the key.
+ */
 export function DocumentRow({ entry, selected, now }: { entry: SummaryEntry; selected: boolean; now: number }) {
   const [cut, setCut] = useState<{ top: number; left: number; width: number }>();
   const title = entry.summary ? entry.summary.title : entry.key;
@@ -17,6 +20,12 @@ export function DocumentRow({ entry, selected, now }: { entry: SummaryEntry; sel
 
   return (
     <Link to={`/p/${pluginOf(entry.key)}/${entry.key}`} className={`document-row${selected ? ' selected' : ''}${entry.error ? ' parse-error' : ''}`} data-key={entry.key}>
+      <div className="row-meta">
+        {entry.summary ? <span className="status">{entry.summary.status}</span> : <span className="error">ERROR</span>}
+        <span className={`row-updated${isRecent(entry.updatedAt, now) ? ' recent' : ''}`} title={`updated ${new Date(entry.updatedAt).toLocaleString()}`}>
+          {relativeTime(entry.updatedAt, now)}
+        </span>
+      </div>
       <div className="row-title" onMouseEnter={onTitleEnter} onMouseLeave={() => setCut(undefined)}>
         {title}
       </div>
@@ -25,17 +34,7 @@ export function DocumentRow({ entry, selected, now }: { entry: SummaryEntry; sel
           {title}
         </div>
       )}
-      {entry.summary ? (
-        <div className="row-meta">
-          <span className="status">{entry.summary.status}</span>
-          <span className="row-key">{entry.key}</span>
-        </div>
-      ) : (
-        <div className="row-meta error">{entry.error}</div>
-      )}
-      <div className="row-meta row-updated" title={new Date(entry.updatedAt).toLocaleString()}>
-        updated {relativeTime(entry.updatedAt, now)}
-      </div>
+      <div className="row-meta">{entry.summary ? <span className="row-key">{entry.key}</span> : <span className="error">{entry.error}</span>}</div>
     </Link>
   );
 }

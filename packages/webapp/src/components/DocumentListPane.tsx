@@ -4,7 +4,7 @@ import { api, type SummaryEntry } from '../api.js';
 import { PinButton } from '../fold.js';
 import { useLive } from '../live.js';
 import { readStored, writeStored } from '../storage.js';
-import { useMinuteClock } from '../time.js';
+import { useClock } from '../time.js';
 import { DocumentRow } from './DocumentRow.js';
 import { DocumentSortPicker, isDocumentSort, sortEntries, type DocumentSort } from './DocumentSortPicker.js';
 
@@ -23,7 +23,7 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
     const stored = readStored<unknown>(SORT_KEY, 'updated');
     return isDocumentSort(stored) ? stored : 'updated';
   });
-  const now = useMinuteClock();
+  const now = useClock();
   const [archive, setArchive] = useState(false);
   useEffect(() => setArchive(false), [pluginKey]);
   const pickSort = (next: DocumentSort) => {

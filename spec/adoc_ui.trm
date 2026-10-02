@@ -167,12 +167,14 @@ card _Document_Row_ in document = {
   leads to _Document_Detail_Pane_
   part of _Document_List_Pane_
 .contract
-  - _Document_Row_ must show the title and status of the _adoc:Document_Summary_ and the _adoc:Document_Key_.
-  - _Document_Row_ must show the last update of its _adoc:Document_ in small text relative to now, such as "updated 5 min ago", with the full date and time on hover, and must keep it current while the page is open.
-  - _Document_Row_ must keep each of its lines (the title, the status with the key, the last update) on one line, cut with an ellipsis when longer, so that every row has the same height, and must show the whole title in a floating card while the pointer is on a cut title.
+  - _Document_Row_ must show three lines: the status of the _adoc:Document_Summary_ with the last update of its _adoc:Document_ aligned right, then the title, then the _adoc:Document_Key_.
+  - _Document_Row_ must show the last update in small text relative to now, such as "5 min ago", with the full date and time on hover, highlighted in colour while it is recent, and must renew it every ten seconds while the page is open.
+  - _Document_Row_ must keep each of its lines on one line, cut with an ellipsis when longer, so that every row has the same height, and must show the whole title in a floating card while the pointer is on a cut title.
   - _Document_Row_ must lead to `/p/:plugin/:document` when chosen, and must be marked when its _adoc:Document_ is the one shown.
 .states
-  - _Document_Row_ is one of normal, selected, parse-error; in parse-error the user sees the _adoc:Document_Key_ and the parse error instead of the title.
+  - _Document_Row_ is one of normal, selected, parse-error; in parse-error the user sees ERROR in place of the status, the _adoc:Document_Key_ in place of the title, and the parse error in place of the key.
+.remarks
+  - Chosen: a change younger than five minutes counts as recent.
 }
 
 panel _Document_Detail_Pane_ in document = {

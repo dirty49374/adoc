@@ -202,7 +202,8 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .row-meta { display: flex; gap: 8px; align-items: center; font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); white-space: nowrap; }
 /* every line of a row stays one line: a long status or key ends in an ellipsis */
 .row-meta > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.row-meta > .row-key { flex: 1 1 auto; }
+.row-meta > .row-updated { margin-left: auto; flex-shrink: 0; }
+.row-updated.recent { color: var(--adoc-primary); font-weight: 600; }
 .row-key { font-family: var(--adoc-font-mono); }
 
 .document-detail-pane { flex: 1; min-width: 0; overflow: auto; display: flex; flex-direction: column; }
