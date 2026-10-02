@@ -24,7 +24,18 @@ adoc is a place where a person and an agent work on documents together. The pers
 
 ## Installing plugins
 
-A plugin is a folder with `index.ts` and `skill/SKILL.md`. Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes from:
+A plugin is a folder:
+
+```
+<plugin>/
+  index.ts          # export default definePlugin({ … }): layout, summarize, render, actions
+  skill/
+    SKILL.md        # the plugin's agent skill; `adoc skill install` installs this folder only
+  package.json      # optional: npm packages the plugin imports, installed in this folder
+  client/           # optional: browser code, index.js (+ index.css), for custom elements
+```
+
+Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes from:
 
 - a bare name, looked up in `.adoc/plugins/<name>/` (project) and then `~/.config/adoc/plugins/<name>/` (user);
 - a path from the workspace root, such as `./plugins/todo`;
@@ -46,6 +57,31 @@ A plugin is a folder with `index.ts` and `skill/SKILL.md`. Declare it in `.adoc/
 | `ui.theme` | default colours of the web UI: `dark` (default), `light` or `system` |
 
 ## Project scope and user scope
+
+A workspace (project scope):
+
+```
+<project-dir>/
+  .adoc/
+    adoc.yaml           # the configuration (above)
+    .gitignore          # keeps claim.yaml out of git
+    claim.yaml          # the assigned agent's herdr pane, written by `adoc agent claim`; this machine only
+    plugins/<name>/     # project-scope plugins, declared as `from: <name>`
+  .agents/skills/       # project-scope skills, the copies written by `adoc skill install`
+  .claude/skills/       # links to them for Claude Code (one folder per detected agent)
+  skills-lock.json      # written by the skills CLI; committing it is your choice
+  docs/                 # a watch path: the documents
+    tasks/_archive/     # archived documents, in `_archive` folders at any depth
+```
+
+The user (user scope):
+
+```
+~/.config/adoc/plugins/<name>/   # user-scope plugins ($XDG_CONFIG_HOME/adoc/plugins), `from: <name>`
+~/.agents/skills/<name>/         # user-scope skills: adoc, adoc-plugin-authoring, user-scope plugins
+~/.claude/skills/<name>          # links to them for Claude Code (one folder per detected agent)
+$XDG_RUNTIME_DIR/adoc/<id>.json  # a record of each running adoc server (pid, url, workspace)
+```
 
 - **Project scope:** inside the workspace. Plugins in `.adoc/plugins/` or at a path inside the workspace; their skills install into the workspace (`.agents/skills/`, `.claude/skills/`, …).
 - **User scope:** for every workspace of this user. Plugins in `~/.config/adoc/plugins/`; their skills, and adoc's own skills `adoc` and `adoc-plugin-authoring`, install into the home (`~/.agents/skills/`, …).
