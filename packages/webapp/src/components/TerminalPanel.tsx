@@ -87,6 +87,39 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       }
     };
     element.addEventListener('wheel', wheel, { passive: false, capture: true });
+    // Mouse buttons go to the pane as 0-based cells; herdr passes them on when the program tracks the mouse.
+    const BUTTONS = ['left', 'middle', 'right'] as const;
+    let held: (typeof BUTTONS)[number] | undefined;
+    let lastCell = '';
+    const cell = (e: MouseEvent) => {
+      const screen = element.querySelector('.xterm-screen')?.getBoundingClientRect();
+      if (!screen || e.clientX < screen.left || e.clientY < screen.top || e.clientX >= screen.right || e.clientY >= screen.bottom) return undefined;
+      return { column: Math.floor(((e.clientX - screen.left) / screen.width) * term.cols), row: Math.floor(((e.clientY - screen.top) / screen.height) * term.rows) };
+    };
+    const mouse = (action: 'down' | 'up' | 'drag', e: MouseEvent, button: (typeof BUTTONS)[number]) => {
+      const at = cell(e);
+      if (!at || mode.current !== 'control') return;
+      const key = `${action}:${at.column}:${at.row}`;
+      if (action === 'drag' && key === lastCell) return;
+      lastCell = key;
+      sendTerminal({ type: 'terminal.mouse', action, button, ...at });
+    };
+    const down = (e: MouseEvent) => {
+      held = BUTTONS[e.button] ?? 'left';
+      takeControl();
+      mouse('down', e, held);
+    };
+    const move = (e: MouseEvent) => {
+      if (held) mouse('drag', e, held);
+    };
+    const up = (e: MouseEvent) => {
+      if (!held) return;
+      mouse('up', e, held);
+      held = undefined;
+    };
+    element.addEventListener('mousedown', down, true);
+    window.addEventListener('mousemove', move, true);
+    window.addEventListener('mouseup', up, true);
     let timer: number | undefined;
     const observer = new ResizeObserver(() => {
       window.clearTimeout(timer);
@@ -108,6 +141,9 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       window.clearInterval(refresh);
       window.removeEventListener('adoc:panel-resized', resized);
       element.removeEventListener('wheel', wheel, { capture: true });
+      element.removeEventListener('mousedown', down, true);
+      window.removeEventListener('mousemove', move, true);
+      window.removeEventListener('mouseup', up, true);
       sendTerminal({ type: 'terminal.close' });
       term.dispose();
     };

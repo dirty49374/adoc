@@ -83,6 +83,11 @@ export class TerminalRelay {
     this.command(ws, { type: 'terminal.scroll', direction: lines > 0 ? 'up' : 'down', lines: Math.min(Math.abs(Math.round(lines)), 200) });
   }
 
+  /** Sends a mouse event at a 0-based cell; herdr passes it to the program when the program tracks the mouse. */
+  mouse(ws: WebSocket, action: 'down' | 'up' | 'drag' | 'move', button: 'left' | 'middle' | 'right', column: number, row: number): void {
+    this.command(ws, { type: 'terminal.mouse', action, button, column: Math.max(0, Math.floor(column)), row: Math.max(0, Math.floor(row)) });
+  }
+
   /** Stops the stream of a socket; a controller releases the pane first so that it gets its own size back. */
   stop(ws: WebSocket): void {
     const stream = this.streams.get(ws);

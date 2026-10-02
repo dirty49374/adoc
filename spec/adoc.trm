@@ -924,11 +924,13 @@ concept _Agent_Terminal_Stream_ in runtime = {
   controlled by _Browser_Session_
 .contract
   - The _Adoc_Server_ must take the stream from `herdr terminal session control` for the one _Browser_Session_ that controls the terminal, and from `herdr terminal session observe` for every other one.
-  - The controlling _Browser_Session_ is the one the person used last: it takes control when it loads with focus and on any click, key press or focus in its page; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll` with a direction and a number of lines, so that the wheel scrolls the pane's scrollback rather than reaching the program as keys.
+  - The controlling _Browser_Session_ is the one the person used last: it takes control when it loads with focus and on any click, key press or focus in its page; it must send keys as `terminal.input`, its terminal size as `terminal.resize`, and wheel scrolling as `terminal.scroll` with a direction and a number of lines, so that the wheel scrolls the pane's scrollback rather than reaching the program as keys, and mouse buttons as `terminal.mouse` with an action, a button and a 0-based cell.
+  - The _Adoc_Server_ must subscribe again when herdr drops the event subscription, for example after herdr restarts.
   - An observing _Browser_Session_ that receives no frame for three seconds must re-open its stream, because herdr's observe stream can lag behind agent panes.
   - The _Adoc_Server_ must send `terminal.release` when the controlling _Browser_Session_ closes or another one takes control, so that the person's own herdr terminal gets its size back.
   - The _Adoc_Server_ must subscribe to the agent status and the closing of the claimed pane through herdr events and pass them to the _Adoc_Web_UI_.
 .remarks
   - Chosen: herdr's own session stream rather than a PTY attach or the herdr TUI, so that adoc needs no node-pty.
   - Chosen: the controlling browser resizes the pane to its own terminal size while it controls it.
+  - Chosen: mouse events need herdr 0.9.3 or later; herdr passes them to the program only when the program tracks the mouse.
 }

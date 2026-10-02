@@ -256,13 +256,16 @@ export class AdocServer {
   private welcome(ws: WebSocket, id: string): void {
     ws.on('message', (data) => {
       try {
-        const event = JSON.parse(String(data)) as { type?: string; mode?: 'observe' | 'control'; cols?: number; rows?: number; data?: string; lines?: number };
+        const event = JSON.parse(String(data)) as { type?: string; mode?: 'observe' | 'control'; cols?: number; rows?: number; data?: string; lines?: number; action?: string; button?: string; column?: number; row?: number };
         const size = (n: unknown, fallback: number) => (typeof n === 'number' && n >= 10 && n <= 500 ? Math.floor(n) : fallback);
         if (event.type === 'terminal.open') this.terminal.open(ws, event.mode === 'control' ? 'control' : 'observe', size(event.cols, 100), size(event.rows, 30));
         else if (event.type === 'terminal.input' && typeof event.data === 'string') this.terminal.input(ws, event.data);
         else if (event.type === 'terminal.resize') this.terminal.resize(ws, size(event.cols, 100), size(event.rows, 30));
         else if (event.type === 'terminal.scroll' && typeof event.lines === 'number') this.terminal.scroll(ws, event.lines);
-        else if (event.type === 'terminal.close') this.terminal.stop(ws);
+        else if (event.type === 'terminal.mouse' && typeof event.column === 'number' && typeof event.row === 'number' && ['down', 'up', 'drag', 'move'].includes(event.action ?? '')) {
+          const button = event.button === 'middle' || event.button === 'right' ? event.button : 'left';
+          this.terminal.mouse(ws, event.action as 'down' | 'up' | 'drag' | 'move', button, event.column, event.row);
+        } else if (event.type === 'terminal.close') this.terminal.stop(ws);
       } catch {
         // Ignore malformed browser events.
       }
@@ -318,7 +321,15 @@ export class AdocServer {
           }
           this.broadcastAgent();
         },
-        () => undefined,
+        () => {
+          // herdr restarted or dropped the subscription: read the claim's pane again after a moment.
+          setTimeout(() => {
+            if (this.claim === claim) {
+              this.claim = undefined;
+              void this.loadClaim();
+            }
+          }, 2000).unref();
+        },
       );
       this.log(`adoc: assigned agent is herdr pane ${claim.pane} (${claim.herdrSession})${this.agentStatus.gone ? ', which is gone' : ''}`);
       if (!this.agentStatus.gone) this.retryHeld();
