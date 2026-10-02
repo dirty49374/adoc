@@ -103,3 +103,4 @@ Markdown과 코드 강조 색(같은 파일):
   - 터미널과 코드: D2Coding(OFL, 한글 고정폭) + Symbols Nerd Font Mono(MIT, Powerline 등 기호)
 - **아이콘:** Lucide(MIT)를 씁니다. 필요한 아이콘만 번들에 들어갑니다.
 - **용어:** 디자인 토큰은 CSS 변수 `--adoc-*`로 씁니다. 바탕 단계는 surface(`--adoc-surface`, `--adoc-surface-panel`, `--adoc-surface-element`), 왼쪽 막대는 accent bar입니다. 지금까지 badge와 chip을 섞어 썼는데 chip 하나로 통일합니다(`adoc-badge` → `adoc-chip`).
+- **모서리:** 둥근 모서리를 쓰지 않습니다(opencode TUI처럼 모두 직각). 2px만 둥글려도 왼쪽 accent bar가 모서리를 따라 휘어 보였기 때문입니다. 원형인 연결 상태 점은 테두리가 아니라 기호라서 그대로 둡니다.

@@ -43,3 +43,4 @@ Spec Terms (aterm):
 - 2026-10-02: plugin-kit Markdown highlights fenced code (highlight.js `hljs-*`); authoring guide section "Styling: classes and design tokens".
 - 2026-10-02: fixed on the way: the server served only four hard-coded files and returned index.html for the fonts. Built files now live under `/assets/` and every other non-API path is a client route (a document key may contain a dot, so an extension test would be wrong). Test added.
 - 2026-10-02: checked in the browser (demo, dark and light: TASK list and detail, KANBAN, TODO with rail and comment popover). Tests 30 passing, `pnpm check` and `aterm corpus check` clean. Not checked by me: the terminal panel on a claimed pane (taking control from a test browser would resize the person's pane).
+- 2026-10-02: square corners everywhere: the person saw the accent bars bend with the 2px rounded corners; `--adoc-radius` removed, spec rule added.

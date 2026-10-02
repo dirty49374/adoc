@@ -729,6 +729,7 @@ concept _Web_UI_Theme_ in runtime = {
 .contract
   - The _Web_UI_Theme_ must define every colour as a design token, a CSS custom property named `--adoc-*`, with the values of the opencode theme in a light and a dark variant; components and plugins must use the tokens instead of colour literals.
   - The _Web_UI_Theme_ must separate regions by three surface levels (surface, panel, element) rather than borders, and must mark emphasis such as selection, focus, a held message or a warning with an accent bar on the left edge.
+  - The _Web_UI_Theme_ must draw every box with square corners, so that an accent bar stays a straight line.
   - In the _Web_UI_Theme_ the largest text must be the base body size; headings must stand out by colour and weight, and only smaller sizes are allowed for meta information.
   - The _Web_UI_Theme_ must follow the colour scheme of the system unless the person chooses light or dark, and must remember that choice per browser.
   - The _Web_UI_Theme_ must bundle its fonts so that the _Adoc_Web_UI_ looks the same offline: a proportional font with Hangul for text and a monospace font with Hangul and Nerd Font symbols for terminals and code.

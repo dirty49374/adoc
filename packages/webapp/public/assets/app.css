@@ -62,13 +62,12 @@
   /* floating surfaces (popovers, cards) only */
   --adoc-shadow: 0 8px 28px light-dark(rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.55));
 
-  /* type and shape: the base size is the largest text */
+  /* type and shape: the base size is the largest text; corners are square everywhere, as in the TUI, so accent bars stay straight */
   --adoc-font-text: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
   --adoc-font-mono: 'D2Coding', 'Symbols Nerd Font Mono', ui-monospace, monospace;
   --adoc-size-base: 14px;
   --adoc-size-small: 12px;
   --adoc-size-tiny: 11px;
-  --adoc-radius: 2px;
   --adoc-bar: 3px;
 }
 :root[data-theme='light'] { color-scheme: light; }
@@ -86,7 +85,7 @@ code, pre, kbd, samp { font-family: var(--adoc-font-mono); }
 svg.lucide { width: 1.1em; height: 1.1em; flex-shrink: 0; stroke-width: 1.75; }
 
 button {
-  font: inherit; font-size: var(--adoc-size-small); cursor: pointer; border: none; border-radius: var(--adoc-radius);
+  font: inherit; font-size: var(--adoc-size-small); cursor: pointer; border: none;
   background: var(--adoc-surface-element); color: var(--adoc-text); padding: 2px 10px; display: inline-flex; align-items: center; gap: 6px;
 }
 button:hover:not(:disabled) { background: color-mix(in srgb, var(--adoc-surface-element), var(--adoc-text) 8%); }
@@ -95,7 +94,7 @@ button.primary { background: var(--adoc-primary); color: var(--adoc-surface); fo
 button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--adoc-primary), var(--adoc-text) 12%); }
 button.quiet { background: transparent; color: var(--adoc-text-muted); padding: 2px 4px; }
 button.quiet:hover:not(:disabled) { color: var(--adoc-text); background: var(--adoc-surface-element); }
-select { font: inherit; font-size: var(--adoc-size-tiny); border: none; border-radius: var(--adoc-radius); background: var(--adoc-surface-element); color: var(--adoc-text); padding: 1px 4px; }
+select { font: inherit; font-size: var(--adoc-size-tiny); border: none; background: var(--adoc-surface-element); color: var(--adoc-text); padding: 1px 4px; }
 textarea { font: inherit; color: var(--adoc-text); }
 
 .muted { color: var(--adoc-text-muted); }
@@ -107,14 +106,14 @@ textarea { font: inherit; color: var(--adoc-text); }
 /* shared primitives, used by the web UI and by plugin HTML alike */
 /* chip: the one small label shape (no separate badge) */
 .adoc-chip {
-  display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; border-radius: var(--adoc-radius);
+  display: inline-flex; align-items: center; gap: 4px; padding: 0 6px;
   background: var(--adoc-surface-element); color: var(--tone, var(--adoc-text-muted)); font-size: var(--adoc-size-tiny); line-height: 18px; white-space: nowrap;
 }
 button.adoc-chip:hover:not(:disabled) { color: var(--adoc-text); }
 button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-primary); font-weight: 600; }
 
 /* accent bar: emphasis on the left edge of a block */
-.adoc-block { background: var(--adoc-surface-panel); box-shadow: inset var(--adoc-bar) 0 0 var(--tone, var(--adoc-border)); padding: 6px 10px 6px calc(10px + var(--adoc-bar)); border-radius: var(--adoc-radius); }
+.adoc-block { background: var(--adoc-surface-panel); box-shadow: inset var(--adoc-bar) 0 0 var(--tone, var(--adoc-border)); padding: 6px 10px 6px calc(10px + var(--adoc-bar)); }
 .adoc-tone-primary { --tone: var(--adoc-primary); }
 .adoc-tone-secondary { --tone: var(--adoc-secondary); }
 .adoc-tone-accent { --tone: var(--adoc-accent); }
@@ -179,7 +178,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .pane-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px 16px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; white-space: nowrap; }
 .document-rows { flex: 1; overflow: auto; padding: 0 6px 12px; min-width: 268px; }
 .document-rows > p { padding: 0 10px; font-size: var(--adoc-size-small); }
-.document-row { display: block; padding: 6px 10px 6px calc(10px + var(--adoc-bar)); text-decoration: none; color: var(--adoc-text); border-radius: var(--adoc-radius); }
+.document-row { display: block; padding: 6px 10px 6px calc(10px + var(--adoc-bar)); text-decoration: none; color: var(--adoc-text); }
 .document-row:hover { background: var(--adoc-surface-element); }
 .document-row.selected { background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-primary); }
 .document-row.parse-error .row-title { color: var(--adoc-error); }
@@ -215,11 +214,11 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .rendered ul > li::marker { color: var(--adoc-md-list-item); }
 .rendered ol > li::marker { color: var(--adoc-md-list-enumeration); }
 .rendered :not(pre) > code { color: var(--adoc-md-code); font-size: 0.95em; }
-.rendered pre { background: var(--adoc-surface-panel); color: var(--adoc-md-code-block); padding: 10px 14px; border-radius: var(--adoc-radius); overflow: auto; font-size: var(--adoc-size-small); line-height: 1.5; }
+.rendered pre { background: var(--adoc-surface-panel); color: var(--adoc-md-code-block); padding: 10px 14px; overflow: auto; font-size: var(--adoc-size-small); line-height: 1.5; }
 .rendered table { border-collapse: collapse; font-size: var(--adoc-size-small); margin: 8px 0; }
 .rendered th, .rendered td { padding: 4px 10px; text-align: left; border-bottom: 1px solid var(--adoc-border-subtle); }
 .rendered th { color: var(--adoc-text-muted); font-weight: 600; }
-.rendered [data-adoc-anchor] { border-radius: var(--adoc-radius); }
+.rendered [data-adoc-anchor] { }
 .rendered [data-adoc-anchor]:hover { background: var(--adoc-surface-panel); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-border); }
 .adoc-ref { white-space: nowrap; text-decoration: none; font-family: var(--adoc-font-mono); font-size: 0.92em; color: var(--adoc-md-link); border-bottom: 1px dashed currentColor; }
 .adoc-ref.adoc-ref-broken { color: var(--adoc-error); text-decoration: line-through; }
@@ -242,7 +241,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .hljs-strong { font-weight: 700; }
 
 /* ---- floating: anchor button, popover, tooltip, draft card ---- */
-.floating { position: absolute; background: var(--adoc-surface-element); border-radius: var(--adoc-radius); box-shadow: var(--adoc-shadow); }
+.floating { position: absolute; background: var(--adoc-surface-element); box-shadow: var(--adoc-shadow); }
 .anchor-comment-button { position: absolute; padding: 3px; z-index: 5; color: var(--adoc-text-muted); }
 .anchor-comment-button:hover:not(:disabled) { color: var(--adoc-primary); }
 .comment-popover { width: 380px; z-index: 10; box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); }
@@ -254,7 +253,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 
 /* _Draft_Comment_Input_ (inside the _Comment_Popover_) */
 .draft-comment-input { padding: 8px 10px 8px calc(10px + var(--adoc-bar)); display: flex; flex-direction: column; gap: 6px; }
-.draft-comment-input textarea { resize: vertical; width: 100%; padding: 4px 6px; border: none; border-radius: var(--adoc-radius); background: var(--adoc-surface); }
+.draft-comment-input textarea { resize: vertical; width: 100%; padding: 4px 6px; border: none; background: var(--adoc-surface); }
 .draft-comment-input textarea:focus { outline: none; }
 .composer-target { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); }
 .composer-target code { color: var(--adoc-secondary); }
@@ -307,7 +306,7 @@ body.resizing { user-select: none; cursor: col-resize; }
 .draft-chip .chip-remove:hover { color: var(--adoc-error); background: transparent; }
 
 /* _Comment_Composer_: one line that grows, on the element surface with the agent's accent bar */
-.comment-composer { margin: 6px 8px 8px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); border-radius: var(--adoc-radius); display: flex; flex-direction: column; gap: 4px; }
+.comment-composer { margin: 6px 8px 8px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
 .composer-row { display: flex; align-items: flex-end; gap: 6px; }
 .comment-composer textarea { flex: 1; resize: none; border: none; background: transparent; padding: 2px 0; max-height: 40vh; line-height: 1.5; }
 .comment-composer textarea:focus { outline: none; }
@@ -340,13 +339,13 @@ body.resizing { user-select: none; cursor: col-resize; }
 .adoc-section { padding: 2px 8px 2px calc(8px + var(--adoc-bar)); margin-bottom: 4px; }
 .adoc-section h2 { margin: 14px 0 4px; }
 .adoc-board { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
-.adoc-column { flex: 1 1 200px; background: var(--adoc-surface-panel); border-radius: var(--adoc-radius); padding: 8px; min-height: 120px; display: flex; flex-direction: column; gap: 6px; }
+.adoc-column { flex: 1 1 200px; background: var(--adoc-surface-panel); padding: 8px; min-height: 120px; display: flex; flex-direction: column; gap: 6px; }
 .adoc-column-title { display: flex; justify-content: space-between; font-weight: 700; font-size: var(--adoc-size-tiny); letter-spacing: 0.06em; color: var(--adoc-text-muted); padding: 0 2px; }
-.adoc-card { background: var(--adoc-surface-element); border-radius: var(--adoc-radius); padding: 6px 10px 6px calc(10px + var(--adoc-bar)); font-size: var(--adoc-size-small); }
+.adoc-card { background: var(--adoc-surface-element); padding: 6px 10px 6px calc(10px + var(--adoc-bar)); font-size: var(--adoc-size-small); }
 .adoc-card:hover { box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-primary); }
 .adoc-card[draggable='true'] { cursor: grab; }
-.adoc-trash { margin-top: 8px; padding: 8px; color: var(--adoc-error); background: var(--adoc-surface-panel); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-error); border-radius: var(--adoc-radius); text-align: center; font-size: var(--adoc-size-small); }
-.adoc-diff { font-family: var(--adoc-font-mono); font-size: var(--adoc-size-small); border-radius: var(--adoc-radius); overflow: auto; background: var(--adoc-surface-panel); padding: 6px 0; }
+.adoc-trash { margin-top: 8px; padding: 8px; color: var(--adoc-error); background: var(--adoc-surface-panel); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-error); text-align: center; font-size: var(--adoc-size-small); }
+.adoc-diff { font-family: var(--adoc-font-mono); font-size: var(--adoc-size-small); overflow: auto; background: var(--adoc-surface-panel); padding: 6px 0; }
 .adoc-diff > div { white-space: pre-wrap; padding: 0 10px; }
 .adoc-diff-mark { display: inline-block; width: 1.4em; color: var(--adoc-text-muted); user-select: none; }
 .adoc-added { background: var(--adoc-diff-added-bg); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-diff-added); }
