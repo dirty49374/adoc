@@ -5,7 +5,7 @@ description: "Writes adoc plugins: a folder with index.ts (definePlugin: layout,
 
 # Writing an adoc plugin
 
-A plugin defines one kind of document. It is **one folder with `index.ts` and `skill/SKILL.md`**. No build step: adoc loads `index.ts` directly with Node's type stripping (only a browser `client/`, below, is built).
+A plugin defines one kind of document. It is **one folder with `index.ts` and `skill/SKILL.md`**. No build step: adoc loads `index.ts` directly with Node's type stripping (only a browser `client/`, below, needs one, which you run yourself).
 
 ```
 plugins/note/
@@ -98,7 +98,7 @@ A content is text, or `{ base64 }` for binary data.
 
 adoc sends the agent a message only when the handler returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
 
-**Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` and changes nothing. That is often all you need: the agent then edits the file.
+**Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` (for a toggle the value is the new checked state, for a drag `<value> to <to>`) and changes nothing. That is often all you need: the agent then edits the file.
 
 ## Companion files
 
