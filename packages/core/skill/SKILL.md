@@ -7,7 +7,7 @@ description: "Explains adoc, where a person and an agent work together on plugin
 
 ## Overview
 
-adoc is a place where a person and an agent work on documents together. The person uses the adoc web UI in a browser; the agent uses the `adoc` command line or its MCP tool. Both connect to the **adoc server** of the workspace and talk through the documents: the person reads the rendered documents, comments on them, edits them or presses their buttons, and each of those reaches the agent as a **message**; the agent edits the files.
+adoc is a place where a person and an agent work on documents together. The person uses the adoc web UI in a browser; the agent uses the `adoc` command line or its MCP tool. Both connect to the **adoc server** of the workspace and talk through the documents: the person reads the rendered documents, comments on them, edits them or presses their buttons, and those reach the agent as **messages**; the agent edits the files. Some changes reach the agent only as uncommitted changes: an edit whose draft the person has not sent yet, or an action that sends no message.
 
 - The adoc server watches the documents for changes, renders each document for the web UI through its plugin (the plugin summarizes and renders it; adoc draws only the header around it), runs the plugin's actions, holds the person's messages and delivers them to the agent.
 - What a document is and how it looks comes from **plugins**: adoc itself knows no document kind.
@@ -19,7 +19,7 @@ adoc is a place where a person and an agent work on documents together. The pers
 - Each plugin defines one kind of document, under a **plugin key** in uppercase letters: `TODO`, `TASK`, `KANBAN`, `NOTE`, `SKETCH`, …
 - A plugin has any number of documents. A document is one file or one folder under the watch paths (usually `docs/`); the plugin decides which, and the file's extension. Its name without the extension is its **document key**, `<PLUGIN KEY>-<local id>`: the file `TASK-260930-order-paging.md` has the key `TASK-260930-order-paging`, the folder `BUG-42/` the key `BUG-42`.
 - Create a new document in the first watch path, in a folder named after the plugin key in lowercase plural: `docs/tasks/TASK-260930-order-paging.md`, `docs/sketches/SKETCH-261002-login.excalidraw`.
-- The local id uses lowercase letters, digits, `-`, `_` and `.`, in English words: today's date as yymmdd and a title (`260930-order-paging`), or a topic (`gui`). A key is never reused.
+- The local id uses lowercase letters, digits, `-`, `_` and `.`, in English words. Each plugin's skill recommends a form: today's date as yymmdd and a title (`260930-order-paging`), or a topic (`gui`). A key is never reused.
 - A document inside a folder named `_archive` is archived: it keeps its key and references to it work, but lists and searches leave it out. To archive one, move it with `git mv` (a plain `mv` without git) into an `_archive` folder next to it (`docs/tasks/_archive/TASK-x.md`), together with its companion files; to restore it, move it back.
 - `[[KEY]]` or `[[KEY#anchor]]` in Markdown content refers to another document.
 
@@ -50,7 +50,7 @@ Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes 
 
 ```yaml
 plugins:                    # the plugins of this workspace; the web UI shows their tabs in this order
-  - key: NOTE               # plugin key: uppercase letters; documents are named NOTE-<id>
+  - key: NOTE               # plugin key: uppercase letters; documents are named NOTE-<local id>
     from: note              # .adoc/plugins/note/, then ~/.config/adoc/plugins/note/
   - key: TASK
     from: ./plugins/task    # a path from the workspace root
@@ -124,7 +124,7 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 1. **Talk first.** Before any work, take time with the person to decide how this project will use them: which documents to keep, what goes where, how detailed.
 2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether every change is committed, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
    - Use a **NOTE** to discuss ideas with the person or to help them understand something. Draw state and sequence diagrams with Mermaid (```` ```mermaid ````) wherever they help.
-   - When the person agrees on a good idea from a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`.
+   - When the person agrees on a good idea from a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`, and point the item to it (see the TODO skill).
    - Start the work only when the documents it depends on are agreed and, if the project commits, committed.
    - The work may go to a subagent or a herdr development agent.
    - When a task is finished, it goes to the person's review (see the TASK skill).
@@ -147,14 +147,14 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 | `adoc plugin list` | the declared plugins |
 | `adoc server run` / `adoc mcp run` / `adoc init` | run the server / serve the MCP tool / create a workspace (command line only) |
 
-Every command takes `--output text|markdown|json|yaml` and answers `--help`. `adoc message` and `adoc ui` need the running server of the workspace; the person usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
+Every command takes `--output text|markdown|json|yaml` and answers `--help`; `--home <dir>` (command line only) chooses the workspace, which is otherwise the nearest `.adoc` folder upwards. `adoc message` and `adoc ui` need the running server of the workspace; the person usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
 
 ### Workflow of the assigned agent
 
 #### Start: claim
 
 - **In herdr (recommended):** run `adoc agent claim` once at the start of your session. Your pane becomes the assigned agent: the person's messages are pushed into it as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over.
-- **Otherwise:** with the `wait` transport, messages are held until you take them with `adoc message wait`.
+- **Outside herdr:** set `agent.transport.kind: wait` in `.adoc/adoc.yaml`, and take the held messages with `adoc message wait`.
 
 The server holds every message until it is delivered or the server stops: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them.
 
@@ -189,11 +189,11 @@ value: "3"
 applied: true
 ```
 
-- The header names the main target; the text after it is what the person typed (for an action, what the plugin reports). After `--` come the attached `comments` the person collected, each with its own target; handle all of them, in order.
+- The header names the main target, and the text after it is what the person typed (for an action, what the plugin reports). After `--` come the attached `comments`: the draft comments the person collected and sent with the message, each with its own target; handle all of them, in order. A message of attached comments only has no target and no text.
 - A target is `workspace`, a plugin key (about the plugin, such as "create a new one"), a document key, a document key with an anchor (the plugin's skill says what an anchor means), or `skill <name>` (about an agent skill: change the `SKILL.md` in the skill's `directory` that `adoc skill list --output json` shows, then run `adoc skill update`, or through MCP ask the person to run it).
 - `source` is the file and line the person pointed at; `quote` is the exact text they selected. If the file changed since, find the place by the quote or the text around it; if you cannot find it, ask (see "Talking to the person").
 - A comment may carry a diff that starts with `I edited <file>:`: the person already changed the file in the web UI. Read the diff, keep the change, and do what the rest of the message asks.
-- An `action` message with `applied: false` is a request: make the change yourself. With `applied: true` the plugin already wrote the change: do not redo it, commit it, and do more only when the text or the plugin's skill asks for it. Every document has the common actions `archive` and `unarchive` (the archive button of its header): they ask you to archive or restore it (see "Plugins and documents"). A plugin's skill lists only its own actions. Some actions send no message at all, such as a sketch's `save`; their skill says how the change reaches you.
+- An `action` message with `applied: false` is a request: make the change yourself. With `applied: true` the plugin already wrote the change: do not redo it, commit it (see "Committing"), and do more only when the text or the plugin's skill asks for it. Every document has the common actions `archive` and `unarchive` (the archive button of its header): they ask you to archive or restore it (see "Plugins and documents"). A plugin's skill lists only its own actions. Some actions send no message at all, such as a sketch's `save`; their skill says how the change reaches you.
 
 #### Rules
 
@@ -208,5 +208,5 @@ applied: true
 
 #### Talking to the person
 
-- Answer the person in your conversation: in herdr, the web UI shows your terminal. Answer a comment that asks a question there, and say there why you decline a request, leaving the document as it is.
-- When you need an answer about a place in a document, write the question there, next to the place, as a blockquote starting with `> Question:` (in a file without Markdown, as a comment such as `# Question:` in YAML), and remove it once answered. A plugin's skill may name a better place, such as a NOTE's **Open questions**.
+- Answer the person in your conversation: in herdr, the web UI shows your terminal. Answer a comment that asks a question there, and say there why you decline what a message asks, leaving the document as it is.
+- When you need an answer about a place in a Markdown document, write the question there, next to the place, as a blockquote starting with `> Question:`, and remove it once answered. A plugin's skill says when its view does not show such a line, or names a better place, such as a NOTE's **Open questions**; otherwise ask in your conversation.
