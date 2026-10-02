@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { SendHorizontal } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { api, formatTarget, type MessageTarget, type UserComment } from '../api.js';
 import { draftStore, type DraftComment } from '../drafts.js';
@@ -17,7 +18,7 @@ function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[]
 
 /**
  * _Comment_Composer_: the one composer. Sends every draft plus its own text on the chosen target
- * as one comment message; clears only after the server accepted.
+ * as one comment message; clears only after the server accepted. The input starts as one line and grows with its text.
  */
 export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const { pluginKey, documentKey } = useParams();
@@ -27,6 +28,13 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
   useEffect(() => setChosen(0), [pluginKey, documentKey]);
+  const area = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const element = area.current;
+    if (!element) return;
+    element.style.height = 'auto';
+    element.style.height = `${element.scrollHeight}px`;
+  }, [text]);
   const target = targets[Math.min(chosen, targets.length - 1)]!;
 
   const update = (value: string) => {
@@ -54,31 +62,38 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   return (
     <div className="comment-composer" data-testid="comment-composer">
       <div className="composer-target">
-        to agent ·{' '}
         {targets.map((t, i) => (
-          <button key={formatTarget(t)} className={`scope${t === target ? ' active' : ''}`} onClick={() => setChosen(i)} title="Target of the message you type here">
+          <button key={formatTarget(t)} className={`adoc-chip mono${t === target ? ' active' : ''}`} onClick={() => setChosen(i)} title="Target of the message you type here">
             {formatTarget(t)}
           </button>
         ))}
       </div>
-      <textarea
-        value={text}
-        rows={3}
-        placeholder={drafts.length ? `Optional message about ${formatTarget(target)}` : `Message about ${formatTarget(target)}`}
-        onChange={(e) => update(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            void send();
-          }
-        }}
-      />
-      {error && <div className="error small">{error}</div>}
-      <div className="composer-actions">
-        <button type="button" disabled={!canSend} onClick={() => void send()}>
-          {sending ? 'Sending…' : drafts.length ? `Send with ${drafts.length} ${drafts.length === 1 ? 'draft' : 'drafts'}` : 'Send'}
+      <div className="composer-row">
+        <textarea
+          ref={area}
+          value={text}
+          rows={1}
+          placeholder={drafts.length ? `Optional message about ${formatTarget(target)}` : `Message about ${formatTarget(target)}`}
+          onChange={(e) => update(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              void send();
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="primary send-button"
+          disabled={!canSend}
+          onClick={() => void send()}
+          title={`${drafts.length ? `Send with ${drafts.length} ${drafts.length === 1 ? 'draft' : 'drafts'}` : 'Send'} (Ctrl+Enter)`}
+          data-testid="composer-send"
+        >
+          <SendHorizontal />
         </button>
       </div>
+      {error && <div className="error small">{error}</div>}
     </div>
   );
 }

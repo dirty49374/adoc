@@ -1,3 +1,4 @@
+import hljs from 'highlight.js/lib/common';
 import markdownIt, { type MarkdownIt, type StateInline } from 'markdown-it';
 import { parse as parseYaml } from 'yaml';
 import { raw } from './html.js';
@@ -21,7 +22,9 @@ function referenceRule(state: StateInline, silent: boolean): boolean {
 }
 
 function createParser(): MarkdownIt {
-  const md = markdownIt({ html: false, linkify: true });
+  // A fence that names a known language gets highlight.js `hljs-*` classes, which the web UI theme colours.
+  const highlight = (code: string, language: string) => (language && hljs.getLanguage(language) ? hljs.highlight(code, { language, ignoreIllegals: true }).value : '');
+  const md = markdownIt({ html: false, linkify: true, highlight });
   md.inline.ruler.before('link', 'adoc_ref', referenceRule);
   md.renderer.rules.adoc_ref = (tokens, idx) => ref(tokens[idx]!.content).html;
   return md;

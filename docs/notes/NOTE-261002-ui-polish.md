@@ -85,10 +85,7 @@ Markdown과 코드 강조 색(같은 파일):
 
 ## Open questions
 
-- 아이콘 세트: Lucide(MIT, 선이 가늘고 깔끔함)를 쓸까요? 필요한 아이콘만 골라 번들에 넣습니다.
-
-- 기본을 다크로 할까요, 시스템 설정을 따를까요? 라이트 토큰도 있으니 전환 버튼은 둡니다.
-- web UI에 웹 글꼴(Pretendard, 한글 Nerd 고정폭)을 수 MB 정도 포함해도 될까요? 아니면 컴퓨터에 설치된 글꼴만 쓸까요?
+- (없음. 아래 Decisions로 옮김)
 
 ## Decisions
 
@@ -100,3 +97,9 @@ Markdown과 코드 강조 색(같은 파일):
 - **글자 크기:** 가장 큰 글씨가 기본 본문 크기입니다(opencode처럼). 제목도 크기를 키우지 않고 색(heading 색)과 굵기로 구분합니다. 본문보다 작은 글씨는 허용합니다.
 - **색:** opencode의 색 체계를 그대로 가져옵니다. surface와 상태 색뿐 아니라 Markdown 색과 코드 강조 색까지 위 표의 값을 씁니다.
 - plugin이 같은 모양을 쉽게 쓰도록, 디자인 토큰(CSS 변수)과 공통 class를 plugin용 CSS로 제공하고 plugin 작성 가이드에 설명합니다.
+- **테마:** 기본은 시스템 설정(라이트/다크)을 따르고, 상단 바의 전환 버튼으로 시스템 → 라이트 → 다크를 고릅니다. 고른 값은 브라우저마다 기억합니다.
+- **글꼴:** web UI에 글꼴 파일을 함께 넣어 오프라인에서도 같게 보이게 합니다.
+  - 화면과 문서: Pretendard(OFL)
+  - 터미널과 코드: D2Coding(OFL, 한글 고정폭) + Symbols Nerd Font Mono(MIT, Powerline 등 기호)
+- **아이콘:** Lucide(MIT)를 씁니다. 필요한 아이콘만 번들에 들어갑니다.
+- **용어:** 디자인 토큰은 CSS 변수 `--adoc-*`로 씁니다. 바탕 단계는 surface(`--adoc-surface`, `--adoc-surface-panel`, `--adoc-surface-element`), 왼쪽 막대는 accent bar입니다. 지금까지 badge와 chip을 섞어 썼는데 chip 하나로 통일합니다(`adoc-badge` → `adoc-chip`).

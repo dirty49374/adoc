@@ -6,7 +6,7 @@ export function PendingMessageList({ messages }: { messages: PublicMessage[] }) 
   return (
     <ol className="pending-message-list" data-testid="pending-message-list">
       {messages.map((m) => (
-        <li key={m.number} className={`pending-message ${m.kind}`} title={m.formatted}>
+        <li key={m.number} className={`pending-message adoc-block ${m.kind}`} title={m.formatted}>
           <div className="pending-head">
             <span className="number">#{m.number}</span>
             <span className="kind">{m.kind}</span>

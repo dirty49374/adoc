@@ -49,6 +49,18 @@ describe('AdocServer', () => {
     await expect.poll(async () => (await json(`${server.url}/api/plugins/TODO/documents`)).documents.length, { timeout: 3000 }).toBe(2);
   });
 
+  it('serves built files under /assets/ and index.html for every client route', async () => {
+    const { server } = await start();
+    const css = await fetch(`${server.url}/assets/app.css`);
+    expect(css.headers.get('content-type')).toMatch(/text\/css/);
+    const font = await fetch(`${server.url}/assets/fonts/D2Coding.woff2`);
+    expect(font.headers.get('content-type')).toBe('font/woff2');
+    for (const route of ['/', '/p/TODO/TODO-v1.txt', '/assets/../package.json']) {
+      expect((await fetch(`${server.url}${route}`)).headers.get('content-type'), route).toMatch(/text\/html/);
+    }
+    expect((await fetch(`${server.url}/assets/missing.js`)).status).toBe(404);
+  });
+
   it('runs once per workspace and records itself outside the repository', async () => {
     const { server, f } = await start();
     expect(await readServerRecord(f.root)).toMatchObject({ pid: process.pid, url: server.url });

@@ -3,14 +3,14 @@ import type { ReferenceInfo } from '../api.js';
 /** _Reference_Tooltip_: "title (status)" and a table of free fields, or the broken state. */
 export function ReferenceTooltip({ top, left, target, info }: { top: number; left: number; target: string; info?: ReferenceInfo }) {
   return (
-    <div className="reference-tooltip" style={{ top, left }} data-testid="reference-tooltip">
+    <div className="reference-tooltip floating" style={{ top, left }} data-testid="reference-tooltip">
       <div className="tooltip-key">{target}</div>
       {!info && <div className="muted">Loading…</div>}
       {info && !info.found && <div className="error">{info.key} does not exist.</div>}
       {info?.found && info.summary && (
         <>
           <div className="tooltip-title">
-            {info.summary.title} ({info.summary.status})
+            {info.summary.title} <span className="status">{info.summary.status}</span>
           </div>
           {info.summary.fields && Object.keys(info.summary.fields).length > 0 && (
             <table>

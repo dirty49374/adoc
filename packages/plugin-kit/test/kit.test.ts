@@ -29,6 +29,13 @@ describe('markdown', () => {
     expect(markdown('<script>x</script>').html).not.toContain('<script>');
   });
 
+  it('marks fenced code of a known language with syntax classes', () => {
+    const out = markdown('```ts\nconst a = "<b>";\n```').html;
+    expect(out).toContain('<span class="hljs-keyword">const</span>');
+    expect(out).toContain('&lt;b&gt;');
+    expect(markdown('```\n<b>\n```').html).toContain('&lt;b&gt;');
+  });
+
   it('finds references and splits front matter', () => {
     expect(findReferences('a [[TASK-1]] b [[KANBAN-s#c1]]')).toEqual(['TASK-1', 'KANBAN-s#c1']);
     const fm = frontmatter('---\ntitle: T\nstatus: DONE\n---\n\n## Goal\n');

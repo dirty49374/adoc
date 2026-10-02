@@ -47,14 +47,14 @@ function renderNote(doc: PluginDocument, previous?: PluginDocument) {
       const mark = !before ? '' : !prior ? 'adoc-added' : prior.body.trim() !== s.body.trim() ? 'adoc-changed' : '';
       return html`
         <section class="adoc-section ${mark}" ${anchor(s.anchor)}>
-          <h2 ${source(doc.file, s.line)}>${s.heading}${mark ? html` <span class="adoc-badge">${mark === 'adoc-added' ? 'new' : 'changed'}</span>` : ''}</h2>
+          <h2 ${source(doc.file, s.line)}>${s.heading}${mark ? html` <span class="adoc-chip">${mark === 'adoc-added' ? 'new' : 'changed'}</span>` : ''}</h2>
           ${markdown(s.body, { file: doc.file, line: s.bodyLine })}
         </section>`;
     })}
     ${removed.map(
       (s) => html`
         <section class="adoc-section adoc-removed">
-          <h2>${s.heading} <span class="adoc-badge">removed</span></h2>
+          <h2>${s.heading} <span class="adoc-chip">removed</span></h2>
           ${markdown(s.body)}
         </section>`,
     )}`;

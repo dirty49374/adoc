@@ -8,14 +8,14 @@ export function WorkspaceHomePanel() {
   return (
     <div className="workspace-home" data-testid="workspace-home">
       <h1>{workspace.name}</h1>
-      <p className="muted">{workspace.root}</p>
+      <p className="root">{workspace.root}</p>
       <div className="plugin-cards">
         {workspace.plugins.map((p) => (
-          <Link key={p.key} to={`/p/${p.key}`} className={`plugin-card${p.error ? ' failed' : ''}`}>
+          <Link key={p.key} to={`/p/${p.key}`} className={`plugin-card adoc-block${p.error ? ' failed' : ''}`}>
             <div className="plugin-card-key">{p.key}</div>
             <div className="plugin-card-count">{p.documents} documents</div>
             <div className="plugin-card-description">{p.error ? `Failed to load: ${p.error}` : p.description}</div>
-            {p.layout && <div className="muted small">{p.layout}</div>}
+            {p.layout && <div className="muted small mono">{p.layout}</div>}
           </Link>
         ))}
       </div>

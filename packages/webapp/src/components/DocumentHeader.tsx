@@ -19,8 +19,8 @@ export function DocumentHeader({ view, changeState, changesOn, onToggleChanges, 
       <div className="header-key">{view.key}</div>
       <h1 className="header-title">{view.summary?.title ?? view.key}</h1>
       <div className="header-meta">
-        {view.summary ? <span className="badge">{view.summary.status}</span> : <span className="badge error">summary failed: {view.summaryError}</span>}
-        <span className="muted">{view.path}</span>
+        {view.summary ? <span className="status">{view.summary.status}</span> : <span className="adoc-chip adoc-tone-error">summary failed: {view.summaryError}</span>}
+        <span className="path">{view.path}</span>
         <ChangeToggle state={changeState} on={changesOn} onToggle={onToggleChanges} />
         <ChangeBasePicker versions={versions} base={versions.some((v) => v.version === base) ? base : undefined} onPick={onPickBase} />
       </div>

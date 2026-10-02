@@ -18,7 +18,7 @@ export function CommentPopover({ documentKey, request, onClose }: { documentKey:
   const props: Parameters<typeof DraftCommentInput>[0] = { documentKey, comment, onDone: onClose };
   if (request.text) props.initialText = request.text;
   return (
-    <div className="comment-popover" style={{ top: request.top, left: request.left }} data-testid="comment-popover" onMouseUp={(e) => e.stopPropagation()}>
+    <div className="comment-popover floating" style={{ top: request.top, left: request.left }} data-testid="comment-popover" onMouseUp={(e) => e.stopPropagation()}>
       <DraftCommentInput {...props} />
     </div>
   );

@@ -12,6 +12,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "highlight.js": "^11.12.0",
     "markdown-it": "15.0.2",
     "yaml": "2.9.0",
     "zod": "4.5.4"

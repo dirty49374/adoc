@@ -50,10 +50,10 @@ export function DraftCommentInput({ documentKey, comment, initialText, onDone }:
         }}
       />
       <div className="composer-actions">
-        <button type="button" className="secondary" onClick={finish}>
+        <button type="button" className="quiet" onClick={finish}>
           Cancel
         </button>
-        <button type="button" disabled={!text.trim()} onClick={add}>
+        <button type="button" className="primary" disabled={!text.trim()} onClick={add}>
           Add
         </button>
       </div>

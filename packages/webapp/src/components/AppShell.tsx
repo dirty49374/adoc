@@ -9,10 +9,11 @@ import { PanelResizer } from './PanelResizer.js';
 import { readStored, writeStored } from '../storage.js';
 import { MessageDock } from './MessageDock.js';
 import { PluginTabBar } from './PluginTabBar.js';
+import { ThemeToggle } from './ThemeToggle.js';
 import { WarningLink } from './WarningLink.js';
 import { WarningPanel } from './WarningPanel.js';
 
-/** _App_Shell_: top bar, plugin tabs, the routed main area and the message dock. */
+/** _App_Shell_: the top bar with the plugin tabs, the routed main area and the message dock. */
 export function AppShell() {
   return (
     <WorkspaceProvider>
@@ -57,16 +58,18 @@ function ShellLayout() {
     <div className="app-shell">
       <header className="top-bar">
         <Link to="/" className="workspace-name">
-          adoc · {workspace?.name ?? '…'}
+          <span className="product">adoc</span>
+          {workspace?.name ?? '…'}
         </Link>
+        <PluginTabBar />
         <div className="top-bar-right">
           <WarningLink count={workspace?.check.length ?? 0} onOpen={() => setWarningsOpen(true)} />
           <ConnectionStatusLabel />
           {workspace && <GitStatusLabel git={workspace.git} />}
           <AgentPaneLabel />
+          <ThemeToggle />
         </div>
       </header>
-      <PluginTabBar />
       <div className="shell-body">
         <main className="shell-main">
           <Outlet />

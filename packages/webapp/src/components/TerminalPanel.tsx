@@ -1,9 +1,36 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { onTerminal, sendTerminal, useLive, type AgentInfo } from '../live.js';
+import { resolveTokens, themeStore } from '../theme.js';
 
-type Phase = 'connecting' | 'observe' | 'control' | 'closed';
+export type TerminalPhase = 'connecting' | 'observe' | 'control' | 'closed';
+
+const TOKENS = ['surface', 'text', 'text-muted', 'primary', 'border', 'surface-element', 'error', 'success', 'warning', 'secondary', 'accent', 'info'] as const;
+
+/** The xterm.js theme from the design tokens, so the terminal follows light and dark like the rest of the page. */
+function terminalTheme() {
+  const t = resolveTokens(TOKENS);
+  const ansi = { black: t['surface-element'], red: t.error, green: t.success, yellow: t.warning, blue: t.secondary, magenta: t.accent, cyan: t.info, white: t['text-muted'] };
+  return {
+    background: t.surface,
+    foreground: t.text,
+    cursor: t.primary,
+    cursorAccent: t.surface,
+    selectionBackground: t.border,
+    ...ansi,
+    brightBlack: t['text-muted'],
+    brightRed: t.error,
+    brightGreen: t.success,
+    brightYellow: t.warning,
+    brightBlue: t.secondary,
+    brightMagenta: t.accent,
+    brightCyan: t.info,
+    brightWhite: t.text,
+  };
+}
+
+const FONT = '"D2Coding", "Symbols Nerd Font Mono", ui-monospace, monospace';
 
 function decode(base64: string): Uint8Array {
   const text = atob(base64);
@@ -16,22 +43,29 @@ function decode(base64: string): Uint8Array {
  * _Terminal_Panel_: the live terminal of the claimed herdr pane. The tab the person is using controls it
  * (taken on load when focused, and on any click, key press or focus in the page), so keys and the size go
  * to the pane. Other tabs observe; herdr's observe stream can lag for agent panes, so an idle observer
- * re-opens its stream every few seconds to get a fresh full frame.
+ * re-opens its stream every few seconds to get a fresh full frame. The phase goes to the _Message_Dock_ header.
  */
-export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']> }) {
+export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo['claim']>; onPhase: (phase: TerminalPhase) => void }) {
   const { connection } = useLive();
   const host = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<Phase>('connecting');
   const mode = useRef<'observe' | 'control'>('observe');
 
   useEffect(() => {
     const element = host.current;
     if (!element) return;
-    const term = new Terminal({ fontSize: 12.5, fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', cursorBlink: true, allowProposedApi: true, scrollback: 0, theme: { background: '#14171c' } });
+    const term = new Terminal({ fontSize: 13, fontFamily: FONT, cursorBlink: true, allowProposedApi: true, scrollback: 0, theme: terminalTheme() });
     const fit = new FitAddon();
     term.loadAddon(fit);
     term.open(element);
     fit.fit();
+    // The bundled fonts load on first use; measure the cells again once they are there.
+    void Promise.all([document.fonts.load(`13px "D2Coding"`), document.fonts.load(`13px "Symbols Nerd Font Mono"`)]).then(() => {
+      term.options.fontFamily = FONT;
+      fit.fit();
+    });
+    const offTheme = themeStore.subscribe(() => {
+      term.options.theme = terminalTheme();
+    });
     const open = (wanted: 'observe' | 'control') => {
       mode.current = wanted;
       sendTerminal({ type: 'terminal.open', mode: wanted, cols: term.cols, rows: term.rows });
@@ -44,9 +78,9 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
         term.write(decode(message.bytes));
       } else if (message.type === 'terminal.mode') {
         mode.current = message.mode === 'control' ? 'control' : 'observe';
-        setPhase(mode.current);
+        onPhase(mode.current);
       } else if (message.type === 'terminal.closed') {
-        setPhase('closed');
+        onPhase('closed');
       }
     });
     const data = term.onData((text) => {
@@ -132,6 +166,7 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
     open(document.hasFocus() ? 'control' : 'observe');
     return () => {
       off();
+      offTheme();
       data.dispose();
       observer.disconnect();
       textarea?.removeEventListener('focus', takeControl);
@@ -151,14 +186,6 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
 
   return (
     <div className="terminal-panel" data-testid="terminal-panel">
-      <div className="terminal-header">
-        <span>
-          ▣ <strong>{claim.pane}</strong>
-          <span className="muted"> · {claim.agent ?? 'pane'} · {claim.herdrSession}</span>
-        </span>
-        <span className={`terminal-phase ${phase}`}>{phase === 'control' ? '⌨ this tab controls the terminal' : phase === 'observe' ? 'observing · another tab controls · click to take over' : phase}</span>
-        <span className={`agent-status ${claim.status ?? ''}`}>{claim.status ?? ''}</span>
-      </div>
       <div className="terminal-host" ref={host} />
     </div>
   );

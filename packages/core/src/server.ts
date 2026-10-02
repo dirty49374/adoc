@@ -80,6 +80,8 @@ const WEBAPP_TYPES: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.map': 'application/json',
   '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
 function sendJson(response: ServerResponse, status: number, body: unknown): void {
@@ -479,13 +481,15 @@ export class AdocServer {
     return this.serveWebapp(path, response);
   }
 
+  /** Serves a built file under `/assets/`; every other path is a client route and gets index.html. */
   private async serveWebapp(path: string, response: ServerResponse): Promise<void> {
-    const file = /^\/(app\.js|app\.css|app\.js\.map|xterm\.css)$/.test(path) ? path.slice(1) : 'index.html';
+    const file = path.startsWith('/assets/') && /^\/assets(\/[\w-][\w.-]*)+$/.test(path) ? path.slice(1) : 'index.html';
     try {
       const body = await readFile(join(this.webappDirectory, file));
       response.writeHead(200, { 'content-type': WEBAPP_TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
       response.end(body);
     } catch {
+      if (file !== 'index.html') return sendJson(response, 404, { error: `no file ${path}` });
       response.writeHead(503, { 'content-type': 'text/plain; charset=utf-8' });
       response.end('The adoc web UI is not built; run pnpm build in the adoc repository.');
     }

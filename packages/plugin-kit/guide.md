@@ -82,9 +82,28 @@ Return any of:
 
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` and changes nothing. That is often all you need: the agent then edits the file.
 
-## CSS classes you can use without writing CSS
+## Styling: classes and design tokens
 
-`adoc-list` + `adoc-item` (rows), `adoc-done` (struck through), `adoc-badge`, `adoc-muted`, `adoc-toolbar` (row of small buttons), `adoc-section` (with an `<h2>`), `adoc-board` + `adoc-column` + `adoc-column-title` + `adoc-card` (columns of cards), `adoc-trash` (a removal drop zone), `adoc-added`, `adoc-removed`, `adoc-changed` (for `renderChanges`). Tables, code blocks and lists from `markdown()` are styled too. Inline `style="…"` also works.
+The web UI styles your HTML; you write no CSS. Its look follows the opencode TUI theme: regions differ by surface (background shade) rather than borders, emphasis is an accent bar on the left edge, and no text is larger than the body text (headings stand out by colour and weight).
+
+**Classes:**
+
+| Class | Use |
+|---|---|
+| `adoc-list` + `adoc-item` | rows; `adoc-done` on an item strikes it through |
+| `adoc-section` | a section, usually with an `<h2>` |
+| `adoc-toolbar` | a row of small buttons and meta text |
+| `adoc-muted` | quiet, smaller meta text |
+| `adoc-chip` | a small label, such as a status or a tag |
+| `adoc-block` | a panel block with an accent bar |
+| `adoc-tone-primary`, `-secondary`, `-accent`, `-success`, `-warning`, `-error`, `-info` | the colour of an `adoc-block` bar or an `adoc-chip` text |
+| `adoc-board` + `adoc-column` + `adoc-column-title` + `adoc-card` | columns of cards; columns wrap instead of scrolling |
+| `adoc-trash` | a removal drop zone |
+| `adoc-added`, `adoc-removed`, `adoc-changed` | marks for `renderChanges` |
+
+Headings, lists, links, tables and code from `markdown()` get the theme's Markdown colours; a fenced code block that names its language (```` ```ts ````) is syntax-highlighted.
+
+**Design tokens:** when you need a colour in an inline `style="…"`, use a token instead of a literal, so that light and dark both work: `var(--adoc-text)`, `--adoc-text-muted`, `--adoc-surface`, `--adoc-surface-panel`, `--adoc-surface-element`, `--adoc-primary`, `--adoc-secondary`, `--adoc-accent`, `--adoc-success`, `--adoc-warning`, `--adoc-error`, `--adoc-info`, `--adoc-border`, `--adoc-border-subtle`. Sizes: `--adoc-size-base`, `--adoc-size-small`, `--adoc-size-tiny`; fonts: `--adoc-font-text`, `--adoc-font-mono`.
 
 ## Rules that avoid load errors
 

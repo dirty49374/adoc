@@ -221,7 +221,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
   return (
     <div className="document-body" ref={container} onMouseLeave={() => setHover(undefined)}>
       {html !== shown && (
-        <div className="pending-update" data-testid="pending-update">
+        <div className="pending-update adoc-block adoc-tone-info" data-testid="pending-update">
           This document changed. The new version appears when you close the comment.
         </div>
       )}

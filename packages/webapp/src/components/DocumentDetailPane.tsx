@@ -92,8 +92,10 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
         <DocumentBody documentKey={documentKey} html={html} onAction={onAction} />
       ) : (
         <div className="document-body parse-error" data-testid="render-error">
-          <strong>{view.pluginKey} could not render this document.</strong>
-          <pre>{view.renderError}</pre>
+          <div className="adoc-block adoc-tone-error">
+            <strong>{view.pluginKey} could not render this document.</strong>
+            <pre>{view.renderError}</pre>
+          </div>
         </div>
       )}
     </section>

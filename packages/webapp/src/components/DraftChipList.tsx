@@ -16,7 +16,7 @@ export function DraftChipList({ drafts }: { drafts: DraftComment[] }) {
   return (
     <div className="draft-chip-list" data-testid="draft-chip-list">
       {drafts.map((d) => (
-        <span key={d.id} className="draft-chip" title={`${d.quote ? `"${d.quote}" — ` : ''}${d.text}`}>
+        <span key={d.id} className="adoc-chip draft-chip" title={`${d.quote ? `"${d.quote}" — ` : ''}${d.text}`}>
           <button className="chip-label" onClick={() => open(d)}>
             {formatTarget(d.target).replace(/^[A-Z]+-[^#]*#/, '#')}
           </button>

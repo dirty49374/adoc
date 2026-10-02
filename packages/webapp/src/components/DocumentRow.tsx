@@ -9,7 +9,7 @@ export function DocumentRow({ entry, selected }: { entry: SummaryEntry; selected
         <>
           <div className="row-title">{entry.summary.title}</div>
           <div className="row-meta">
-            <span className="badge">{entry.summary.status}</span>
+            <span className="status">{entry.summary.status}</span>
             <span className="row-key">{entry.key}</span>
           </div>
         </>

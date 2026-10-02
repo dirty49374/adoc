@@ -1,3 +1,4 @@
+import { Circle, Pencil, X } from 'lucide-react';
 import { useLayoutEffect, useState } from 'react';
 import { draftStore, useDrafts, type DraftComment } from '../drafts.js';
 
@@ -33,18 +34,18 @@ export function DraftMarkerColumn({ documentKey, content, container, html, onEdi
     <div className="draft-marker-column" data-testid="draft-marker-column">
       {placed.map(({ draft, top }) => (
         <div key={draft.id} className="draft-marker" style={{ top }} onMouseEnter={() => setOpen(draft.id)} onMouseLeave={() => setOpen(undefined)}>
-          ●
+          <Circle />
           {open === draft.id && (
-            <div className="draft-card">
+            <div className="draft-card floating">
               <div className="draft-card-target">{draft.target.level === 'anchor' ? `#${draft.target.anchor}` : documentKey}</div>
               {draft.quote && <blockquote>{draft.quote}</blockquote>}
               <div>{draft.text}</div>
               <div className="draft-card-actions">
-                <button title="Edit" onClick={() => onEdit(draft)}>
-                  ✎
+                <button className="quiet" title="Edit" onClick={() => onEdit(draft)}>
+                  <Pencil />
                 </button>
-                <button title="Remove" onClick={() => draftStore.remove(draft.id)}>
-                  ✕
+                <button className="quiet" title="Remove" onClick={() => draftStore.remove(draft.id)}>
+                  <X />
                 </button>
               </div>
             </div>
