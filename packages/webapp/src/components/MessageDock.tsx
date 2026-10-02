@@ -8,7 +8,7 @@ import { TerminalPanel, type TerminalPhase } from './TerminalPanel.js';
  * _Message_Dock_: one header (agent, pane or transport, agent status, terminal control, pending count), then the
  * agent's terminal when a pane is claimed or the pending messages otherwise.
  */
-export function MessageDock({ width }: { width: number }) {
+export function MessageDock({ width, dockLeft }: { width: number; dockLeft: boolean }) {
   const { messages, agent } = useLive();
   const [collapsed, setCollapsed] = useState(false);
   const [phase, setPhase] = useState<TerminalPhase>('connecting');
@@ -36,7 +36,8 @@ export function MessageDock({ width }: { width: number }) {
           {messages.length}
         </span>
         <button className="quiet" onClick={() => setCollapsed(!collapsed)} title={collapsed ? 'Open the panel' : 'Fold the panel'}>
-          {collapsed ? <ChevronLeft /> : <ChevronRight />}
+          {/* The arrow points to where the panel goes: toward its edge when folding, away from it when opening. */}
+          {collapsed === dockLeft ? <ChevronRight /> : <ChevronLeft />}
         </button>
       </div>
       {!collapsed && (

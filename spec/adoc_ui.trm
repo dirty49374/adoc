@@ -368,7 +368,7 @@ panel _Terminal_Panel_ in message = {
 }
 
 input _Panel_Resizer_ in shell = {
-  The draggable border between the main area and the _Message_Dock_ that sets the width of the _Message_Dock_.
+  The draggable border between the main area and the _Message_Dock_ that sets the width of the _Message_Dock_ and swaps their sides.
 .relations
   resizes _Message_Dock_
   references _Terminal_Panel_
@@ -377,6 +377,9 @@ input _Panel_Resizer_ in shell = {
   - _Panel_Resizer_ must show a thin vertical rule between the main area and the _Message_Dock_, so that the _Terminal_Panel_ is never mistaken for the main area.
   - _Panel_Resizer_ takes a horizontal drag; it refuses widths that would leave less than a usable minimum for either side.
   - _Panel_Resizer_ must keep the chosen width across navigation and page reloads in the same browser.
+  - _Panel_Resizer_ must carry a button in the middle of its rule that swaps the sides of the main area and the _Message_Dock_, and must keep that choice across page reloads in the same browser.
+.remarks
+  - Chosen: the main area is on the left by default; a person who talks with the agent more than reading puts the _Message_Dock_ on the left.
 }
 
 list _Draft_Marker_Column_ in comment = {

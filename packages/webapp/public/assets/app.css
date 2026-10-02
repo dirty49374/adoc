@@ -153,6 +153,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .plugin-tab .count { font-weight: 400; color: var(--adoc-text-muted); font-size: var(--adoc-size-tiny); }
 
 .shell-body { flex: 1; display: flex; min-height: 0; }
+.shell-body.dock-left { flex-direction: row-reverse; }
 .shell-column { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
 
 /* pin and fold (fold.tsx): an unpinned foldable shows its fold-closed part, and its fold-open part while the pointer
@@ -289,7 +290,9 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 
 /* ---- _Message_Dock_: one header, then the terminal or the pending messages, drafts and the composer ---- */
 /* _Panel_Resizer_: a 1px rule centred in the 4px hit area, so the _Terminal_Panel_ never reads as part of the main area */
-.panel-resizer { width: 4px; cursor: col-resize; background: linear-gradient(var(--adoc-border-subtle), var(--adoc-border-subtle)) center / 1px 100% no-repeat, var(--adoc-surface); flex-shrink: 0; }
+.panel-resizer { position: relative; width: 4px; cursor: col-resize; background: linear-gradient(var(--adoc-border-subtle), var(--adoc-border-subtle)) center / 1px 100% no-repeat, var(--adoc-surface); flex-shrink: 0; }
+.panel-swap { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 8; padding: 3px; color: var(--adoc-text-muted); background: var(--adoc-surface-element); box-shadow: var(--adoc-shadow); }
+.panel-swap:hover:not(:disabled) { color: var(--adoc-primary); }
 .panel-resizer:hover, body.resizing .panel-resizer { background: var(--adoc-border-active); }
 body.resizing { user-select: none; cursor: col-resize; }
 .message-dock { flex-shrink: 0; background: var(--adoc-surface-panel); display: flex; flex-direction: column; min-width: 0; }

@@ -53,6 +53,11 @@ function ShellLayout() {
   useActivityReports();
   const [warningsOpen, setWarningsOpen] = useState(false);
   const [dockWidth, setDockWidth] = useState(() => readStored('adoc.dock-width', 420));
+  const [dockLeft, setDockLeft] = useState(() => readStored('adoc.dock-left', false));
+  const swap = () => {
+    setDockLeft(!dockLeft);
+    writeStored('adoc.dock-left', !dockLeft || undefined);
+  };
   const resize = useCallback((width: number) => {
     setDockWidth(width);
     writeStored('adoc.dock-width', width);
@@ -73,15 +78,15 @@ function ShellLayout() {
           <ThemeToggle />
         </div>
       </header>
-      <div className="shell-body">
+      <div className={`shell-body${dockLeft ? ' dock-left' : ''}`}>
         <div className="shell-column">
           <main className="shell-main">
             <Outlet />
           </main>
           <CommentComposer drafts={drafts} />
         </div>
-        <PanelResizer width={dockWidth} onWidth={resize} />
-        <MessageDock width={dockWidth} />
+        <PanelResizer width={dockWidth} onWidth={resize} dockLeft={dockLeft} onSwap={swap} />
+        <MessageDock width={dockWidth} dockLeft={dockLeft} />
       </div>
       {warningsOpen && <WarningPanel entries={workspace?.check ?? []} onClose={() => setWarningsOpen(false)} />}
     </div>
