@@ -17,3 +17,6 @@
 - [ ] Plugins: register a source (GitHub URL etc.) for a plugin so that `adoc plugin update` can update it, see [[NOTE-261002-installation]]
 - [x] Markdown documents: edit in the web UI (e.g. answer an open question by typing right below it); an edit reaches the agent with a diff of what the person changed, see [[NOTE-261002-client-plugins]]; done: [[TASK-261002-document-edit]] (whole main file of any document)
 - [x] Markdown: render Mermaid diagrams in ```mermaid fences (code syntax highlighting already works: fenced code with a language, highlight.js, since the UI polish); done: drawn by the web UI with Mermaid 12, loaded on demand (the web UI bundle is now split into chunks)
+- [ ] Plugin tab order NOTE | TODO | SKETCH | TASK | KANBAN, set in this repository's `.adoc/adoc.yaml` (tabs follow the order of `plugins`)
+- [ ] List pane title: write the skill link as `KANBAN | SKILL.md` (a separator between the plugin key and the link)
+- [ ] Plugin tab click: unfold the list pane and open its top document; fold the list pane again when the pointer leaves both the tab bar and the list pane
