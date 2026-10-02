@@ -18,7 +18,7 @@ function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[]
 
 /**
  * _Comment_Composer_: the one composer. Sends every draft plus its own text on the chosen target
- * as one comment message; clears only after the server accepted. The input starts as one line and grows with its text.
+ * as one comment message; clears only after the server accepted. The input starts with three lines and grows with its text.
  */
 export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const { pluginKey, documentKey } = useParams();
@@ -72,7 +72,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
         <textarea
           ref={area}
           value={text}
-          rows={1}
+          rows={3}
           placeholder={drafts.length ? `Optional message about ${formatTarget(target)}` : `Message about ${formatTarget(target)}`}
           onChange={(e) => update(e.target.value)}
           onKeyDown={(e) => {

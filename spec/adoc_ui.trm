@@ -9,8 +9,9 @@
 }
 
 panel _App_Shell_ in shell = {
-  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area and the _Message_Dock_.
+  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area with the _Draft_Chip_List_ and the _Comment_Composer_ below it, and the _Message_Dock_.
 .relations
+  references _adoc_ui:Terminal_Panel_
   references _adoc:Adoc_Web_UI_
   references _adoc:Document_
   shows _adoc:Adoc_Workspace_
@@ -22,6 +23,8 @@ panel _App_Shell_ in shell = {
   contains _Panel_Resizer_
   contains _Warning_Link_
   contains _Message_Dock_
+  contains _Draft_Chip_List_
+  contains _Comment_Composer_
   contains _Workspace_Home_Panel_
   contains _Document_List_Pane_
   contains _Document_Detail_Pane_
@@ -29,6 +32,7 @@ panel _App_Shell_ in shell = {
   - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
   - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
+  - _App_Shell_ must show the _Draft_Chip_List_ and the _Comment_Composer_ below the main area at every route, apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
 .states
   - _App_Shell_ is one of connecting, connected, disconnected; in disconnected the user sees the last loaded content and the _Connection_Status_Label_ says the server is unreachable.
 .rules
@@ -257,7 +261,7 @@ input _Draft_Comment_Input_ in comment = {
 }
 
 input _Comment_Composer_ in comment = {
-  The single text input with a send button, at the bottom of the _Message_Dock_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
+  The single text input with a send button, below the main area of _App_Shell_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
 .relations
   references _adoc:Document_
   references _adoc:Plugin_
@@ -267,11 +271,11 @@ input _Comment_Composer_ in comment = {
   targets _adoc:User_Message_Target_
   sends _Draft_Chip_List_
   sends to _adoc:Adoc_Server_
-  placed in _Message_Dock_
+  placed in _App_Shell_
 .contract
   - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.
   - _Comment_Composer_ must let the user widen its target from document to plugin to workspace, and must show the chosen target, written as in _adoc:User_Message_Format_.
-  - _Comment_Composer_ takes multi-line text; it starts as one line and grows with its text; it is enabled when the text is not empty after trimming or the _Draft_Chip_List_ is not empty.
+  - _Comment_Composer_ takes multi-line text; it starts with three lines and grows with its text; it is enabled when the text is not empty after trimming or the _Draft_Chip_List_ is not empty.
   - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose composer text is its own text on the chosen target, and whose _adoc:User_Comment_ entries are the drafts in their order.
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
@@ -299,7 +303,7 @@ card _Reference_Tooltip_ in document = {
 }
 
 panel _Message_Dock_ in message = {
-  The resizable right panel of _App_Shell_: the _Terminal_Panel_ of the assigned agent when an _adoc:Agent_Claim_ exists, otherwise the _Pending_Message_List_; the _Comment_Composer_ is always at its bottom.
+  The resizable right panel of _App_Shell_: the _Terminal_Panel_ of the assigned agent when an _adoc:Agent_Claim_ exists, otherwise the _Pending_Message_List_.
 .relations
   references _adoc:Assigned_Agent_
   references _adoc:User_Message_Transport_
@@ -307,13 +311,10 @@ panel _Message_Dock_ in message = {
   shows _adoc:User_Message_
   contains _Terminal_Panel_
   contains _Pending_Message_List_
-  contains _Draft_Chip_List_
-  contains _Comment_Composer_
   resized by _Panel_Resizer_
   part of _App_Shell_
 .contract
   - _Message_Dock_ must show the _Terminal_Panel_ when an _adoc:Agent_Claim_ exists, and the _Pending_Message_List_ otherwise.
-  - _Message_Dock_ must show the _Draft_Chip_List_ and the _Comment_Composer_ at its bottom in both cases.
   - _Message_Dock_ must have one header with the agent name, the transport or the claimed pane, the agent status, whether this tab controls the _Terminal_Panel_, and the number of undelivered messages as a chip.
 .states
   - _Message_Dock_ is one of terminal, messages, collapsed; collapsed shows only the header.
@@ -366,7 +367,7 @@ list _Draft_Chip_List_ in comment = {
   references _adoc:Document_
   references _adoc_ui:Draft_Marker_Column_
   shows _adoc:User_Comment_
-  part of _Message_Dock_
+  part of _App_Shell_
   filled by _Draft_Comment_Input_
   sent by _Comment_Composer_
 .contract

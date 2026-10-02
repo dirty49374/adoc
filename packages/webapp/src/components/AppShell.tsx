@@ -7,13 +7,16 @@ import { AgentPaneLabel } from './AgentPaneLabel.js';
 import { GitStatusLabel } from './GitStatusLabel.js';
 import { PanelResizer } from './PanelResizer.js';
 import { readStored, writeStored } from '../storage.js';
+import { useDrafts } from '../drafts.js';
+import { CommentComposer } from './CommentComposer.js';
+import { DraftChipList } from './DraftChipList.js';
 import { MessageDock } from './MessageDock.js';
 import { PluginTabBar } from './PluginTabBar.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { WarningLink } from './WarningLink.js';
 import { WarningPanel } from './WarningPanel.js';
 
-/** _App_Shell_: the top bar with the plugin tabs, the routed main area and the message dock. */
+/** _App_Shell_: the top bar with the plugin tabs, the routed main area with the drafts and the composer below it, and the message dock. */
 export function AppShell() {
   return (
     <WorkspaceProvider>
@@ -47,6 +50,7 @@ function useActivityReports() {
 
 function ShellLayout() {
   const workspace = useWorkspace();
+  const drafts = useDrafts();
   useActivityReports();
   const [warningsOpen, setWarningsOpen] = useState(false);
   const [dockWidth, setDockWidth] = useState(() => readStored('adoc.dock-width', 420));
@@ -71,9 +75,13 @@ function ShellLayout() {
         </div>
       </header>
       <div className="shell-body">
-        <main className="shell-main">
-          <Outlet />
-        </main>
+        <div className="shell-column">
+          <main className="shell-main">
+            <Outlet />
+          </main>
+          <DraftChipList drafts={drafts} />
+          <CommentComposer drafts={drafts} />
+        </div>
         <PanelResizer width={dockWidth} onWidth={resize} />
         <MessageDock width={dockWidth} />
       </div>

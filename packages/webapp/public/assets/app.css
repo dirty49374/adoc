@@ -150,7 +150,8 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .plugin-tab .count { font-weight: 400; color: var(--adoc-text-muted); font-size: var(--adoc-size-tiny); }
 
 .shell-body { flex: 1; display: flex; min-height: 0; }
-.shell-main { flex: 1; min-width: 0; overflow: auto; background: var(--adoc-surface); }
+.shell-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.shell-main { flex: 1; min-height: 0; overflow: auto; background: var(--adoc-surface); }
 .pane-placeholder { padding: 32px; color: var(--adoc-text-muted); }
 
 /* _Workspace_Home_Panel_ */
@@ -299,16 +300,16 @@ body.resizing { user-select: none; cursor: col-resize; }
 .pending-comment { margin-top: 4px; }
 
 /* _Draft_Chip_List_ */
-.draft-chip-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px 0; }
+.draft-chip-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 12px 0; }
 .draft-chip { padding: 0; color: var(--adoc-secondary); font-family: var(--adoc-font-mono); }
 .draft-chip button { background: transparent; color: inherit; font-size: inherit; padding: 0 2px 0 6px; }
 .draft-chip .chip-remove { color: var(--adoc-text-muted); padding: 0 4px 0 2px; }
 .draft-chip .chip-remove:hover { color: var(--adoc-error); background: transparent; }
 
-/* _Comment_Composer_: one line that grows, on the element surface with the agent's accent bar */
-.comment-composer { margin: 6px 8px 8px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
+/* _Comment_Composer_: below the main area, three lines that grow, on the element surface with the agent's accent bar */
+.comment-composer { margin: 6px 12px 10px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
 .composer-row { display: flex; align-items: flex-end; gap: 6px; }
-.comment-composer textarea { flex: 1; resize: none; border: none; background: transparent; padding: 2px 0; max-height: 40vh; line-height: 1.5; }
+.comment-composer textarea { flex: 1; resize: none; border: none; background: transparent; padding: 2px 0; max-height: 30vh; line-height: 1.5; }
 .comment-composer textarea:focus { outline: none; }
 .comment-composer textarea::placeholder { color: var(--adoc-text-muted); }
 .send-button { padding: 4px; }

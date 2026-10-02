@@ -104,3 +104,5 @@ Markdown과 코드 강조 색(같은 파일):
 - **아이콘:** Lucide(MIT)를 씁니다. 필요한 아이콘만 번들에 들어갑니다.
 - **용어:** 디자인 토큰은 CSS 변수 `--adoc-*`로 씁니다. 바탕 단계는 surface(`--adoc-surface`, `--adoc-surface-panel`, `--adoc-surface-element`), 왼쪽 막대는 accent bar입니다. 지금까지 badge와 chip을 섞어 썼는데 chip 하나로 통일합니다(`adoc-badge` → `adoc-chip`).
 - **모서리:** 둥근 모서리를 쓰지 않습니다(opencode TUI처럼 모두 직각). 2px만 둥글려도 왼쪽 accent bar가 모서리를 따라 휘어 보였기 때문입니다. 원형인 연결 상태 점은 테두리가 아니라 기호라서 그대로 둡니다.
+- **입력창 위치:** 입력창(Comment_Composer)과 draft chip은 오른쪽 패널에서 빼서 main area(가운데 내용 영역) 아래에 둡니다. 터미널과 붙어 있으면 어디에 입력하는지 헷갈리기 때문입니다. 입력창은 세 줄 높이로 시작해 입력하면 늘어납니다.
+- **용어:** 가운데 내용 영역은 spec에서 이미 쓰던 **main area**로 부릅니다(HTML `<main>`, ARIA main landmark).

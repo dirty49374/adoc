@@ -1,19 +1,15 @@
 import { ChevronLeft, ChevronRight, Eye, Inbox, Keyboard, SquareTerminal } from 'lucide-react';
 import { useState } from 'react';
-import { useDrafts } from '../drafts.js';
 import { useLive } from '../live.js';
-import { CommentComposer } from './CommentComposer.js';
-import { DraftChipList } from './DraftChipList.js';
 import { PendingMessageList } from './PendingMessageList.js';
 import { TerminalPanel, type TerminalPhase } from './TerminalPanel.js';
 
 /**
  * _Message_Dock_: one header (agent, pane or transport, agent status, terminal control, pending count), then the
- * agent's terminal when a pane is claimed or the pending messages otherwise; drafts and the composer at the bottom.
+ * agent's terminal when a pane is claimed or the pending messages otherwise.
  */
 export function MessageDock({ width }: { width: number }) {
   const { messages, agent } = useLive();
-  const drafts = useDrafts();
   const [collapsed, setCollapsed] = useState(false);
   const [phase, setPhase] = useState<TerminalPhase>('connecting');
   const claim = agent?.claim && !agent.claim.gone ? agent.claim : undefined;
@@ -47,8 +43,6 @@ export function MessageDock({ width }: { width: number }) {
         <>
           {claim ? <TerminalPanel claim={claim} onPhase={setPhase} /> : <PendingMessageList messages={messages} />}
           {agent?.claim?.gone && <p className="dock-note adoc-block adoc-tone-error">The claimed pane {agent.claim.pane} closed; messages are held until an agent claims the workspace again.</p>}
-          <DraftChipList drafts={drafts} />
-          <CommentComposer drafts={drafts} />
         </>
       )}
     </aside>
