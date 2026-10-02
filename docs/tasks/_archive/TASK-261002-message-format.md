@@ -1,6 +1,6 @@
 ---
 title: Message format with the person's text first
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 related: [TASK-261002-herdr-integration]
 ---

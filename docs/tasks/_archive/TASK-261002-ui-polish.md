@@ -1,6 +1,6 @@
 ---
 title: UI polish with the opencode theme
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-ui-polish]
 related: [KANBAN-adoc]

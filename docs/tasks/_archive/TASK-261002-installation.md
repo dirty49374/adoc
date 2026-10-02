@@ -1,6 +1,6 @@
 ---
 title: skills through the skills CLI, plugin directories, skill check
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-installation]
 related: [KANBAN-adoc]

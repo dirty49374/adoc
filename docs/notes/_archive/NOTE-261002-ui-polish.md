@@ -1,6 +1,6 @@
 ---
 title: web UI 예쁘게 다듬기
-status: OPEN
+status: MOVED
 ---
 
 ## Background

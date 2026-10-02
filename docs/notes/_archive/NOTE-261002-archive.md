@@ -1,6 +1,6 @@
 ---
 title: archive — _archive 폴더로 옮긴 문서
-status: OPEN
+status: MOVED
 ---
 
 ## Background

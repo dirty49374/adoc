@@ -1,6 +1,6 @@
 ---
 title: edit documents in the web UI, with the diff for the agent
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-document-edit]
 related: [KANBAN-adoc]

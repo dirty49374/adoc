@@ -1,6 +1,6 @@
 ---
 title: plugin client modules and the SKETCH plugin
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-client-plugins]
 related: [KANBAN-adoc]

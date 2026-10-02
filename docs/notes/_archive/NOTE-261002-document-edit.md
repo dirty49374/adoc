@@ -1,6 +1,6 @@
 ---
 title: 웹 UI에서 문서 직접 편집 — 편집은 바로, diff는 다음 message로
-status: OPEN
+status: MOVED
 ---
 
 ## Background

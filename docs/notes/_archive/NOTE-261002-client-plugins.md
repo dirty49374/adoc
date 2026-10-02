@@ -1,6 +1,6 @@
 ---
 title: 브라우저에서 도는 plugin 코드 — 첫 사례는 그림판
-status: OPEN
+status: MOVED
 ---
 
 ## Background

@@ -1,6 +1,6 @@
 ---
 title: herdr integration and the terminal panel
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-herdr-integration, NOTE-261002-right-panel-layout]
 related: [KANBAN-adoc]

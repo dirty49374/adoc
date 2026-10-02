@@ -1,6 +1,6 @@
 ---
 title: archive by _archive folders
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-archive]
 related: [KANBAN-adoc]

@@ -1,6 +1,6 @@
 ---
 title: 설치 방법 — 프로그램이 먼저인가, skill이 먼저인가
-status: OPEN
+status: MOVED
 ---
 
 ## Background
