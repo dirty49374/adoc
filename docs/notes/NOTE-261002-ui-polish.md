@@ -1,37 +1,51 @@
 ---
-title: Making the web UI look good
+title: web UI 예쁘게 다듬기
 status: OPEN
 ---
 
 ## Background
 
-The web UI works but looks like a prototype. This note lists what is wrong today (from screenshots of the NOTE, home and KANBAN pages at 1440×900) and proposes a direction, so that we agree on it before designing in aterm and making a TASK.
+web UI는 동작하지만 아직 프로토타입처럼 보입니다. 이 노트는 지금 화면에서 어색한 점(NOTE, 홈, KANBAN 화면을 1440×900으로 찍어 진단)과 다듬는 방향을 정리합니다. 방향을 합의한 뒤 aterm으로 설계하고 TASK로 넘어갑니다.
 
 ## What is wrong today
 
-- **Terminal glyphs:** Korean text in the terminal is drawn with gaps between syllables, and the Powerline glyphs of the shell prompt show as boxes; the terminal font has neither CJK nor Nerd Font glyphs.
-- **Two worlds:** a bright document area next to a dark terminal, with no shared palette; the right panel has two headers stacked ("Agent terminal adoc-dev via herdr" and the terminal header).
-- **Cramped middle:** list pane (300px) + document + terminal leave the document narrow; the KANBAN board scrolls sideways inside it.
-- **Weak hierarchy:** the plugin tabs are plain text with counts; the document key, title, status and path compete in the header; badges, buttons and chips each have their own style.
-- **Heavy composer:** a three-line box with a big Send button takes space even when unused.
-- **Typography:** system font for everything; no font chosen for Korean; line lengths in documents are unbounded.
+- **터미널 글꼴:** 터미널의 한글이 글자 사이가 벌어져 보이고, 셸 프롬프트의 Powerline 기호가 네모로 나옵니다. 터미널 글꼴에 한글(CJK)과 Nerd Font 글리프가 없어서입니다.
+- **두 세계:** 밝은 문서 영역과 검은 터미널이 서로 다른 색 체계를 씁니다. 오른쪽 패널에는 헤더가 두 개 겹쳐 있습니다("Agent terminal adoc-dev via herdr"와 터미널 헤더).
+- **가운데가 좁음:** 목록(300px), 문서, 터미널 세 칸 때문에 문서 폭이 좁고, KANBAN 보드는 그 안에서 옆으로 스크롤됩니다.
+- **위계가 약함:** plugin 탭은 숫자가 붙은 일반 글자일 뿐이고, 문서 헤더에서는 key, 제목, 상태, 경로가 서로 경쟁합니다. 배지, 버튼, chip도 저마다 스타일이 다릅니다.
+- **무거운 입력창:** 쓰지 않을 때도 세 줄짜리 입력 상자와 큰 Send 버튼이 자리를 차지합니다.
+- **타이포그래피:** 모든 곳에 시스템 글꼴을 쓰고, 한글용 글꼴을 따로 정하지 않았습니다. 문서 본문의 한 줄 길이에도 제한이 없습니다.
 
 ## Ideas
 
-- **One palette, light and dark:** design tokens shared by the shell, the documents and the terminal theme; follow the system theme, with a toggle. The terminal uses the same background and accent as the app instead of a separate black box.
-- **Fonts:** Pretendard for the interface and documents (good Korean and Latin), a monospace with CJK and Nerd Font glyphs for the terminal and code (for example D2Coding Nerd or Sarasa Mono K, falling back to JetBrains Mono); bundled with the web UI so that it works offline on the internal network.
-- **Layout:** the list pane collapses to a narrow rail when a document is open (hover or click to expand); documents get a comfortable reading width (about 72 characters) centred in their pane; KANBAN columns fill the available width and wrap instead of scrolling.
-- **Right panel:** one header that combines the agent, the pane, the status and the control state; the terminal fills the rest; the composer becomes a single line that grows while typing, with the draft chips above it and a small send icon.
-- **Plugin tabs:** pill-shaped tabs with a small icon per plugin and a quiet count.
-- **Document header:** key as a small monospace caption, title large, status as a coloured pill, path and change toggle in a quiet meta row.
-- **Components:** one style for badges, pills, chips and buttons; visible focus rings; short transitions on hover and on panel changes.
+- **색 체계 하나로, 라이트와 다크:** 앱 틀, 문서, 터미널 테마가 같은 디자인 토큰을 씁니다. 시스템 설정을 따르되 전환 버튼을 둡니다. 터미널도 별도의 검은 상자가 아니라 앱과 같은 배경색과 강조색을 씁니다.
+- **글꼴:**
+  - 화면과 문서는 Pretendard를 씁니다. 한글과 영문이 모두 좋습니다.
+  - 터미널과 코드는 한글과 Nerd Font 글리프를 갖춘 고정폭 글꼴을 씁니다. 예를 들어 D2Coding Nerd나 Sarasa Mono K이고, 없으면 JetBrains Mono로 대체합니다.
+  - 내부망에서도 오프라인으로 동작하도록 web UI에 글꼴 파일을 함께 넣습니다.
+- **배치:**
+  - 문서를 열면 목록 칸이 좁은 레일로 접힙니다. 마우스를 올리거나 클릭하면 펼쳐집니다.
+  - 문서는 읽기 좋은 폭(약 72자)으로 가운데에 놓습니다.
+  - KANBAN 열은 화면 폭을 채우고, 넘치면 옆으로 스크롤하지 않고 줄바꿈합니다.
+- **오른쪽 패널:**
+  - 헤더 하나에 agent, pane, 상태, 제어 상태를 함께 담습니다. 나머지 공간은 터미널이 채웁니다.
+  - 입력창은 한 줄로 시작해 입력하면 늘어납니다. 위에는 draft chip이 붙고, 보내기는 작은 아이콘으로 합니다.
+- **plugin 탭:** pill 모양에 plugin별 작은 아이콘을 넣고, 숫자는 조용하게 표시합니다.
+- **문서 헤더:**
+  - key는 작은 고정폭 글씨로 쓰고, 제목은 크게 씁니다.
+  - 상태는 색 있는 pill로 표시합니다.
+  - 경로와 변경 보기 버튼은 조용한 meta 줄에 둡니다.
+- **컴포넌트:** 배지, pill, chip, 버튼의 스타일을 하나로 통일합니다. focus 표시를 분명하게 하고, hover와 패널 전환에 짧은 애니메이션을 넣습니다.
 
 ## Open questions
 
-- Which overall look: calm light workspace (Notion/Linear-like), full dark (terminal-like everywhere), or system light/dark with a toggle?
-- May the web UI bundle web fonts (Pretendard, a CJK Nerd monospace), adding a few MB, or should it use only fonts installed on the computer?
-- Any app whose look you want adoc to resemble?
+- 전체 톤: 다음 중 어느 쪽이 좋을까요?
+  - 차분한 라이트 작업 공간(Notion이나 Linear 느낌)
+  - 전체 다크(어디서나 터미널 느낌)
+  - 시스템을 따르는 라이트/다크와 전환 버튼
+- web UI에 웹 글꼴(Pretendard, 한글 Nerd 고정폭)을 수 MB 정도 포함해도 될까요? 아니면 컴퓨터에 설치된 글꼴만 쓸까요?
+- 닮았으면 하는 앱이 있나요?
 
 ## Decisions
 
-- (none yet)
+- (아직 없음)
