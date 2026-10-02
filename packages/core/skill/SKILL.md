@@ -9,7 +9,7 @@ description: "What adoc is (plugins, documents, configuration, scopes) and how i
 
 adoc is a place where a person and an agent work on documents together. The person uses the adoc web UI in a browser; the agent uses the `adoc` command line or its MCP tool. Both connect to the **adoc server** of the workspace and talk through the documents: the person reads the rendered documents, comments on them, edits them or presses their buttons, and each of those reaches the agent as a **message**; the agent edits the files.
 
-- The adoc server watches the documents for changes, calls each document's plugin to summarize and render it for the web UI (adoc renders nothing itself), runs the plugin's actions, holds the person's messages and delivers them to the agent.
+- The adoc server watches the documents for changes, renders each document for the web UI through its plugin (the plugin summarizes and renders it; adoc renders nothing itself), runs the plugin's actions, holds the person's messages and delivers them to the agent.
 - What a document is and how it looks comes from **plugins**: adoc itself knows no document kind.
 - adoc never starts an agent. Run the agent in a herdr pane: adoc then pushes every message straight into that pane, and the web UI shows its terminal.
 - A workspace is usually a git repository, so that the agent can commit every change; adoc also works without git and then warns in `adoc check`.
@@ -115,6 +115,20 @@ $XDG_RUNTIME_DIR/adoc/<id>.json  # a record of each running adoc server (pid, ur
 How a plugin is meant to be used, what its files look like, what an anchor means and what to do for each of its actions is written in its skill. **Always read the skill of a plugin before you touch its documents:** `adoc skill list`, then `adoc skill view adoc-<plugin key in lowercase>`, such as `adoc skill view adoc-task`. The person sees the same text in the web UI (`SKILL.md` beside the plugin key).
 
 ## For the agent
+
+### Setting up a new project
+
+adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings).
+
+1. **Talk first.** Before any work, take time with the person to decide how this project will use them: which documents to keep, what goes where, how detailed.
+2. **Agree on the way of working, and record it** in the project's `AGENTS.md` (or `CLAUDE.md`): whether every change is committed, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
+   - Use a **NOTE** to discuss ideas with the person or to help them understand something. Draw state and sequence diagrams with Mermaid (```` ```mermaid ````) wherever they help.
+   - When a good idea comes out of a NOTE, put it on a **TODO** list and do it; when it is complex, design it enough and turn it into a **TASK** that lists the NOTE in `notes:`.
+   - Start work only when the NOTEs, TODOs and TASKs are all committed.
+   - The work may go to a subagent or a herdr development agent.
+   - When a task is finished, set it to REVIEW and get the person's review; on their approval it becomes DONE (see the TASK skill).
+3. **Change the procedure with the person as you go**, and keep `AGENTS.md` up to date.
+4. **Make plugins fit the work.** A plugin is easy to write, so change one or write a new one whenever the documents should look or behave differently (skill `adoc-plugin-authoring`).
 
 ### Commands
 
