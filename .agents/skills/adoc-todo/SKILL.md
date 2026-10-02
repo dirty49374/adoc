@@ -5,7 +5,7 @@ description: "TODO documents: lists of one-line things to do, as Markdown task l
 
 # TODO documents
 
-Document keys look like `TODO-<id>`. Read the general workflow with `adoc skill view adoc`.
+Document keys look like `TODO-<local id>`. Read the general workflow with `adoc skill view adoc`.
 
 ## Purpose
 
@@ -21,11 +21,13 @@ A TODO list keeps small things to do, each one line, so that nothing small gets 
 - Keep every item one line. When an item needs more than a line, it is a TASK: propose one in your conversation; once the person agrees, create the TASK and point the item to it: `- [ ] Rework the auth layer: [[TASK-261010-auth]]`.
 - When you finish an item, check it and append `; done: …`, saying what was done and where, such as a commit or a document key.
 - When the person asks to add something "to the TODO", add one item in the right group; create a group when none fits.
-- Never delete or reword an item the person wrote without asking; you only check it and append the `done:` clause.
+- Never delete or reword an item the person wrote without asking; you only check it, append the `done:` clause, or point it to a TASK the person agreed to.
+- Check an item that points to a TASK when the TASK is DONE, and list the TODO in the TASK's `related:`.
+- Ask the person in your conversation, not in the file: the view shows only items and group headings.
 
 ## File
 
-`TODO-<id>.md`, a Markdown task list under an optional `# Title`:
+`TODO-<local id>.md`, a Markdown task list under an optional `# Title`:
 
 ```markdown
 # GUI work
@@ -40,14 +42,14 @@ A TODO list keeps small things to do, each one line, so that nothing small gets 
 
 - One item per line: `- [ ] text` (open) or `- [x] text` (done). Write `[[KEY]]` to refer to another document.
 - A `## Heading` line starts a group, until the next heading; items before the first heading have no group. Other lines are ignored by the view.
-- Recommended id: a topic in English words, such as `TODO-gui` or `TODO-backend`.
+- Recommended local id: a topic, such as `TODO-gui` or `TODO-backend`.
 
 ## Anchors
 
-The anchor of an item, and of a group heading, is its 1-based line number: `TODO-gui#5` is line 5. If the line moved, find the item by the `quote` of the message.
+The anchor of an item, and of a group heading, is its 1-based line number: `TODO-gui#5` is line 5. If the line moved, find the item by the `quote` of the comment, or by the item text in an action message.
 
 ## Actions
 
 | action | what adoc already did | what you do |
 |---|---|---|
-| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing: the person marked the item done, or open again; it is not a request to do the work. Commit it with your next change |
+| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing more: the person marked the item done, or open again; it is not a request to do the work |

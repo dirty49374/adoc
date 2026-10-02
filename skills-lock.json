@@ -4,27 +4,27 @@
     "adoc-kanban": {
       "source": "./plugins/kanban/skill",
       "sourceType": "local",
-      "computedHash": "c40143af1e4e67d9a1e26830925b131a29706bd83e1425642cdfd637a6ef379b"
+      "computedHash": "4461fb38484b1d52d211d8bebd14275a92f83b44628e509b2fc6ce94212e70b9"
     },
     "adoc-note": {
       "source": "./plugins/note/skill",
       "sourceType": "local",
-      "computedHash": "1344399274894db1dbdaf4a96387b3f434f7923523a60283c0424498801c0e58"
+      "computedHash": "08a2214db7573efc8b8b1637efcc9858d92d8b755f674bf1b907ee9fd8c2f5f4"
     },
     "adoc-sketch": {
       "source": "./plugins/sketch/skill",
       "sourceType": "local",
-      "computedHash": "f0f1d4340107d736fe9b781d315d2b1f577bc2bdcec7fd1feac80e6eb5518fee"
+      "computedHash": "3fe07fc2ee3c7657f4c4d7f59721dbe3c860f28b8b2495de548c806a2ad75697"
     },
     "adoc-task": {
       "source": "./plugins/task/skill",
       "sourceType": "local",
-      "computedHash": "7bd3a8655925af35782b4e60a4f5d7f57aadde49fca0402fd0fa83d7f053477d"
+      "computedHash": "3cbbcb8adbf6f01cda58b3cbc4699b6914e1d141f551039d840c9792efc283b2"
     },
     "adoc-todo": {
       "source": "./plugins/todo/skill",
       "sourceType": "local",
-      "computedHash": "1b99cdc2f5365a5b10518f3060f38a309258fabfdd45c78ca4df04936bbc71ab"
+      "computedHash": "dab38afed9ff303d77a4719a5e11b62788ed88f0e61ed0da1020c6a5609f8411"
     }
   }
 }
