@@ -6,3 +6,4 @@
 - [ ] Show "no git" in git-related fields once such fields exist (commit hash etc.)
 - [ ] Idea: show the agent's herdr window in the web UI
 - [x] Change view: pick any older version kept in memory as the base (version picker), see [[NOTE-261002-note-plugin]]
+- [ ] Terminal mouse clicks: forward as `terminal.mouse` once herdr is updated (0.9.1 has no mouse command; docs for 0.9.3 list it), see [[TASK-261002-herdr-integration]]
