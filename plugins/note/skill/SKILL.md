@@ -64,4 +64,4 @@ The anchor of a section is its heading in lowercase with hyphens: `## Open quest
 
 ## Actions
 
-None.
+None of its own.
