@@ -7,9 +7,11 @@ export function PanelResizer({ width, onWidth }: { width: number; onWidth: (widt
     const move = (e: PointerEvent) => {
       if (!start.current) return;
       const next = start.current.width + (start.current.x - e.clientX);
-      onWidth(Math.max(280, Math.min(window.innerWidth - 700, next)));
+      onWidth(Math.max(280, Math.min(window.innerWidth - 400, next)));
     };
     const up = () => {
+      // Resizing the panel is an interaction with the terminal: this tab takes control so that its size reaches the pane.
+      if (start.current) window.dispatchEvent(new CustomEvent('adoc:panel-resized'));
       start.current = undefined;
       document.body.classList.remove('resizing');
     };

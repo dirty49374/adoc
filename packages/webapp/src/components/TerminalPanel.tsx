@@ -53,6 +53,11 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       if (mode.current !== 'control') open('control');
     };
     textarea?.addEventListener('focus', takeControl);
+    const resized = () => {
+      fit.fit();
+      open('control');
+    };
+    window.addEventListener('adoc:panel-resized', resized);
     const wheel = (e: WheelEvent) => {
       if (mode.current !== 'control') return;
       e.preventDefault();
@@ -74,6 +79,7 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
       data.dispose();
       observer.disconnect();
       textarea?.removeEventListener('focus', takeControl);
+      window.removeEventListener('adoc:panel-resized', resized);
       element.removeEventListener('wheel', wheel);
       sendTerminal({ type: 'terminal.close' });
       term.dispose();
@@ -87,7 +93,7 @@ export function TerminalPanel({ claim }: { claim: NonNullable<AgentInfo['claim']
           ▣ <strong>{claim.pane}</strong>
           <span className="muted"> · {claim.agent ?? 'pane'} · {claim.herdrSession}</span>
         </span>
-        <span className={`terminal-phase ${phase}`}>{phase === 'control' ? '⌨ controlling' : phase === 'observe' ? 'click to type' : phase}</span>
+        <span className={`terminal-phase ${phase}`}>{phase === 'control' ? '⌨ controlling (this tab sets the size)' : phase === 'observe' ? 'observing · click to control' : phase}</span>
         <span className={`agent-status ${claim.status ?? ''}`}>{claim.status ?? ''}</span>
       </div>
       <div className="terminal-host" ref={host} />

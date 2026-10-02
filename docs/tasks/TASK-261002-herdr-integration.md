@@ -41,4 +41,5 @@ Spec Terms (aterm, `spec/adoc.trm` and `spec/adoc_ui.trm`):
 - 2026-10-02: CLI: `adoc agent claim | show`, `adoc server run --agent-pane`, `adoc init` writes `.adoc/.gitignore`.
 - 2026-10-02: web UI: terminal panel (xterm.js, click to control, resize follows the panel), panel resizer, agent pane label, draft markers with hover cards, draft chips.
 - 2026-10-02: verified on a scratch shell pane: live frames, typing (including Korean text), resize 55 → 88 columns, message push; then claimed this session's pane w2B:p1. Tests: 28 passing.
-- 2026-10-02: left for review: real Korean IME composition from a keyboard (Playwright only typed characters).
+- 2026-10-02: Korean IME confirmed by the person.
+- 2026-10-02: fixed: the panel could not grow on windows narrower than about 1150px (width limit too strict), and resizing in an observing tab did not reach the pane; dragging the border now takes control in that tab.
