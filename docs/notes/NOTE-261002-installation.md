@@ -62,4 +62,9 @@ adoc을 다른 프로젝트나 다른 사람이 쓰려면 설치 방법이 필�
 
 ## Decisions
 
-- (아직 없음)
+- **배포:** npm 공개 패키지로 냅니다. 공개 안내 문구는 "`npm i -g <패키지>` 하고 `adoc skill install` 하세요."입니다.
+- **skill:** adoc 패키지 안에 SKILL.md를 파일로 넣고, 설치는 Vercel `skills` CLI에 맡깁니다. `adoc skill install`이 설치된 패키지의 skill 폴더를 원본으로 `npx skills add <폴더>`를 실행합니다(로컬 경로를 지원함을 확인: `npx skills add ./my-local-skills`). 짧은 pointer SKILL.md 안은 쓰지 않습니다.
+- **여러 agent:** Vercel `skills`가 agent별 위치(`.agents/skills`, `.claude/skills` 등)를 처리하므로 Codex도 함께 해결됩니다.
+- **설치 시점:** skill 설치는 `adoc skill install`로 따로 합니다. `adoc init`은 skill이 설치되어 있는지 한 번 검사해서 없으면 경고합니다.
+- **plugin 위치:** 사용자별 adoc 설정 디렉터리와 프로젝트별 디렉터리, 양쪽에 둘 수 있게 합니다.
+- **plugin 업데이트:** plugin에 GitHub URL 등 출처를 등록하면 업데이트할 수 있게 합니다. 나중 일이라 TODO로 넘깁니다.

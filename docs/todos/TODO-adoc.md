@@ -16,3 +16,4 @@
 - [ ] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status)
 - [ ] Document list pane: show the last update in small text, relative ("updated 5 min ago")
 - [ ] Web UI: horizontal and vertical scrollbars always show on the page (new, since the UI polish); not reproduced in the demo, which has no terminal panel, so suspect the terminal panel (xterm.js sizing) first
+- [ ] Plugins: register a source (GitHub URL etc.) for a plugin so that `adoc plugin update` can update it, see [[NOTE-261002-installation]]
