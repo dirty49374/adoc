@@ -60,6 +60,8 @@ const commentSchema = z.object({
     .default([]),
 }).refine((m) => (m.text?.trim() && m.target) || m.comments.length > 0, 'a comment message needs text with a target, or at least one comment');
 
+const editSchema = z.object({ version: z.string(), text: z.string(), since: z.string().optional() });
+
 const actionSchema = z.object({
   key: z.string(),
   version: z.string(),
@@ -427,6 +429,15 @@ export class AdocServer {
     if (match && method === 'GET') {
       const file = ws.mainFile(decodeURIComponent(match[1]!));
       return file ? sendJson(response, 200, file) : sendJson(response, 404, { error: `${match[1]} does not exist` });
+    }
+    if (match && method === 'POST') {
+      const parsed = editSchema.safeParse(await readBody(request));
+      if (!parsed.success) return sendJson(response, 400, { error: 'an edit needs version and text' });
+      const key = decodeURIComponent(match[1]!);
+      const outcome = await this.run(() => ws.editMainFile(key, parsed.data.version, parsed.data.text, parsed.data.since));
+      if (outcome.status === 'refused') return sendJson(response, 409, outcome);
+      this.broadcast({ type: 'documents', revision: ws.revision, changed: [key] });
+      return sendJson(response, 200, outcome);
     }
     match = /^\/api\/documents\/([^/]+)\/versions$/.exec(path);
     if (match && method === 'GET') {

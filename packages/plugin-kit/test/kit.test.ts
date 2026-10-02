@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { action, anchor, definePlugin, diffLines, sourceDiff, dropTarget, findReferences, frontmatter, html, markdown, raw, ref, slug, source } from '../src/index.js';
+import { action, anchor, definePlugin, diffLines, sourceDiff, unifiedDiff, dropTarget, findReferences, frontmatter, html, markdown, raw, ref, slug, source } from '../src/index.js';
 
 describe('html', () => {
   it('escapes interpolated text and keeps fragments', () => {
@@ -55,6 +55,15 @@ describe('diff', () => {
     expect(diffLines('a\nb\nc', 'a\nB\nc\nd').map((d) => `${d.op[0]}${d.line}:${d.text}`)).toEqual(['s1:a', 'r2:b', 'a2:B', 's3:c', 'a4:d']);
     const out = sourceDiff('x', 'x\ny', { file: 'f.md' }).html;
     expect(out).toContain('<div class="adoc-added" data-adoc-source="f.md:2">');
+  });
+});
+
+describe('unifiedDiff', () => {
+  it('writes hunks with context and line numbers, and nothing for equal texts', () => {
+    expect(unifiedDiff('a\nb\nc\nd\ne\nf\ng', 'a\nb\nC\nd\ne\nf\ng\nh', 'x.md', 1)).toBe(
+      ['--- a/x.md', '+++ b/x.md', '@@ -2,3 +2,3 @@', ' b', '-c', '+C', ' d', '@@ -7,1 +7,2 @@', ' g', '+h'].join('\n'),
+    );
+    expect(unifiedDiff('same', 'same', 'x.md')).toBe('');
   });
 });
 

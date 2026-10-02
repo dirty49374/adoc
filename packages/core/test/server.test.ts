@@ -51,6 +51,19 @@ describe('AdocServer', () => {
     await expect.poll(async () => (await json(`${server.url}/api/plugins/TODO/documents`)).documents.length, { timeout: 3000 }).toBe(2);
   });
 
+  it('writes an edited main file when its version is current, with the diff since the first unsent edit', async () => {
+    const { server, f } = await start();
+    const file = await json(`${server.url}/api/documents/TODO-gui/file`);
+    const first = await json(`${server.url}/api/documents/TODO-gui/file`, post({ version: file.version, text: '# GUI\n\n- [ ] One\n- [ ] Two\n' }));
+    expect(first).toMatchObject({ status: 'applied', diff: expect.stringContaining('+- [ ] Two') });
+    const second = await json(`${server.url}/api/documents/TODO-gui/file`, post({ version: first.version, text: '# GUI\n\n- [x] One\n- [ ] Two\n', since: file.text }));
+    expect(second.diff).toContain('-- [ ] One\n+- [x] One\n+- [ ] Two');
+    expect(await readFile(join(f.root, 'docs/TODO-gui.md'), 'utf8')).toBe('# GUI\n\n- [x] One\n- [ ] Two\n');
+    const stale = await fetch(`${server.url}/api/documents/TODO-gui/file`, post({ version: file.version, text: 'lost' }));
+    expect(stale.status).toBe(409);
+    expect(await readFile(join(f.root, 'docs/TODO-gui.md'), 'utf8')).toContain('Two');
+  });
+
   it('keeps companion files with their document, writes binary contents, and serves a plugin client module', async () => {
     const f = await fixture({ 'docs/SKETCH-a.excalidraw': '{ "type": "excalidraw", "elements": [] }', 'docs/SKETCH-a.png': 'old', 'docs/SKETCH-lost.png': 'x' });
     await f.write('.adoc/adoc.yaml', `plugins:\n  - key: SKETCH\n    from: ${PLUGINS}/sketch\nwatch: [docs]\n`);

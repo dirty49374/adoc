@@ -4,6 +4,7 @@ import { useLive } from '../live.js';
 import { seenVersions } from '../storage.js';
 import { ActionNotice } from './ActionNotice.js';
 import { DocumentBody } from './DocumentBody.js';
+import { DocumentEditor } from './DocumentEditor.js';
 import { DocumentHeader } from './DocumentHeader.js';
 
 type DetailState = { phase: 'loading' } | { phase: 'missing' } | { phase: 'failed'; error: string } | { phase: 'showing'; view: DocumentView };
@@ -75,13 +76,16 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
     if (state.phase === 'showing') version.current = state.view.version;
   }, [state]);
 
-  const onAction = async (request: Omit<ActionRequest, 'key' | 'version'>): Promise<ActionResponse | undefined> => {
-    if (!version.current) return undefined;
+  /** Runs a write of this browser (an action or an edit); the version it produces counts as seen. */
+  const ownWrite = async <T extends { status: string; version?: string }>(write: () => Promise<T>): Promise<T> => {
     inFlight.current += 1;
-    let response: ActionResponse;
     try {
-      response = await api.sendAction({ ...request, key: documentKey, version: version.current });
-      if (response.status === 'applied' && response.version) seenVersions.set(documentKey, response.version);
+      const response = await write();
+      if (response.status === 'applied' && response.version) {
+        seenVersions.set(documentKey, response.version);
+        version.current = response.version;
+      }
+      return response;
     } finally {
       inFlight.current -= 1;
       if (!inFlight.current && reloadAfterAction.current) {
@@ -89,6 +93,15 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
         load();
       }
     }
+  };
+
+  const [editing, setEditing] = useState(false);
+  const saveEdit = (text: string, since: string, from: string) => ownWrite(() => api.editFile(documentKey, { version: from, text, since }));
+
+  const onAction = async (request: Omit<ActionRequest, 'key' | 'version'>): Promise<ActionResponse | undefined> => {
+    if (!version.current) return undefined;
+    const sent = version.current;
+    const response = await ownWrite(() => api.sendAction({ ...request, key: documentKey, version: sent }));
     if (response.status === 'refused') {
       setNotice(`Refused: ${response.reason}`);
       load();
@@ -96,7 +109,6 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
       setNotice(`The action failed: ${response.error}`);
       load();
     } else {
-      if (response.version) version.current = response.version;
       setNotice(undefined);
     }
     return response;
@@ -112,10 +124,12 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
   const html = showChanges ? changes.html : view.html;
   return (
     <section className="document-detail-pane main-scroll" data-testid="document-detail-pane">
-      <DocumentHeader view={view} changeState={changeState} changesOn={showChanges} onToggleChanges={() => void toggle()} versions={versions} base={base.current} onPickBase={(v) => void pick(v)} onArchive={(name) => void onAction({ event: { kind: 'click', name, value: '' } })} />
+      <DocumentHeader view={view} changeState={changeState} changesOn={showChanges} onToggleChanges={() => void toggle()} versions={versions} base={base.current} onPickBase={(v) => void pick(v)} onArchive={(name) => void onAction({ event: { kind: 'click', name, value: '' } })} editing={editing} onEdit={() => setEditing(true)} />
       {notice && <ActionNotice text={notice} onDismiss={() => setNotice(undefined)} />}
       {showChanges && changes.error && <ActionNotice text={`renderChanges failed: ${changes.error}`} onDismiss={() => undefined} />}
-      {html !== undefined ? (
+      {editing ? (
+        <DocumentEditor documentKey={documentKey} onSave={saveEdit} onClose={() => setEditing(false)} />
+      ) : html !== undefined ? (
         <DocumentBody documentKey={documentKey} html={html} onAction={onAction} />
       ) : (
         <div className="document-body parse-error" data-testid="render-error">

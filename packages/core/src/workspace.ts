@@ -5,6 +5,7 @@ import {
   actionResultSchema,
   describeIssues,
   sourceDiff,
+  unifiedDiff,
   summarySchema,
   type ActionEvent,
   type DocumentSummary,
@@ -318,6 +319,21 @@ export class Workspace {
       }
     }
     return hits;
+  }
+
+  /**
+   * Writes the main file that the person edited in the _Document_Editor_, when `version` is still current; answers
+   * with the new version and the unified diff from `since` (the text the unsent edits started from) to the new text.
+   */
+  async editMainFile(key: string, version: string, text: string, since?: string): Promise<{ status: 'applied'; version: string; diff: string } | { status: 'refused'; reason: string }> {
+    await this.refresh();
+    const entry = this.entry(key);
+    if (!entry) return { status: 'refused', reason: `${key} no longer exists.` };
+    if (entry.cached.version !== version) return { status: 'refused', reason: `${key} changed while you were editing; your text is kept, copy it and edit again.` };
+    const before = since ?? entry.cached.doc.text;
+    await writeFile(join(this.root, entry.record.file), text);
+    await this.refresh();
+    return { status: 'applied', version: this.cache.get(key)!.version, diff: unifiedDiff(before, text, entry.record.file) };
   }
 
   /** The main file of a document with its version, for the elements of a _Plugin_Client_Module_. */

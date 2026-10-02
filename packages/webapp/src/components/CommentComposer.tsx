@@ -2,7 +2,7 @@ import { MessageSquare, SendHorizontal } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { api, formatTarget, type MessageTarget, type UserComment } from '../api.js';
-import { draftStore, type DraftComment } from '../drafts.js';
+import { draftStore, sentComment, type DraftComment } from '../drafts.js';
 import { PinButton, usePinned } from '../fold.js';
 import { readStored, writeStored } from '../storage.js';
 import { DraftChipList } from './DraftChipList.js';
@@ -78,7 +78,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
     if (!canSend) return;
     setSending(true);
     setError(undefined);
-    const comments: UserComment[] = drafts.map(({ id: _id, ...comment }) => comment);
+    const comments: UserComment[] = drafts.map(sentComment);
     try {
       await api.sendComments(text.trim() ? { target, text, comments } : { comments });
       draftStore.clear(drafts.map((d) => d.id));

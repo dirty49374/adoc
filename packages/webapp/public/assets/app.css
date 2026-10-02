@@ -211,6 +211,13 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .header-meta .path { font-family: var(--adoc-font-mono); font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); }
 .action-notice { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; font-size: var(--adoc-size-small); }
 .document-detail-pane > .action-notice { width: calc(100% - 64px); }
+.document-editor { display: flex; flex-direction: column; gap: 6px; padding: 8px 32px 32px; flex: 1; min-height: 0; }
+.editor-toolbar { display: flex; align-items: center; gap: 10px; font-size: var(--adoc-size-small); }
+.editor-toolbar .path { font-family: var(--adoc-font-mono); font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); }
+.editor-toolbar .spacer { flex: 1; }
+.editor-notice { color: var(--adoc-text-muted); }
+.editor-notice.error { color: var(--adoc-error); }
+.editor-text { flex: 1; min-height: 60vh; resize: none; border: none; outline: none; padding: 10px 12px calc(10px + var(--adoc-composer-space, 0px)) calc(12px + var(--adoc-bar)); background: var(--adoc-surface-panel); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); font-family: var(--adoc-font-mono); font-size: var(--adoc-size-small); line-height: 1.6; tab-size: 2; }
 .document-body { position: relative; padding: 8px 48px 32px 32px; flex: 1; }
 .document-body.parse-error pre { white-space: pre-wrap; color: var(--adoc-error); }
 .pending-update { margin-bottom: 12px; font-size: var(--adoc-size-small); }

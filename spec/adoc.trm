@@ -424,6 +424,8 @@ concept _Plugin_Skill_ in plugin = {
 concept _Document_ in document = {
   One unit of content of one _Plugin_, stored as one file or one folder in an _Adoc_Workspace_ and identified by one _Document_Key_.
 .relations
+  references _adoc:Adoc_Server_
+  references _adoc:Document_Action_
   defined by _Plugin_
   identified by _Document_Key_
   versioned by _Document_Version_
@@ -436,8 +438,8 @@ concept _Document_ in document = {
   - Every file inside the folder of a folder _Document_ must belong to that _Document_.
   - A file _Document_ may have companion files: files next to it with the same name and another extension that its _Plugin_ declares, such as `SKETCH-login.png` beside `SKETCH-login.excalidraw`; they belong to the _Document_, count for its _Document_Version_ and its last update, and move with it.
   - The git copy of a _Document_ must be its source of truth.
-  - A _Document_ must change only through the _Assigned_Agent_, a _Plugin_Action_Handler_ or a direct file edit.
-  - An _Adoc_Web_UI_ must not write any file of a _Document_.
+  - A _Document_ must change only through the _Assigned_Agent_, a _Plugin_Action_Handler_, an edit of its main file in the _Adoc_Web_UI_, or a direct file edit.
+  - An _Adoc_Web_UI_ must not write any file of a _Document_ itself: it sends a _Document_Action_ or the edited main file to the _Adoc_Server_, which writes it after checking the _Document_Version_.
 .remarks
   - Chosen: direct file edits by people are allowed but not recommended.
 }
@@ -787,6 +789,7 @@ concept _User_Message_Transport_ in message = {
 concept _Adoc_Server_ in runtime = {
   The local adoc process of one _Adoc_Workspace_ that loads plugins, watches files, writes changes returned by handlers, serves the _Adoc_Web_UI_ and the _Adoc_MCP_Tool_, and holds every _User_Message_ until delivery.
 .relations
+  references _adoc:Document_Version_
   serves _Adoc_Workspace_
   configured by _Adoc_Config_
   loads _Plugin_
@@ -806,7 +809,8 @@ concept _Adoc_Server_ in runtime = {
   - An _Adoc_Server_ must accept remote connections within an internal network without authentication.
   - An _Adoc_Server_ must refuse to start on a port that is already in use.
   - An _Adoc_Server_ must write its _Server_Record_ when it starts and remove it when it stops, and must refuse to start while the _Server_Record_ of the same _Adoc_Workspace_ names a running process.
-  - An _Adoc_Server_ must reload a _Plugin_ loaded from a local path whenever a file in its folder changes, and refresh the _Adoc_Web_UI_.
+  - An _Adoc_Server_ must reload a _Plugin_ loaded from a local path whenever a file at the top of its folder, such as `index.ts`, changes, and refresh the _Adoc_Web_UI_.
+  - An _Adoc_Server_ must write an edited main file sent by the _Adoc_Web_UI_ only when the _Document_Version_ it was edited from is still current, and must answer with the new version and the unified diff from the text the edit started from.
   - An _Adoc_Server_ must remove scripts and inline event attributes from every body HTML before serving it.
 .remarks
   - Chosen: implemented in TypeScript.

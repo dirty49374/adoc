@@ -107,6 +107,8 @@ export interface ActionRequest {
 
 export type ActionResponse = { status: 'applied' | 'sent'; version?: string; message?: PublicMessage } | { status: 'refused'; reason: string } | { status: 'failed'; error: string };
 
+export type EditResponse = { status: 'applied'; version: string; diff: string } | { status: 'refused'; reason: string };
+
 export class HttpError extends Error {
   constructor(
     readonly status: number,
@@ -134,6 +136,8 @@ export const api = {
   sendComments: (body: { target?: MessageTarget; text?: string; comments: UserComment[] }) => request<{ message: PublicMessage }>('/api/messages', post(body)),
   sendAction: (body: ActionRequest) => request<ActionResponse>('/api/actions', post(body)),
   file: (key: string) => request<{ key: string; version: string; file: string; text: string }>(`/api/documents/${encodeURIComponent(key)}/file`),
+  editFile: (key: string, body: { version: string; text: string; since?: string }) =>
+    request<EditResponse>(`/api/documents/${encodeURIComponent(key)}/file`, post(body)),
 };
 
 /** Writes a target as in _User_Message_Format_. */

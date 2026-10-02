@@ -193,9 +193,31 @@ panel _Document_Detail_Pane_ in document = {
   - Through _Document_Detail_Pane_ the user must never lose an open comment input when the _adoc:Document_ re-renders.
 }
 
+panel _Document_Editor_ in document = {
+  The text editor that replaces the _Document_Body_ while the person edits the whole main file of the shown _adoc:Document_.
+.relations
+  references _adoc_ui:Change_Toggle_
+  references _adoc_ui:Document_Body_
+  references _adoc_ui:Document_Header_
+  references _adoc:Document_
+  references _adoc:Document_Version_
+  references _adoc:Adoc_Server_
+  references _adoc:User_Comment_
+  part of _Document_Detail_Pane_
+  adds to _Draft_Chip_List_
+.contract
+  - _Document_Editor_ must open from the edit button of the _Document_Header_ with the current text of the main file, and must save it at once on the save button or Ctrl+S through the _adoc:Adoc_Server_.
+  - When a save is refused because the _adoc:Document_ changed, _Document_Editor_ must keep the typed text and say so.
+  - After a save, _Document_Editor_ must put one draft _adoc:User_Comment_ on the _adoc:Document_ with the unified diff since the text before the first edit that has not been sent, replacing the earlier one, and must remove it when the text is back to that text.
+  - A version that a save of this browser produced counts as shown, so that the person's own edit never turns the _Change_Toggle_ on.
+.states
+  - _Document_Editor_ is one of editing, saving, refused.
+}
+
 label _Document_Header_ in document = {
   The header at the top of the _Document_Detail_Pane_ that shows the identity and state of the shown _adoc:Document_.
 .relations
+  references _adoc_ui:Document_Editor_
   references _adoc:Document_Action_
   references _adoc:Document_
   shows _adoc:Document_Key_
@@ -205,7 +227,7 @@ label _Document_Header_ in document = {
   part of _Document_Detail_Pane_
 .contract
   - _Document_Header_ must show the _adoc:Document_Key_, the title and the status of the _adoc:Document_Summary_, and the file path, updated on every change.
-  - _Document_Header_ must contain the _Change_Toggle_ and the _Change_Base_Picker_.
+  - _Document_Header_ must contain the _Change_Toggle_ and the _Change_Base_Picker_, and an edit button that opens the _Document_Editor_.
   - _Document_Header_ must mark an archived _adoc:Document_ as archived, and must offer a button that triggers the _adoc:Document_Action_ `archive`, or `unarchive` for an archived one.
 }
 
