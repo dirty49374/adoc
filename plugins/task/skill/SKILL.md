@@ -16,7 +16,7 @@ A TASK is the work order for one piece of work that needs a design and a plan: w
 `TODO` → `RUNNING` → `REVIEW` → `DONE`, then archived.
 
 - Write the TASK and agree on it with the person before you start; it usually comes from a NOTE.
-- Set `RUNNING` and commit when you start, and log progress in `## Log`.
+- Set `RUNNING` when you start (a step to commit, see the adoc skill), and log progress in `## Log`.
 - When you finish, set `REVIEW`. **Only the person decides that a task is DONE:** when they approve it, you set `status: DONE`.
 - **Keep the person told.** While any TASK has `status: REVIEW`, end every report to the person in the conversation (after finishing a piece of work, when you go idle) with one line listing those TASKs in the order of `adoc document list --plugin TASK` (the most recently changed first; pick the REVIEW ones yourself): at most three keys, then the number of the others, if any: `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`.
 - **When the person says they will review:** open the first one of that order with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When they approve it, set `status: DONE`, commit, and open the next one. When they ask for changes, make them and keep the task in REVIEW. Stop when none is left or the person stops.
@@ -70,4 +70,4 @@ The anchor of a section is its heading in lowercase, with every run of other cha
 
 ## Actions
 
-None of its own: the person asks for a status change in a comment or in the conversation, and you edit `status:` in the front matter.
+None of its own beyond the common `archive` and `unarchive` (see the adoc skill): the person asks for a status change in a comment or in the conversation, and you edit `status:` in the front matter.

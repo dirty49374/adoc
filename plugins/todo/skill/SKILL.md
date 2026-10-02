@@ -52,4 +52,4 @@ The anchor of an item, and of a group heading, is its 1-based line number: `TODO
 
 | action | what adoc already did | what you do |
 |---|---|---|
-| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing more: the person marked the item done, or open again; it is not a request to do the work |
+| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing more than committing it: the person marked the item done, or open again; it is not a request to do the work |
