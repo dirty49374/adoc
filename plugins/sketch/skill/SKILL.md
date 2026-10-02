@@ -21,7 +21,7 @@ A SKETCH is a drawing the person makes in the web UI, usually a UI wireframe or 
 
 - Read **both** files of a changed sketch: look at the PNG to see the layout, and read the JSON for the exact texts, the shapes and how they connect. If you cannot view images, work from the JSON and say so.
 - Describe back in one or two sentences what you understood from the drawing before you act on it, when it is not obvious.
-- You may edit the JSON, for example to tidy a wireframe or add labels. Read it just before you edit it, since the person may be drawing; the open board picks up your change. The board does not fill in missing fields, so write every new element in full: copy an element of the same type, or use the example below, and give it a new unique `id`, `seed` and `versionNonce` (random integers) and `version: 1`.
+- You may edit the JSON, for example to tidy a wireframe or add labels. Read it just before you edit it, since the person may be drawing; the open board picks up your elements. The board does not fill in missing fields, so write every new element in full: copy an element of the same type, or use the example below, and give it a new unique `id`, `seed` and `versionNonce` (random integers) and `version: 1`.
 - Never write the PNG yourself: the web UI writes it on the person's next save, so after your own edit it shows the older drawing until then. Commit as usual and tell the person.
 - To give the person an empty board, create `SKETCH-<id>.excalidraw` with the empty board below and open it for them with `adoc ui open SKETCH-<id>`.
 
