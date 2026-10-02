@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "adoc-kanban": {
+      "source": "./plugins/kanban/skill",
+      "sourceType": "local",
+      "computedHash": "dd08e0d0796227defcabae1101ad2e77f7af78f94c768ec8a603ced8b2f8fa28"
+    },
+    "adoc-note": {
+      "source": "./plugins/note/skill",
+      "sourceType": "local",
+      "computedHash": "9be45cb39700091fd4eaa8676ac0a3ec14218c0054afd8ccd2b1ab2eb6ef110c"
+    },
+    "adoc-sketch": {
+      "source": "./plugins/sketch/skill",
+      "sourceType": "local",
+      "computedHash": "444aae01a89a8004a026fbd19f31d3f50e00b01ff56b58f3bab101147fe0459a"
+    },
+    "adoc-task": {
+      "source": "./plugins/task/skill",
+      "sourceType": "local",
+      "computedHash": "8e442f7c4883a97d2fa21fef1cfabcbfb81c33e852ff529214065ad6c7f7a869"
+    },
+    "adoc-todo": {
+      "source": "./plugins/todo/skill",
+      "sourceType": "local",
+      "computedHash": "a80990b2a3a0cd169d6e2521dfe2de10dfe01fdfba90ae5cffe41a639bca84be"
+    }
+  }
+}
