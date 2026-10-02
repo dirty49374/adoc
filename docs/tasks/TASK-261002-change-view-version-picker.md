@@ -1,6 +1,6 @@
 ---
 title: Change view over any version in memory
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 related: [NOTE-261002-note-plugin, TODO-adoc]
 ---
@@ -28,3 +28,4 @@ The change view compares only with the version this browser showed last. The per
 - 2026-10-02: server lists versions with the time first seen (`GET /api/documents/<KEY>/versions`).
 - 2026-10-02: web UI picker next to the change toggle; spec and tests updated.
 - 2026-10-02: verified in the browser: the picker lists the versions in memory and shows the line diff against the chosen one. Ready for review.
+- 2026-10-02: reviewed and accepted.

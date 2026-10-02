@@ -5,4 +5,4 @@
 - [ ] CLI tests import the core test fixture across packages; give tests one shared place
 - [ ] Show "no git" in git-related fields once such fields exist (commit hash etc.)
 - [ ] Idea: show the agent's herdr window in the web UI
-- [ ] Change view: pick any older version kept in memory as the base (version picker), see [[NOTE-261002-note-plugin]]
+- [x] Change view: pick any older version kept in memory as the base (version picker), see [[NOTE-261002-note-plugin]]

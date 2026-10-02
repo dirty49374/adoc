@@ -12,4 +12,4 @@ cards:
     column: TODO
   - id: c4
     text: Change view version picker [[TASK-261002-change-view-version-picker]]
-    column: RUNNING
+    column: DONE
