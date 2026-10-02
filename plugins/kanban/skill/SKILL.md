@@ -13,15 +13,15 @@ A KANBAN board is one screen that shows where about ten pieces of work stand, so
 
 ## States and workflow
 
-- The columns are the states, in order, usually `TODO`, `RUNNING`, `DONE`, and the hidden `REMOVE`.
-- The person drags a card to another column in the web UI; that reaches you as a request, and you move the card in the file. You also move cards yourself when the work they stand for changes state.
+- The columns are the states, in the order of `columns`, usually `TODO`, `RUNNING`, `DONE`, and the hidden `REMOVE`.
+- The person drags a card to another column in the web UI; that reaches you as a request, and you move the card in the file. You move cards only when the person asks.
 
 ## Instructions
 
-- Keep the board to about ten cards: when it grows, ask the person whether to remove DONE cards.
+- Keep the board to about ten cards: when it has more, ask the person whether to remove DONE cards.
 - Keep each card one line; refer to the document that holds the details with `[[KEY]]`.
 - A board is independent: moving a card never changes the documents its text refers to, and changing those documents never moves a card. Update both only when the person asks for it.
-- Give a new card the next free id; never reuse the id of a removed card.
+- Give a new card an id one higher than any id the board has had; never reuse the id of a removed card (look at the board's git history when the highest card was removed).
 
 ## File
 
@@ -51,4 +51,4 @@ The anchor of a card is its `id`: `KANBAN-sprint12#c1`.
 
 | action | what adoc already did | what you do |
 |---|---|---|
-| `move` (drag a card), message `user request: move card c1 "…": RUNNING => DONE` | nothing (`applied: false`) | set that card's `column` to the new column; for `REMOVE`, delete the card from `cards` |
+| `move` (drag a card), message `user request: move card c1 "…": RUNNING => DONE` | nothing (`applied: false`); no message when the card is already in that column | set that card's `column` to the new column; for `REMOVE`, delete the card from `cards` |
