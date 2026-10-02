@@ -1,6 +1,6 @@
 ---
 name: adoc-task
-description: "TASK documents: A detailed work order: front matter with title and status, and ## sections."
+description: "TASK documents: detailed work orders with front matter and ## sections that go from TODO to REVIEW to DONE. Use when work needs a design and a plan before it is done, when finishing work for review, or when the person reviews, approves or archives tasks."
 ---
 
 # TASK documents

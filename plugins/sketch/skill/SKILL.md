@@ -1,6 +1,6 @@
 ---
 name: adoc-sketch
-description: "SKETCH documents: drawings, such as UI wireframes, that the person draws in Excalidraw; read the PNG and the Excalidraw JSON."
+description: "SKETCH documents: drawings, such as UI wireframes, that the person draws in Excalidraw, saved as JSON with a PNG beside it. Use when a message says a sketch changed, when the person wants to draw something, or when a drawing must be read or tidied."
 ---
 
 # SKETCH documents

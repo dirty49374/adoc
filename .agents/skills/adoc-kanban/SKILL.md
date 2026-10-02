@@ -1,6 +1,6 @@
 ---
 name: adoc-kanban
-description: "KANBAN documents: One screen of about ten cards in columns, to see where work stands."
+description: "KANBAN documents: one board of about ten cards in columns, to see where work stands. Use when the person wants an overview of work in progress, moves a card, or asks to add or remove cards."
 ---
 
 # KANBAN documents

@@ -1,6 +1,6 @@
 ---
 name: adoc-plugin-authoring
-description: "Write an adoc plugin: a folder with index.ts (definePlugin: summarize, render, actions) and skill/SKILL.md."
+description: "Writes adoc plugins: a folder with index.ts (definePlugin: layout, summarize, render, actions), skill/SKILL.md and optional browser code. Use when creating or changing an adoc plugin or its skill."
 ---
 
 # Writing an adoc plugin
@@ -207,32 +207,54 @@ export default definePlugin({
 });
 ```
 
-## skill/SKILL.md template
+## skill/SKILL.md
 
-Write it for the agent that edits these documents. It is an agent skill: `adoc skill install` installs the folder `skill/` for every agent, so keep only the skill in it (never code). The `name` is `adoc-` and the plugin key in lowercase.
+The plugin's skill is what the agent reads before it touches the plugin's documents, and what the person reads in the web UI (`SKILL.md` beside the plugin key, where they may comment on it or edit it; `adoc skill update` installs a changed one). `adoc skill install` installs the folder `skill/` for every agent, so keep only the skill in it, never code.
 
-The person reads the same file in the web UI (`SKILL.md` beside the plugin key), comments on it and may edit it; after a change, `adoc skill update` installs it again. Say what the plugin is for and how to use it, not only the file format: the agent reads this skill before it touches the plugin's documents.
+**Front matter.** `name` is `adoc-` and the plugin key in lowercase. The `description` is all an agent sees when it chooses a skill, so write it in the third person and say what the documents are and **when to use them**, with the words a person would use (the plugin key, the file extension, the kind of work). At most 1024 characters, no XML tags.
+
+**Body.** Cover these, in whatever order and depth fits the plugin and the project:
+
+1. **Purpose:** where these documents are used and what they achieve.
+2. **States and workflow:** the states a document goes through and the recommended flow between them, including who moves it (the agent, or only the person).
+3. **Instructions for the agent:** what to do, what not to do, and what to do when something happens: "do X", "never do Y", "when Z, do W".
+4. **File:** the format, with a short example, and the recommended document id.
+5. **Anchors:** what an anchor is, so that the agent finds a commented place.
+6. **Actions:** for each action, what the plugin already did and what the agent is expected to do.
+
+Write it short (the agent is capable; explain only what it cannot know), use one term for one thing throughout, and leave out what goes stale, such as dates or current counts.
+
+Here is a sensible starting point; it is an example only, so change, drop or add sections to suit the plugin and the project:
 
 ```markdown
 ---
-name: adoc-note
-description: "NOTE documents: (the description of definePlugin)."
+name: adoc-review
+description: "REVIEW documents: one code review each, with its findings and their resolution. Use when the person asks for a review, comments on a finding, or wants to know what is still open before a release."
 ---
 
-# NOTE documents
+# REVIEW documents
 
-Document keys look like `NOTE-<id>`. Read the general workflow with `adoc skill view adoc`.
+Document keys look like `REVIEW-<id>`. Read the general workflow with `adoc skill view adoc`.
 
-A NOTE document is … (one sentence).
+## Purpose
+One REVIEW records the review of one change: what was looked at, each finding, and how it was resolved, so that nothing found in a review is lost.
+
+## States and workflow
+`OPEN` → `ANSWERED` → `CLOSED`. You open a review and answer findings; only the person closes it.
+
+## Instructions
+- Write one finding per `##` section, with the file and line it concerns.
+- Never delete a finding; mark it resolved and say how.
+- When a comment disagrees with a finding, answer it under the finding and keep the review `ANSWERED`.
 
 ## File
-`NOTE-<id>.md`: (format with a short example). Recommended id: (e.g. date and title, `NOTE-261002-standup`).
+`REVIEW-<id>.md`: front matter `title`, `status`, then one `##` section per finding. Recommended id: date and change, `REVIEW-261002-login-form`.
 
 ## Anchors
-The anchor of … is …: `NOTE-…#…`.
+The anchor of a finding is its heading in lowercase with hyphens: `REVIEW-…#sql-in-loop`.
 
 ## Actions
 | action | what adoc already did | what you do |
 |---|---|---|
-| `name` | (wrote X / nothing) | (edit Y) |
+| `resolve` | nothing (`applied: false`) | mark the finding resolved, as the person asks |
 ```

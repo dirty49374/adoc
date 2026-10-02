@@ -1,6 +1,6 @@
 ---
 name: adoc
-description: "What adoc is (plugins, documents, configuration, scopes) and how its assigned agent works: claim, receive messages, edit documents, check, commit."
+description: "Explains adoc, where a person and an agent work together on plugin-defined documents, and how its assigned agent works: claim, receive messages, edit documents, check, commit. Use when a project has an .adoc folder, when an adoc message arrives, or when setting up adoc for a project."
 ---
 
 # adoc

@@ -1,6 +1,6 @@
 ---
 name: adoc-note
-description: "NOTE documents: A free-form shared note: ideas from a conversation, open questions, decisions, or anything the two of you want to keep."
+description: "NOTE documents: free-form shared notes for ideas, open questions and decisions. Use when discussing an idea with the person, explaining something (with Mermaid diagrams), or recording decisions before they become TODO items or TASKs."
 ---
 
 # NOTE documents

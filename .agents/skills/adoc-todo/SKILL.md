@@ -1,6 +1,6 @@
 ---
 name: adoc-todo
-description: "TODO documents: A list of one-line things to do, as a Markdown task list."
+description: "TODO documents: lists of one-line things to do, as Markdown task lists with optional groups. Use when the person wants something remembered or done that fits in one line, or comments on, checks or groups TODO items."
 ---
 
 # TODO documents
