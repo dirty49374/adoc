@@ -77,5 +77,6 @@ describe('definePlugin', () => {
   it('names each wrong field in one line', () => {
     expect(() => definePlugin({ ...valid, layout: { kind: 'file', extension: 'md' } })).toThrow(/layout\.extension: must look like "\.md"/);
     expect(() => definePlugin({ ...valid, actions: { Toggle: () => ({}) } })).toThrow(/actions\.Toggle/);
+    expect(() => definePlugin({ ...valid, actions: { archive: () => ({}) } })).toThrow(/archive and unarchive are sent by the document header/);
   });
 });

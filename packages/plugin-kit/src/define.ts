@@ -15,13 +15,23 @@ const layoutSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('folder'), entry: z.string().regex(/^[^/\\]+$/, 'must be a file name inside the folder, such as "bug.yaml"') }),
 ]);
 
+/** Action names the web UI's document header sends for every document; the agent handles them, never a plugin. */
+const RESERVED_ACTIONS = ['archive', 'unarchive'];
+
 const definitionSchema = z.object({
   description: z.string().min(1, 'must be a non-empty one-line description'),
   layout: layoutSchema,
   summarize: fn,
   render: fn,
   renderChanges: fn.optional(),
-  actions: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/, 'action names must be lowercase words such as "toggle"'), fn).optional(),
+  actions: z
+    .record(z.string().regex(/^[a-z][a-z0-9-]*$/, 'action names must be lowercase words such as "toggle"'), fn)
+    .superRefine((actions, context) => {
+      for (const name of RESERVED_ACTIONS.filter((reserved) => reserved in actions)) {
+        context.addIssue({ code: 'custom', path: [name], message: 'archive and unarchive are sent by the document header for the agent; choose another name' });
+      }
+    })
+    .optional(),
 });
 
 /** Validates what `summarize` returned. */
