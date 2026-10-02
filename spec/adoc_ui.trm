@@ -281,7 +281,7 @@ input _Comment_Composer_ in comment = {
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
   - _Comment_Composer_ must stay open when the person pins it; unpinned, it must fold into one line that shows the number of drafts and whether text is typed, and unfold while the pointer is on it or its input has focus, keeping its text and the drafts; the pin is kept across page reloads in the same browser.
-  - The main area must leave room below its content for the _Comment_Composer_, so that the end of a document can be scrolled into view above it.
+  - The main area must leave room below its content for the open _Comment_Composer_, also while it is folded, so that the end of a document can always be scrolled into view above it.
 .rules
   - Through _Comment_Composer_ the user must never send an empty message.
   - Through _Comment_Composer_ the user must never lose typed text or drafts because the page re-rendered.

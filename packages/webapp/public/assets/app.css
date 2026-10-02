@@ -159,6 +159,9 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .foldable:not(.unpinned) .fold-closed,
 .foldable.unpinned:is(:hover, :has(textarea:focus)) .fold-closed,
 .foldable.unpinned:not(:hover):not(:has(textarea:focus)) .fold-open { display: none; }
+/* measuring: a folded region laid out open but invisible for one synchronous measurement (CommentComposer) */
+.foldable.measuring .fold-open { display: block !important; visibility: hidden; }
+.foldable.measuring .fold-closed { display: none !important; }
 .shell-main { flex: 1; min-height: 0; overflow: auto; background: var(--adoc-surface); }
 .pane-placeholder { padding: 32px; color: var(--adoc-text-muted); }
 

@@ -22,8 +22,7 @@ function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[]
  * _Comment_Composer_: the one composer. Sends every draft plus its own text on the chosen target
  * as one comment message; clears only after the server accepted. The input starts with three lines and grows with its text.
  * It floats over the bottom of the main area; unpinned, it folds into one line (see fold.tsx), keeping text and drafts.
- * Its height, except while unfolded by hover or focus, is published as `--adoc-composer-space` so that the main area
- * leaves room for it.
+ * Its open height is published as `--adoc-composer-space` so that the main area leaves room for it.
  */
 export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const { pluginKey, documentKey } = useParams();
@@ -44,13 +43,21 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
     element.style.height = `${element.scrollHeight}px`;
   };
   useLayoutEffect(grow, [text, pinned]);
-  /** Publishes the resting height; skipped while hover or focus unfolds an unpinned composer for now. */
+  /**
+   * Publishes the height of the open composer, also while it is folded, so that unfolding never covers the end of the
+   * main area. A folded composer is measured open but invisible (`measuring`) when no open height is known yet.
+   */
   const measure = () => {
     const element = box.current;
     const shell = element?.parentElement;
     if (!element || !shell) return;
-    const unfoldedForNow = element.classList.contains('unpinned') && element.matches(':hover, :has(textarea:focus)');
-    if (!unfoldedForNow) shell.style.setProperty('--adoc-composer-space', `${element.offsetHeight}px`);
+    const open = element.querySelector<HTMLElement>(':scope > .fold-open');
+    if (!open?.offsetHeight) {
+      element.classList.add('measuring');
+      grow();
+    }
+    shell.style.setProperty('--adoc-composer-space', `${element.offsetHeight}px`);
+    element.classList.remove('measuring');
   };
   useEffect(() => {
     if (!box.current) return;
@@ -84,7 +91,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   };
 
   return (
-    <div ref={box} className={`composer-area foldable${pinned ? '' : ' unpinned'}`} onPointerEnter={grow} onFocus={grow} onPointerLeave={() => requestAnimationFrame(measure)} onBlur={() => requestAnimationFrame(measure)}>
+    <div ref={box} className={`composer-area foldable${pinned ? '' : ' unpinned'}`} onPointerEnter={grow} onFocus={grow}>
       <button className="composer-folded fold-closed" onClick={() => area.current?.focus()} data-testid="composer-folded">
         <MessageSquare />
         <span>Message to the agent</span>
