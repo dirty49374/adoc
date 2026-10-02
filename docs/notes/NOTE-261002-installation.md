@@ -10,7 +10,7 @@ adoc을 다른 프로젝트나 다른 사람이 쓰려면 설치 방법이 필�
 ## What is wrong today
 
 - 설치 경로가 "저장소 받아서 빌드"뿐입니다. 패키지(npm 등)로 받는 방법이 없습니다.
-- `adoc skill install`은 skill **본문 전체를 복사**해서 `.claude/skills/`에 씁니다. 프로그램을 업데이트해도 복사된 본문은 그대로라 둘이 어긋날 수 있습니다(업계 용어로 **version skew**). 이 컴퓨터의 aterm은 반대로, skill에는 "`aterm skill aterm`을 실행해서 읽어라"는 짧은 안내(pointer)만 두고 본문은 프로그램이 내줍니다. 같은 사람이 만든 두 도구가 서로 다른 방식을 쓰고 있습니다(불일치).
+- `adoc skill install`은 skill **본문 전체를 복사**해서 `.claude/skills/`에 씁니다. 프로그램을 업데이트해도 복사된 본문은 그대로라 둘이 어긋날 수 있습니다(업계 용어로 **version skew**).
 - Claude Code용 위치(`.claude/skills`)에만 씁니다. Codex 등 다른 agent는 지원하지 않습니다.
 
 ## Findings: 주요 프로젝트
@@ -45,7 +45,7 @@ adoc을 다른 프로젝트나 다른 사람이 쓰려면 설치 방법이 필�
 ## Ideas
 
 - **프로그램 먼저:** `npm i -g` 한 번으로 `adoc` 명령이 생기게 합니다(npm 공개 또는 내부 registry, 아니면 tarball). Node 24가 전제입니다.
-- **skill은 pointer로:** 설치되는 SKILL.md에는 name, description과 "`adoc skill view <name>`을 실행해 전체를 읽어라"만 둡니다. 본문은 항상 설치된 프로그램이 내주므로 version skew가 없습니다. aterm과 같은 방식이 되어 두 도구의 불일치도 사라집니다. description은 agent가 skill을 고르는 기준이라 pointer에도 그대로 넣습니다.
+- **skill은 pointer로:** 설치되는 SKILL.md에는 name, description과 "`adoc skill view <name>`을 실행해 전체를 읽어라"만 둡니다. 본문은 항상 설치된 프로그램이 내주므로 version skew가 없습니다. beads(프로그램이 지침을 출력)와 Claude Code `command` source(프로그램이 skill 폴더를 알려 줌)와 같은 생각입니다. description은 agent가 skill을 고르는 기준이라 pointer에도 그대로 넣습니다.
   - plugin별 skill(`adoc-todo` 등)은 워크스페이스의 plugin 목록에 따라 달라지므로, plugin을 추가·삭제하면 `adoc skill update`가 pointer 목록만 다시 맞춥니다.
 - **여러 agent:** `adoc skill install --agent claude,codex`. 원본 위치는 `.agents/skills`이고, Claude용 `.claude/skills`에는 같은 pointer를 씁니다(symlink 또는 복사 중 하나로 통일).
 - **scope:** adoc은 워크스페이스(저장소)에 묶인 도구이므로 project scope가 기본입니다. pointer는 짧고 버전에 묶이지 않으니 저장소에 commit해도 됩니다.
