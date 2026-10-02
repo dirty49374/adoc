@@ -66,3 +66,13 @@ status: OPEN
 ## Decisions
 
 - 첫 사례는 그림판: 사람이 UI 같은 것을 그려서 agent에게 전달하는 기능입니다.
+- **방식:** Web Component(custom element)로 합니다.
+- **라이브러리:** Excalidraw(MIT).
+- **문서 형태:** JSON과 PNG를 같은 이름, 다른 확장자로 둡니다(예: `SKETCH-login.excalidraw`, `SKETCH-login.png`).
+  - 그런데 지금 스캔 규칙에서는 `SKETCH-login.png`가 SKETCH 문서의 확장자와 맞지 않아 "layout-mismatch" 경고가 납니다. 그래서 plugin layout에 **companion file**(같은 이름의 짝 파일) 개념을 추가해야 합니다. 예: `layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] }`. companion file은 같은 문서의 일부라서 `doc.files`와 문서 version에 포함됩니다.
+- **plugin key:** `SKETCH`(agent가 골라도 된다고 하셔서 고름. "그림판"을 뜻하는 가장 흔한 영어 단어이고 wireframe 용도에도 맞음).
+- **보내는 방식:** 따로 "보내기" 없이, 평소처럼 composer로 message를 보낼 때 함께 갑니다. 그림이 바뀌면 "그림이 바뀌었다"는 chip이 `_Draft_Chip_List_`에 들어가고, 보내면 그 chip이 message에 실립니다(PNG와 JSON 경로 포함). 그림 안의 영역은 구분하지 않으므로 chip은 문서마다 1개입니다.
+
+## Open questions (Decisions 이후 남은 것)
+
+- 그림이 바뀌었다는 chip을 일반 draft comment와 같은 것으로 볼까요? 지금 draft는 "대상 + 글"인데, 이 chip은 글이 없고 "변경 알림"입니다. 같은 메커니즘으로 하려면 draft에 "글 없이 변경만 알림" 형태를 허용해야 합니다(추천: 허용. 한 가지 chip 목록, 한 가지 보내기).
