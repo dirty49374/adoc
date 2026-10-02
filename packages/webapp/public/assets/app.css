@@ -280,7 +280,8 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .draft-card-actions { display: flex; justify-content: flex-end; gap: 2px; margin-top: 4px; }
 
 /* ---- _Message_Dock_: one header, then the terminal or the pending messages, drafts and the composer ---- */
-.panel-resizer { width: 4px; cursor: col-resize; background: var(--adoc-surface); flex-shrink: 0; }
+/* _Panel_Resizer_: a 1px rule centred in the 4px hit area, so the _Terminal_Panel_ never reads as part of the main area */
+.panel-resizer { width: 4px; cursor: col-resize; background: linear-gradient(var(--adoc-border-subtle), var(--adoc-border-subtle)) center / 1px 100% no-repeat, var(--adoc-surface); flex-shrink: 0; }
 .panel-resizer:hover, body.resizing .panel-resizer { background: var(--adoc-border-active); }
 body.resizing { user-select: none; cursor: col-resize; }
 .message-dock { flex-shrink: 0; background: var(--adoc-surface-panel); display: flex; flex-direction: column; min-width: 0; }

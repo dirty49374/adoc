@@ -344,8 +344,10 @@ input _Panel_Resizer_ in shell = {
   The draggable border between the main area and the _Message_Dock_ that sets the width of the _Message_Dock_.
 .relations
   resizes _Message_Dock_
+  references _Terminal_Panel_
   part of _App_Shell_
 .contract
+  - _Panel_Resizer_ must show a thin vertical rule between the main area and the _Message_Dock_, so that the _Terminal_Panel_ is never mistaken for the main area.
   - _Panel_Resizer_ takes a horizontal drag; it refuses widths that would leave less than a usable minimum for either side.
   - _Panel_Resizer_ must keep the chosen width across navigation and page reloads in the same browser.
 }
