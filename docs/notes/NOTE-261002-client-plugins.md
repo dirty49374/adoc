@@ -49,7 +49,7 @@ status: OPEN
   - 파일 쓰기는 지금처럼 **action으로만** 합니다. 그러면 "파일은 서버만 쓴다, version 검사는 한 곳"이 유지됩니다. plugin-kit에 브라우저 쪽 helper(예: `sendAction`, 현재 version 받기)를 둡니다.
 - **묶기(bundle):** 라이브러리는 plugin 작성자가 배포할 때 하나의 파일로 미리 묶어 둡니다. 내부망과 오프라인에서도 동작하고, 서버에 빌드 도구가 필요 없습니다.
 - **그림판 plugin(안): `SKETCH`.**
-  - 문서는 `SKETCH-<id>.excalidraw`(JSON) 한 파일입니다. 저장할 때 브라우저가 PNG(또는 SVG)도 만들어 같은 이름으로 함께 씁니다. 그래서 문서 형태는 폴더형(`SKETCH-<id>/sketch.excalidraw` + `sketch.png`)이 맞을 수 있습니다.
+  - 문서는 `SKETCH-<id>.excalidraw`(JSON)이고, 저장할 때 브라우저가 PNG도 만들어 같은 이름으로 함께 씁니다(`SKETCH-<id>.png`).
   - 저장은 action입니다(`save`: 새 JSON과 PNG를 돌려줌).
   - **agent에게 전달:** composer로 보내는 comment의 대상이 이 문서이면, message에 PNG와 JSON 경로가 함께 실립니다. agent는 두 파일을 읽고 작업합니다.
   - **comment 연결:** 도형 id를 anchor로 써서 "이 상자" 같은 comment를 붙입니다.
@@ -57,11 +57,7 @@ status: OPEN
 
 ## Open questions
 
-- Web Component로 갈까요, iframe으로 갈까요? (추천: Web Component. 테마, comment, anchor를 그대로 쓸 수 있어서 adoc의 다른 화면과 같은 방식이 됩니다. 신뢰하지 않는 plugin을 받을 일이 생기면 그때 iframe을 다시 검토합니다.)
-- 라이브러리: Excalidraw(MIT)로 정할까요? (추천: Excalidraw. 라이선스가 단순하고, wireframe 용도로 많이 쓰이며, JSON을 agent가 읽을 수 있습니다.)
-- 문서 형태: 파일 하나(JSON만, PNG는 필요할 때 만듦)로 할까요, 폴더형(JSON + PNG)으로 할까요?
-- plugin key 이름: `SKETCH`가 좋을까요? (`DRAW`, `BOARD` 등도 가능)
-- 그림을 보내는 순간: "보내기"를 누를 때만 보낼까요, 저장할 때마다 agent에게 알릴까요?
+- 그림이 바뀌었다는 chip을 일반 draft comment와 같은 것으로 볼까요? 지금 draft는 "대상 + 글"인데, 이 chip은 글이 없고 "변경 알림"입니다. 같은 메커니즘으로 하려면 draft에 "글 없이 변경만 알림" 형태를 허용해야 합니다(추천: 허용. 한 가지 chip 목록, 한 가지 보내기).
 
 ## Decisions
 
@@ -72,7 +68,3 @@ status: OPEN
   - 그런데 지금 스캔 규칙에서는 `SKETCH-login.png`가 SKETCH 문서의 확장자와 맞지 않아 "layout-mismatch" 경고가 납니다. 그래서 plugin layout에 **companion file**(같은 이름의 짝 파일) 개념을 추가해야 합니다. 예: `layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] }`. companion file은 같은 문서의 일부라서 `doc.files`와 문서 version에 포함됩니다.
 - **plugin key:** `SKETCH`(agent가 골라도 된다고 하셔서 고름. "그림판"을 뜻하는 가장 흔한 영어 단어이고 wireframe 용도에도 맞음).
 - **보내는 방식:** 따로 "보내기" 없이, 평소처럼 composer로 message를 보낼 때 함께 갑니다. 그림이 바뀌면 "그림이 바뀌었다"는 chip이 `_Draft_Chip_List_`에 들어가고, 보내면 그 chip이 message에 실립니다(PNG와 JSON 경로 포함). 그림 안의 영역은 구분하지 않으므로 chip은 문서마다 1개입니다.
-
-## Open questions (Decisions 이후 남은 것)
-
-- 그림이 바뀌었다는 chip을 일반 draft comment와 같은 것으로 볼까요? 지금 draft는 "대상 + 글"인데, 이 chip은 글이 없고 "변경 알림"입니다. 같은 메커니즘으로 하려면 draft에 "글 없이 변경만 알림" 형태를 허용해야 합니다(추천: 허용. 한 가지 chip 목록, 한 가지 보내기).
