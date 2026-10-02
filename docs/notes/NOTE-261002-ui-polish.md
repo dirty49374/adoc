@@ -16,9 +16,39 @@ web UI는 동작하지만 아직 프로토타입처럼 보입니다. 이 노트�
 - **무거운 입력창:** 쓰지 않을 때도 세 줄짜리 입력 상자와 큰 Send 버튼이 자리를 차지합니다.
 - **타이포그래피:** 모든 곳에 시스템 글꼴을 쓰고, 한글용 글꼴을 따로 정하지 않았습니다. 문서 본문의 한 줄 길이에도 제한이 없습니다.
 
+## Findings: opencode 스타일
+
+사용자가 마음에 들어 하는 것은 opencode의 **TUI 테마**("opencode")입니다. opencode의 웹·데스크톱 앱은 기본 테마(oc-2)가 달라서 테두리가 있는 일반적인 스타일입니다. 출처는 `sst/opencode` dev 브랜치의 `packages/tui/src/theme/assets/opencode.json`이고, 이 컴퓨터에서 실행 중인 opencode 화면도 직접 읽어 같은 색을 확인했습니다.
+
+| 토큰 | 다크 | 라이트 | 쓰임 |
+|---|---|---|---|
+| background | #0a0a0a | #ffffff | 전체 바탕 |
+| backgroundPanel | #141414 | #fafafa | 블록(메시지, 도구 출력) |
+| backgroundElement | #1e1e1e | #f5f5f5 | 입력창, hover |
+| text / textMuted | #eeeeee / #808080 | #1a1a1a / #8a8a8a | 본문 / 메타 정보 |
+| primary | #fab283 | #3b7dd8 | 선택 강조 |
+| secondary / accent | #5c9cf5 / #9d7cd8 | #7b5bb6 / #d68c27 | agent 색, 제목 |
+| success / warning / error / info | #7fd88f / #f5a742 / #e06c75 / #56b6c2 | #3d9a57 / #d68c27 / #d1383d / #318795 | 상태 |
+| diff 추가 / 삭제 (글자, 배경) | #4fd6be, #20303b / #c53b53, #37222c | #1e725c, #d5e5d5 / #c53b53, #f7d8db | 변경 보기 |
+
+규칙:
+
+- **바탕 세 단계:** background → panel(블록) → element(입력창과 hover) 순서로 밝기만 바꿔 영역을 구분합니다. 테두리는 거의 쓰지 않습니다.
+- **왼쪽 막대(`┃`):** 블록 왼쪽 가장자리에 굵은 막대를 둡니다. 사용자 메시지는 agent 색, 오류는 error 색, 입력창은 테두리색에 agent 색을 섞은 색입니다. 도구 출력 블록은 막대를 바탕색으로 그려 여백으로만 씁니다.
+- **assistant 메시지:** 막대도 바탕도 없는 평문입니다. 끝에 `▣ agent · model` 한 줄을 흐리게 붙입니다.
+- **목록과 대화상자의 선택:** 줄 전체를 primary로 채우고, 글자는 굵게 바탕색으로 씁니다.
+- **글꼴:** TUI라 터미널 글꼴을 씁니다. 웹 앱은 시스템 UI 글꼴, 고정폭은 `ui-monospace`, 크기 13/14/16/20px입니다.
+
 ## Ideas
 
-- **색 체계 하나로, 라이트와 다크:** 앱 틀, 문서, 터미널 테마가 같은 디자인 토큰을 씁니다. 시스템 설정을 따르되 전환 버튼을 둡니다. 터미널도 별도의 검은 상자가 아니라 앱과 같은 배경색과 강조색을 씁니다.
+- **opencode 스타일을 adoc에:** 위 토큰을 그대로 쓰고, 영역은 바탕색 단계로만 나눕니다. 강조가 필요한 곳에는 왼쪽 막대(웹에서는 3px 정도의 굵은 선)를 붙입니다.
+  - 목록의 선택된 문서: element 바탕 + primary 막대
+  - 문서 본문: background 위에 평문. hover하거나 comment가 달린 anchor는 panel 바탕 + 막대
+  - 전송 대기 message와 draft: panel 블록 + 종류별 색 막대(comment는 secondary, action은 warning)
+  - 입력창: element 바탕 + agent 색 막대
+  - 경고와 오류: panel 블록 + warning/error 막대
+- **터미널과 하나로:** 터미널 테마의 배경과 글자색도 같은 토큰을 씁니다. herdr 화면이 opencode 같은 TUI라면 자연스럽게 이어집니다.
+- **용어:** 업계 표준어로 바탕 단계는 **surface**(background, panel, element), 왼쪽 막대는 **accent bar**라고 부르겠습니다. spec과 CSS에서 이 이름 하나로 씁니다.
 - **글꼴:**
   - 화면과 문서는 Pretendard를 씁니다. 한글과 영문이 모두 좋습니다.
   - 터미널과 코드는 한글과 Nerd Font 글리프를 갖춘 고정폭 글꼴을 씁니다. 예를 들어 D2Coding Nerd나 Sarasa Mono K이고, 없으면 JetBrains Mono로 대체합니다.
@@ -39,13 +69,9 @@ web UI는 동작하지만 아직 프로토타입처럼 보입니다. 이 노트�
 
 ## Open questions
 
-- 전체 톤: 다음 중 어느 쪽이 좋을까요?
-  - 차분한 라이트 작업 공간(Notion이나 Linear 느낌)
-  - 전체 다크(어디서나 터미널 느낌)
-  - 시스템을 따르는 라이트/다크와 전환 버튼
+- 기본을 다크로 할까요, 시스템 설정을 따를까요? 라이트 토큰도 있으니 전환 버튼은 둡니다.
 - web UI에 웹 글꼴(Pretendard, 한글 Nerd 고정폭)을 수 MB 정도 포함해도 될까요? 아니면 컴퓨터에 설치된 글꼴만 쓸까요?
-- 닮았으면 하는 앱이 있나요?
 
 ## Decisions
 
-- (아직 없음)
+- opencode TUI의 "opencode" 테마 스타일을 따릅니다: 바탕색 단계로 영역을 나누고, 강조는 왼쪽 accent bar로 합니다. 테두리는 최소로 씁니다.
