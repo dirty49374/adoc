@@ -30,7 +30,7 @@ panel _App_Shell_ in shell = {
   contains _Document_Detail_Pane_
 .contract
   - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
-  - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`, and the _Skill_View_ at `/skills/:name`.
+  - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`, the _Document_List_Pane_ beside the _Skill_View_ of the plugin's skill at `/p/:plugin/skill`, and the _Skill_View_ of a skill of no plugin at `/skills/:name`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
   - _App_Shell_ must show the _Comment_Composer_ floating over the bottom of the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
 .states
@@ -110,8 +110,10 @@ list _Plugin_Tab_Bar_ in shell = {
 }
 
 panel _Skill_View_ in shell = {
-  The main area of _App_Shell_ at the route `/skills/:name`, which shows one _adoc:Agent_Skill_ read-only: its name and description, and its `SKILL.md` rendered like a document body.
+  The view that shows one _adoc:Agent_Skill_ read-only: its name and description, and its `SKILL.md` rendered like a document body; a _adoc:Plugin_Skill_ beside the _Document_List_Pane_ of its plugin at `/p/:plugin/skill`, a skill of no plugin as the main area at `/skills/:name`.
 .relations
+  references _adoc:Plugin_Skill_
+  references _adoc_ui:Document_List_Pane_
   shows _adoc:Agent_Skill_
   part of _App_Shell_
   references _Document_Body_

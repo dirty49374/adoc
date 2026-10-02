@@ -53,7 +53,7 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned 
         <span className="pane-title-name">
           {archive ? `${pluginKey} · ARCHIVE` : pluginKey}
           {skill && (
-            <Link className="skill-link" to={`/skills/${skill}`} title={`The agent skill of ${pluginKey}: how the agent works with these documents`} data-testid="skill-link">
+            <Link className="skill-link" to={`/p/${pluginKey}/skill`} title={`The agent skill of ${pluginKey}: how the agent works with these documents`} data-testid="skill-link">
               SKILL.md
             </Link>
           )}
