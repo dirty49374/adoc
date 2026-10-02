@@ -32,7 +32,7 @@ adoc check            # runs summarize and render on every document; exits 1 on 
 
 Actions run only from the web UI: start `adoc server run`, open a sample document and click, toggle or drag (or use the elements of your client module).
 
-A running `adoc server run` reloads the plugin whenever a file at the top of its folder, such as `index.ts`, changes. Other files that `index.ts` imports are not reloaded: restart the server after changing them.
+A running `adoc server run` reloads the plugin whenever a file at the top of its folder changes. A reload imports `index.ts` again, but the other files it imports keep their old code: restart the server after changing them.
 
 ## What a plugin provides
 
@@ -96,7 +96,7 @@ Return any of:
 
 A content is text, or `{ base64 }` for binary data.
 
-adoc sends `message` to the agent with `applied: true` when it wrote something, and with `applied: false` when the handler returned only `message` (a request: the agent makes the change). A handler that returns nothing sends no message. When the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
+adoc sends the agent a message only when the handler returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
 
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` and changes nothing. That is often all you need: the agent then edits the file.
 
@@ -125,7 +125,7 @@ Keep the `render` output the same across changes of the document (load the conte
 
 ## Styling: classes and design tokens
 
-The web UI styles your HTML; you write no CSS. Its look follows the opencode TUI theme: regions differ by surface (background shade) rather than borders, emphasis is an accent bar on the left edge, and no text is larger than the body text (headings stand out by colour and weight).
+The web UI styles your HTML; for plain HTML you write no CSS. Its look follows the opencode TUI theme: regions differ by surface (background shade) rather than borders, emphasis is an accent bar on the left edge, and no text is larger than the body text (headings stand out by colour and weight).
 
 **Classes:**
 
