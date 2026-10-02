@@ -116,14 +116,19 @@ async function listFiles(root: string, prefix = ''): Promise<string[]> {
   return out.sort();
 }
 
-/** Reads a document into the shape plugins receive, together with its _Document_Version_. */
-export async function readDocument(workspace: string, record: DocumentRecord): Promise<{ doc: PluginDocument; version: string }> {
+/** Reads a document into the shape plugins receive, together with its _Document_Version_ and its last update (the newest file modification time). */
+export async function readDocument(workspace: string, record: DocumentRecord): Promise<{ doc: PluginDocument; version: string; updatedAt: string }> {
   const files: Record<string, string> = {};
   const absolute = join(workspace, record.path);
+  let updated = 0;
+  const read = async (path: string) => {
+    updated = Math.max(updated, (await stat(path)).mtimeMs);
+    return readFile(path, 'utf8');
+  };
   if (record.kind === 'file') {
-    files[record.path.split('/').pop()!] = await readFile(absolute, 'utf8');
+    files[record.path.split('/').pop()!] = await read(absolute);
   } else if (await isDirectory(absolute)) {
-    for (const rel of await listFiles(absolute)) files[rel] = await readFile(join(absolute, rel), 'utf8');
+    for (const rel of await listFiles(absolute)) files[rel] = await read(join(absolute, rel));
   }
   const mainName = record.kind === 'file' ? record.path.split('/').pop()! : record.file.slice(record.path.length + 1);
   const hash = createHash('sha256');
@@ -137,5 +142,5 @@ export async function readDocument(workspace: string, record: DocumentRecord): P
     text: files[mainName] ?? '',
     files,
   };
-  return { doc, version: hash.digest('hex').slice(0, 16) };
+  return { doc, version: hash.digest('hex').slice(0, 16), updatedAt: new Date(updated).toISOString() };
 }

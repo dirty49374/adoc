@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { discoverHome } from '../src/home.js';
@@ -29,11 +29,24 @@ describe('Workspace', () => {
       ['TASK', 1, undefined],
       ['KANBAN', 0, undefined],
     ]);
-    expect(ws.summaryList('TODO')).toEqual([{ key: 'TODO-gui', path: 'docs/TODO-gui.md', summary: { title: 'GUI', status: '1/3 done', fields: { open: 2, done: 1 } } }]);
+    expect(ws.summaryList('TODO')).toEqual([{ key: 'TODO-gui', path: 'docs/TODO-gui.md', updatedAt: expect.any(String), summary: { title: 'GUI', status: '1/3 done', fields: { open: 2, done: 1 } } }]);
     const view = ws.view('TASK-a')!;
     expect(view.summary?.status).toBe('RUNNING');
     expect(view.html).toContain('data-adoc-anchor="goal"');
     expect(ws.resolve('TASK-a#goal')).toMatchObject({ found: true, key: 'TASK-a' });
+  });
+
+  it('carries the last update of every document in the summary list, also for a parse error', async () => {
+    const ws = await open({ 'docs/TODO-gui.md': TODO, 'docs/KANBAN-broken.yaml': 'title: x\n' });
+    const when = new Date('2026-01-02T03:04:05.000Z');
+    await utimes(join(current!.root, 'docs/TODO-gui.md'), when, when);
+    await utimes(join(current!.root, 'docs/KANBAN-broken.yaml'), when, when);
+    await ws.refresh();
+    expect(ws.summaryList('TODO')[0]!.updatedAt).toBe(when.toISOString());
+    expect(ws.summaryList('KANBAN')[0]).toMatchObject({ key: 'KANBAN-broken', updatedAt: when.toISOString(), error: expect.any(String) });
+    await current!.write('docs/TODO-gui.md', `${TODO}- [ ] Four\n`);
+    await ws.refresh();
+    expect(Date.parse(ws.summaryList('TODO')[0]!.updatedAt)).toBeGreaterThan(when.getTime());
   });
 
   it('reports every kind of problem in check', async () => {

@@ -13,8 +13,8 @@
 - [ ] Web UI: switch the terminal into the main area (the side panel stays fixed), and back
 - [x] Web UI: tell the terminal from the main area: a subtly different background, or a very thin vertical rule between them; done: the _Panel_Resizer_ shows a 1px rule in --adoc-border-subtle
 - [x] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover; done: fixed two-line title block (line-clamp), the whole title in a fixed floating card over a cut title
-- [ ] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status)
-- [ ] Document list pane: show the last update in small text, relative ("updated 5 min ago")
+- [x] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status); done: summary list entries carry updatedAt (newest file mtime), the _Document_Sort_Picker_ in the pane title sorts in the browser, remembered as adoc.list-sort
+- [x] Document list pane: show the last update in small text, relative ("updated 5 min ago"); done: a third meta line in each _Document_Row_, full date and time on hover, renewed every minute
 - [ ] Web UI: horizontal and vertical scrollbars always show on the page (new, since the UI polish); not reproduced in the demo, which has no terminal panel, so suspect the terminal panel (xterm.js sizing) first
 - [ ] Plugins: register a source (GitHub URL etc.) for a plugin so that `adoc plugin update` can update it, see [[NOTE-261002-installation]]
 - [ ] Markdown documents: edit in the web UI (e.g. answer an open question by typing right below it); an edit reaches the agent with a diff of what the person changed, see [[NOTE-261002-client-plugins]]

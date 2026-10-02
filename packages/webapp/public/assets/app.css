@@ -186,6 +186,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .document-list-pane.unpinned:is(:hover, :has(textarea:focus)) { width: 280px; box-shadow: var(--adoc-shadow); }
 .pane-rail { writing-mode: vertical-rl; padding: 10px 7px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; }
 .pane-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px 16px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; white-space: nowrap; }
+.pane-title-controls { display: flex; align-items: center; gap: 4px; font-weight: 400; letter-spacing: normal; }
 .document-rows { flex: 1; overflow: auto; padding: 0 6px 12px; min-width: 268px; }
 .document-rows > p { padding: 0 10px; font-size: var(--adoc-size-small); }
 .document-row { display: block; padding: 6px 10px 6px calc(10px + var(--adoc-bar)); text-decoration: none; color: var(--adoc-text); }

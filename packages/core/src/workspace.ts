@@ -19,10 +19,11 @@ import { loadPlugins, readGuide, type LoadedPlugin } from './plugins.js';
 import { readDocument, scanDocuments, type DocumentRecord, type ScanProblem } from './scan.js';
 import type { ActionMessageInput } from './messages.js';
 
-/** One entry of a _Document_Summary_List_: the summary, or the key with the parse error. */
+/** One entry of a _Document_Summary_List_: the summary, or the key with the parse error, and the last update of the document. */
 export interface SummaryEntry {
   key: string;
   path: string;
+  updatedAt: string;
   summary?: DocumentSummary;
   error?: string;
 }
@@ -104,7 +105,7 @@ export class Workspace {
   private plugins = new Map<string, LoadedPlugin>();
   private documents = new Map<string, DocumentRecord>();
   private problems: ScanProblem[] = [];
-  private cache = new Map<string, { version: string; doc: PluginDocument; summary?: DocumentSummary; summaryError?: string; html?: string; renderError?: string }>();
+  private cache = new Map<string, { version: string; updatedAt: string; doc: PluginDocument; summary?: DocumentSummary; summaryError?: string; html?: string; renderError?: string }>();
   /** _Document_Version_Store_: recent versions of each document, oldest first. */
   private versions = new Map<string, Map<string, { doc: PluginDocument; seenAt: string }>>();
   private changeCache = new Map<string, { html?: string; error?: string }>();
@@ -150,10 +151,11 @@ export class Workspace {
     this.problems = scan.problems;
     for (const key of [...this.cache.keys()]) if (!this.documents.has(key)) this.cache.delete(key);
     for (const record of this.documents.values()) {
-      const { doc, version } = await readDocument(this.root, record);
+      const { doc, version, updatedAt } = await readDocument(this.root, record);
       const cached = this.cache.get(record.key);
+      if (cached) cached.updatedAt = updatedAt;
       if (cached?.version !== version) {
-        this.cache.set(record.key, { version, doc });
+        this.cache.set(record.key, { version, updatedAt, doc });
         this.remember(record.key, version, doc);
         changed.add(record.key);
       }
@@ -272,7 +274,7 @@ export class Workspace {
     return [...this.documents.values()]
       .filter((d) => d.pluginKey === pluginKey)
       .sort((a, b) => a.key.localeCompare(b.key))
-      .map((d) => ({ key: d.key, path: d.path, ...this.summarize(d.key) }));
+      .map((d) => ({ key: d.key, path: d.path, updatedAt: this.cache.get(d.key)!.updatedAt, ...this.summarize(d.key) }));
   }
 
   view(key: string): DocumentView | undefined {

@@ -131,12 +131,29 @@ list _Document_List_Pane_ in document = {
   shows _adoc:Document_Summary_List_
   realizes _adoc:Document_List_View_
   contains _Document_Row_
+  contains _Document_Sort_Picker_
 .contract
-  - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, ordered by _adoc:Document_Key_.
+  - _Document_List_Pane_ must show one _Document_Row_ per _adoc:Document_ of the current _adoc:Plugin_, in the order chosen in the _Document_Sort_Picker_, and by default by last update, newest first.
   - _Document_List_Pane_ must update when the _adoc:Document_Summary_List_ changes.
   - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it, and stay unfolded when the person pins it, with the same pin and fold behaviour as the _Comment_Composer_.
 .states
   - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.
+}
+
+input _Document_Sort_Picker_ in document = {
+  The selector in the title row of the _Document_List_Pane_ that chooses the order of its _Document_Row_ entries.
+.relations
+  references _adoc:Document_Key_
+  references _adoc:Document_Summary_
+  references _adoc:Document_Summary_List_
+  references _adoc:Plugin_
+  references _Document_Row_
+  part of _Document_List_Pane_
+.contract
+  - _Document_Sort_Picker_ must offer the orders last update (newest first), _adoc:Document_Key_, title and status of the _adoc:Document_Summary_; ties are broken by _adoc:Document_Key_.
+  - _Document_Sort_Picker_ must sort in the browser, from the last update that the _adoc:Document_Summary_List_ carries.
+.remarks
+  - Chosen: the order is remembered per browser, for every _adoc:Plugin_ alike.
 }
 
 card _Document_Row_ in document = {
@@ -150,6 +167,7 @@ card _Document_Row_ in document = {
   part of _Document_List_Pane_
 .contract
   - _Document_Row_ must show the title and status of the _adoc:Document_Summary_ and the _adoc:Document_Key_.
+  - _Document_Row_ must show the last update of its _adoc:Document_ in small text relative to now, such as "updated 5 min ago", with the full date and time on hover, and must keep it current while the page is open.
   - _Document_Row_ must show the title on exactly two lines, cut with an ellipsis when longer, and must show the whole title in a floating card while the pointer is on a cut title.
   - _Document_Row_ must lead to `/p/:plugin/:document` when chosen, and must be marked when its _adoc:Document_ is the one shown.
 .states

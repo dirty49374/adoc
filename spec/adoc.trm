@@ -486,7 +486,7 @@ concept _Document_Summary_ in document = {
 }
 
 concept _Document_Summary_List_ in document = {
-  The list that the _Adoc_Server_ builds for one _Plugin_ with one entry for each of its documents, which is the _Document_Summary_ or, when summarize fails, the _Document_Key_ with the parse error.
+  The list that the _Adoc_Server_ builds for one _Plugin_ with one entry for each of its documents, which is the _Document_Summary_ or, when summarize fails, the _Document_Key_ with the parse error, together with the last update of the document.
 .relations
   built by _Adoc_Server_
   has_member _Document_Summary_
@@ -495,9 +495,13 @@ concept _Document_Summary_List_ in document = {
   for _Plugin_
   shows _Document_Key_
   used by _Document_List_View_
+  references _Assigned_Agent_
 .contract
   - A _Document_Summary_List_ must contain exactly one entry for each _Document_ of its _Plugin_ under every _Watch_Path_.
   - An entry whose summarize failed must show the _Document_Key_ and the parse error instead of a _Document_Summary_.
+  - Every entry, also one whose summarize failed, must carry the last update of its _Document_: the newest modification time of its files.
+.remarks
+  - Chosen: the last update is the file modification time, not the last git commit, so that an edit by the _Assigned_Agent_ shows at once.
 }
 
 concept _Document_List_View_ in document = {

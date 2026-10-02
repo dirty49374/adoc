@@ -34,6 +34,7 @@ export interface WorkspaceInfo {
 export interface SummaryEntry {
   key: string;
   path: string;
+  updatedAt: string;
   summary?: DocumentSummary;
   error?: string;
 }
