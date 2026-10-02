@@ -20,11 +20,10 @@ Register it in the workspace's `.adoc/adoc.yaml`, then check:
 ```yaml
 plugins:
   - key: NOTE                 # uppercase letters only; documents are named NOTE-<id>.<ext>
-    from: note                # a folder name in .adoc/plugins/ (project) or ~/.config/adoc/plugins/ (user),
-                              # or a path such as ./plugins/note, or an npm package name
+    from: note                # where it comes from: see "Installing plugins" in the adoc skill
 ```
 
-A plugin in `.adoc/plugins/` or inside the workspace has project scope; one in `~/.config/adoc/plugins/` has user scope. `adoc skill install` installs its skill in the same scope.
+Its scope, and so where `adoc skill install` installs its skill, follows from where the folder is (see "Project scope and user scope" in the adoc skill).
 
 ```sh
 adoc plugin list      # shows the plugin, or its load error
@@ -51,7 +50,7 @@ The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.t
 `doc` is `{ key, pluginKey, localId, path, file, text, files }`:
 - `path`: the workspace-relative path of the document itself, the file or the folder;
 - `file`: the workspace-relative path of the main file (the file itself, or the folder's entry file); use it for `source` and `markdown({ file })`;
-- `text`: the main file's text; `files`: every file of the document by path relative to it.
+- `text`: the main file's text; `files`: the text files of the document: for a folder document every file by path relative to the folder, for a file document the main file under its name (companion files are not in it).
 
 If a function throws, adoc shows the message as the document's error and in `adoc check`; you do not need try/catch.
 
@@ -85,7 +84,7 @@ Never add `<script>` or `on…=` attributes; adoc removes them. Every interactio
 The person clicks, toggles or drags a control marked with `action()`. adoc calls `actions[name](doc, event)` on the server.
 
 `event` is `{ kind, name, value, checked?, to?, anchor? }`:
-- `kind` is the control type you gave `action()` (`click`, `toggle` or `drag`), or `client` for an `adoc-action` event of your client module; `name` selects the handler; `value` is the value you gave `action()` (or the event's `value`);
+- `kind` is the control type you gave `action()` (`click`, `toggle` or `drag`), or `client` for an `adoc-action` event of your client module; `name` selects the handler; `value` is the value you gave `action()` (or the event's `value`), always as a string;
 - `checked`: the new state, for toggle; `to`: the drop target's value, for drag;
 - `anchor`: the bare value of the nearest enclosing `anchor()`, such as `goal` (not `KEY#goal`).
 
@@ -97,11 +96,13 @@ Return any of:
 
 A content is text, or `{ base64 }` for binary data.
 
+adoc sends `message` to the agent with `applied: true` when it wrote something, and with `applied: false` when the handler returned only `message` (a request: the agent makes the change). A handler that returns nothing sends no message. When the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
+
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` and changes nothing. That is often all you need: the agent then edits the file.
 
 ## Companion files
 
-A file document can have companion files: files beside it with the same name and another extension, declared in the layout, such as `layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] }` for `SKETCH-login.excalidraw` with `SKETCH-login.png`. They belong to the document (its version, its last update, archiving) but are not in `doc`, since they may be binary. An action writes one by returning `companions: { '.png': content }`. A content in `files` or `companions` is text, or `{ base64 }` for binary data.
+A file document can have companion files: files beside it with the same name and another extension, declared in the layout, such as `layout: { kind: 'file', extension: '.excalidraw', companions: ['.png'] }` for `SKETCH-login.excalidraw` with `SKETCH-login.png`. They belong to the document (its version, its last update, archiving) but are not in `doc`, since they may be binary. An action writes one by returning `companions: { '.png': content }`.
 
 ## Browser code: the client module
 
@@ -120,7 +121,7 @@ The element talks to adoc only through DOM events and two URLs:
 | tell the agent | dispatch `new CustomEvent('adoc-draft', { bubbles: true, detail: { text } })`: one draft comment on the document waits in the composer; a later one replaces it |
 | follow changes | `window.addEventListener('adoc-documents-changed', (e) => e.detail.keys…)` |
 
-Keep the `render` output the same across versions (load the content in the element, not in attributes), or the page replaces the element on every change and it loses its state. A `client/` built from sources (with esbuild, for example) is a build output; see the SKETCH plugin for a complete example.
+Keep the `render` output the same across changes of the document (load the content in the element, not in attributes), or the page replaces the element on every change and it loses its state. A `client/` built from sources (with esbuild, for example) is a build output; see the SKETCH plugin for a complete example.
 
 ## Styling: classes and design tokens
 
@@ -149,7 +150,7 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 
 - Import types with `import type { PluginDocument } from '@adoc/plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
 - No TypeScript `enum`, `namespace` or parameter properties (`constructor(private x)`): Node cannot strip them.
-- Keep the plugin in `index.ts`. Import `@adoc/plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
+- `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@adoc/plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
 - Action names are lowercase kebab-case: `toggle`, `move`, `add-card`.
 
 ## Complete example: the TODO plugin
