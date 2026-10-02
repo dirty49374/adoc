@@ -14,11 +14,11 @@ A KANBAN board is one screen that shows where about ten pieces of work stand, so
 ## States and workflow
 
 - The columns are the states, in the order of `columns`, usually `TODO`, `RUNNING`, `DONE`, and the hidden `REMOVE`.
-- The person drags a card to another column in the web UI; that reaches you as a request, and you move the card in the file. Never move or remove a card on your own initiative.
+- The person drags a card to another column in the web UI; that reaches you as a request, and you move the card in the file. Move or remove a card only when the person asks for it or agrees.
 
 ## Instructions
 
-- Keep the board to about ten cards: when it has more, ask the person whether to remove DONE cards, and remove them only when they agree.
+- Keep the board to about ten cards: when it has more, ask the person whether to remove DONE cards.
 - Keep each card one line; refer to the document that holds the details with `[[KEY]]`.
 - A board is independent: moving a card never changes the documents its text refers to, and changing those documents never moves a card. Update both only when the person asks for it.
 - Give a new card an id one higher than any id the board has had; never reuse the id of a removed card (look at the board's git history when the highest card was removed).
