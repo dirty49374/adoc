@@ -1,6 +1,5 @@
 # adoc follow-ups
 
-- [ ] Verify hc delivery to another agent (self-sends are refused by hc)
 - [ ] Plugin hot reload re-imports only index.ts; decide whether multi-file plugins are allowed
 - [x] CLI tests import the core test fixture across packages; give tests one shared place; done: private workspace package `@adoc/testing`
 - [ ] Show "no git" in git-related fields once such fields exist (commit hash etc.)

@@ -6,7 +6,7 @@ export { loadPlugins, pluginDirectories, readSkillSource, scopeOf, type LoadedPl
 export { scanDocuments, readDocument, type DocumentRecord, type ScanProblem } from './scan.js';
 export { Workspace, type SummaryEntry, type DocumentView, type CheckEntry, type PluginInfo, type ActionOutcome, type DocumentChanges, type StoredVersion } from './workspace.js';
 export { MessageQueue, formatMessage, formatMessages, formatTarget, messageFields, type UserMessage, type UserComment, type MessageTarget } from './messages.js';
-export { createTransport, attachTransport, type MessageTransport, type CommandRunner, type ClaimSource } from './transports.js';
+export { createTransport, attachTransport, type MessageTransport, type ClaimSource } from './transports.js';
 export { readClaim, writeClaim, removeClaim, claimPath, CLAIM_FILE, type AgentClaim } from './claim.js';
 export { herdrCall, herdrSubscribe, herdrSessions, herdrPanes, resolveAgentPane, underSharedDaemon, type HerdrPane, type ResolvedPane } from './herdr.js';
 export { AdocServer, PROTOCOL, publicMessage, type BrowserSession, type ServerExtension, type ServerOptions } from './server.js';

@@ -7,7 +7,6 @@ import { PLUGIN_KEY_PATTERN } from './names.js';
 
 const transportSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('herdr') }),
-  z.object({ kind: z.literal('hc'), target: z.string().min(1) }),
   z.object({ kind: z.literal('wait') }),
 ]);
 
@@ -71,7 +70,7 @@ watch:
 agent:
   name: agent
   transport:
-    kind: herdr                 # herdr (the pane from adoc agent claim) | hc (target: <hc address>) | wait
+    kind: herdr                 # herdr (the pane from adoc agent claim) | wait (the agent runs adoc message wait)
 server:
   host: 127.0.0.1               # 0.0.0.0 to accept connections from the internal network
   port: 7700

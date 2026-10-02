@@ -1,12 +1,8 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import type { AgentClaim } from './claim.js';
 import type { TransportConfig } from './config.js';
 import { herdrCall } from './herdr.js';
 import { errorMessage } from './errors.js';
 import { formatMessage, type MessageQueue, type UserMessage } from './messages.js';
-
-const run = promisify(execFile);
 
 /**
  * _User_Message_Transport_: how a held message reaches the _Assigned_Agent_.
@@ -19,25 +15,13 @@ export interface MessageTransport {
   push?(message: UserMessage): Promise<void>;
 }
 
-export type CommandRunner = (file: string, args: string[]) => Promise<void>;
-
-const defaultRunner: CommandRunner = async (file, args) => {
-  await run(file, args, { timeout: 30_000 });
-};
-
 /** The current _Agent_Claim_, read when a message is pushed. */
 export type ClaimSource = () => AgentClaim | undefined;
 
-export function createTransport(config: TransportConfig, runner: CommandRunner = defaultRunner, claim: ClaimSource = () => undefined): MessageTransport {
+export function createTransport(config: TransportConfig, claim: ClaimSource = () => undefined): MessageTransport {
   switch (config.kind) {
     case 'wait':
       return { kind: 'wait' };
-    case 'hc':
-      return {
-        kind: 'hc',
-        push: (message) =>
-          runner('hc', ['send', '--title', `adoc message ${message.number}`, '--delivery-timeout', '30m', '--no-reply-needed', config.target, formatMessage(message)]),
-      };
     case 'herdr':
       return {
         kind: 'herdr',

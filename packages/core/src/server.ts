@@ -148,7 +148,7 @@ export class AdocServer {
     this.host = options.host ?? workspace.config.server.host;
     this.port = options.port ?? workspace.config.server.port;
     this.log = options.log ?? ((line) => process.stderr.write(line + '\n'));
-    this.transport = createTransport(workspace.config.agent.transport, undefined, () => (this.agentStatus.gone ? undefined : this.claim));
+    this.transport = createTransport(workspace.config.agent.transport, () => (this.agentStatus.gone ? undefined : this.claim));
     this.retryHeld = attachTransport(this.queue, this.transport, this.log);
     this.terminal = new TerminalRelay(() => (this.agentStatus.gone ? undefined : this.claim), this.log);
     this.listener = createServer((request, response) => {

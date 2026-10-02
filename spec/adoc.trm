@@ -777,11 +777,11 @@ concept _User_Message_Transport_ in message = {
   has_part _User_Message_Wait_Command_
 .contract
   - All kinds of _User_Message_Transport_ must share one interface, so that a new kind can be added without changing the rest of adoc.
-  - adoc must provide the herdr, hc and wait kinds of _User_Message_Transport_.
+  - adoc must provide the herdr and wait kinds of _User_Message_Transport_.
   - The herdr kind of _User_Message_Transport_ must be the default; it must deliver to the pane named by the _Agent_Claim_, with `agent.prompt`, or as typed input followed by Enter while herdr has not detected an agent in that pane.
   - While the herdr kind has no _Agent_Claim_, every _User_Message_ must stay held, so that `adoc message wait` can still take it.
   - Every kind of _User_Message_Transport_ must deliver the same text in _User_Message_Format_.
-  - A push kind, such as hc or herdr, must deliver each _User_Message_ as soon as it is created, and must keep it held when delivery fails.
+  - A push kind, such as herdr, must deliver each _User_Message_ as soon as it is created, and must keep it held when delivery fails.
 }
 
 concept _Adoc_Server_ in runtime = {

@@ -1,6 +1,6 @@
 # adoc
 
-adoc is a document collaboration system for agents. Its documents are plugin-defined files kept in git, such as TODO lists, task work orders and KANBAN boards. **An agent edits them directly.** A person reads the rendered documents in a web UI and comments on a section or on selected text, or uses buttons, checkboxes and drag-and-drop. Each of those becomes a one-time **message** to the agent. adoc does not depend on any agent harness: an agent can receive messages through the `adoc` CLI, through MCP, or by having them pushed via hc or herdr.
+adoc is a document collaboration system for agents. Its documents are plugin-defined files kept in git, such as TODO lists, task work orders and KANBAN boards. **An agent edits them directly.** A person reads the rendered documents in a web UI and comments on a section or on selected text, or uses buttons, checkboxes and drag-and-drop. Each of those becomes a one-time **message** to the agent. adoc does not depend on any agent harness: an agent can receive messages through the `adoc` CLI, through MCP, or by having them pushed into its herdr pane.
 
 The specification is an aterm corpus, and it is the authority:
 

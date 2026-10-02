@@ -88,7 +88,7 @@ describe('claim and herdr transport', () => {
     expect(claim).toMatchObject({ pane: 'w2:p3', herdrSession: 'work', terminal: 't3' });
 
     const queue = new MessageQueue();
-    attachTransport(queue, createTransport({ kind: 'herdr' }, undefined, () => claim), () => undefined);
+    attachTransport(queue, createTransport({ kind: 'herdr' }, () => claim), () => undefined);
     queue.add({ kind: 'comment', comments: [{ target: { level: 'workspace' }, text: 'hello' }] });
     await expect.poll(() => queue.list().length).toBe(0);
     expect(work.requests.map((r) => r.method)).toEqual(expect.arrayContaining(['agent.prompt', 'pane.send_input']));
@@ -97,7 +97,7 @@ describe('claim and herdr transport', () => {
 
   it('holds messages while no agent has claimed the workspace', async () => {
     const queue = new MessageQueue();
-    attachTransport(queue, createTransport({ kind: 'herdr' }, undefined, () => undefined), () => undefined);
+    attachTransport(queue, createTransport({ kind: 'herdr' }, () => undefined), () => undefined);
     queue.add({ kind: 'comment', comments: [{ target: { level: 'workspace' }, text: 'hello' }] });
     await new Promise((r) => setTimeout(r, 20));
     expect(queue.list()).toHaveLength(1);

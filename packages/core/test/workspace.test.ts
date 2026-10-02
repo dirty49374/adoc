@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { discoverHome } from '../src/home.js';
 import { formatMessage, MessageQueue } from '../src/messages.js';
-import { attachTransport, createTransport } from '../src/transports.js';
+import { attachTransport, type MessageTransport } from '../src/transports.js';
 import { Workspace } from '../src/workspace.js';
 import { fixture, type Fixture } from '@adoc/testing';
 
@@ -122,16 +122,16 @@ describe('messages', () => {
 
   it('pushes through a push transport and keeps messages held when delivery fails', async () => {
     const queue = new MessageQueue();
-    const calls: string[][] = [];
+    const pushed: string[] = [];
     let fail = true;
-    attachTransport(
-      queue,
-      createTransport({ kind: 'hc', target: 'me' }, async (file, args) => {
-        calls.push([file, ...args]);
+    const transport: MessageTransport = {
+      kind: 'test',
+      push: async (message) => {
         if (fail) throw new Error('down');
-      }),
-      () => undefined,
-    );
+        pushed.push(formatMessage(message));
+      },
+    };
+    attachTransport(queue, transport, () => undefined);
     queue.add({ kind: 'comment', comments: [{ target: { level: 'workspace' }, text: 'a' }] });
     await new Promise((r) => setTimeout(r, 10));
     expect(queue.list()).toHaveLength(1);
@@ -139,7 +139,6 @@ describe('messages', () => {
     queue.add({ kind: 'comment', comments: [{ target: { level: 'workspace' }, text: 'b' }] });
     await new Promise((r) => setTimeout(r, 10));
     expect(queue.list()).toHaveLength(0);
-    expect(calls[0]!.slice(0, 2)).toEqual(['hc', 'send']);
-    expect(calls.at(-1)!.at(-1)).toContain('[adoc message 2] comment');
+    expect(pushed.at(-1)).toContain('[adoc message 2] comment');
   });
 });
