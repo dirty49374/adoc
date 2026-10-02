@@ -41,7 +41,7 @@ concept _Adoc_Home_ in workspace = {
 }
 
 concept _Adoc_Config_ in workspace = {
-  The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, and the server address of one _Adoc_Workspace_.
+  The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, the server address and the default colour scheme of the web UI of one _Adoc_Workspace_.
 .relations
   references _adoc:Agent_Claim_
   configures _Adoc_Workspace_
@@ -52,13 +52,15 @@ concept _Adoc_Config_ in workspace = {
   declares _Assigned_Agent_
   configures _User_Message_Transport_
   configures _Adoc_Server_
+  configures _Web_UI_Theme_
 .contract
   - Each _Plugin_ declared in an _Adoc_Config_ must name its source as a local path or an npm package, and the _Plugin_Key_ under which it is used.
   - An _Adoc_Config_ must declare exactly one _Assigned_Agent_ with a name and one _User_Message_Transport_ with the settings of its kind.
   - An _Adoc_Config_ must declare the host and port of the _Adoc_Server_.
+  - An _Adoc_Config_ may declare the default colour scheme of the _Web_UI_Theme_ as `ui.theme`: dark, light or system; dark when it is not declared.
 .remarks
   - Chosen: the _Adoc_Config_ assigns the _Plugin_Key_, so one plugin package may serve two keys in one workspace.
-  - Example: `plugins: [{key: TODO, from: ./.adoc/plugins/todo}]`, `watch: [docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`.
+  - Example: `plugins: [{key: TODO, from: ./.adoc/plugins/todo}]`, `watch: [docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`, `ui: {theme: dark}`.
   - Chosen: the herdr kind needs no target in the _Adoc_Config_; the target comes from the _Agent_Claim_.
 }
 
@@ -723,6 +725,7 @@ concept _Adoc_Web_UI_ in runtime = {
 concept _Web_UI_Theme_ in runtime = {
   The visual system of the _Adoc_Web_UI_, taken from the "opencode" theme of the opencode TUI: design tokens for surface, text, status, diff, Markdown and syntax colours in a light and a dark variant, the accent bar, the type scale, the bundled fonts and the icons.
 .relations
+  references _adoc:Adoc_Config_
   styles _Adoc_Web_UI_
   styles _Plugin_Kit_
   offered to _Plugin_
@@ -731,7 +734,7 @@ concept _Web_UI_Theme_ in runtime = {
   - The _Web_UI_Theme_ must separate regions by three surface levels (surface, panel, element) rather than borders, and must mark emphasis such as selection, focus, a held message or a warning with an accent bar on the left edge.
   - The _Web_UI_Theme_ must draw every box with square corners, so that an accent bar stays a straight line.
   - In the _Web_UI_Theme_ the largest text must be the base body size; headings must stand out by colour and weight, and only smaller sizes are allowed for meta information.
-  - The _Web_UI_Theme_ must follow the colour scheme of the system unless the person chooses light or dark, and must remember that choice per browser.
+  - The _Web_UI_Theme_ must show the default colour scheme of the _Adoc_Config_ from the first paint, unless the person chose system, light or dark in this browser, and must remember that choice per browser.
   - The _Web_UI_Theme_ must bundle its fonts so that the _Adoc_Web_UI_ looks the same offline: a proportional font with Hangul for text and a monospace font with Hangul and Nerd Font symbols for terminals and code.
   - The _Web_UI_Theme_ must draw icons as vector graphics.
   - The _Web_UI_Theme_ must style the generic `adoc-*` classes listed in the authoring guide of the _Plugin_Kit_, so that a plugin needs no CSS of its own.

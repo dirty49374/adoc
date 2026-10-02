@@ -1,17 +1,22 @@
 import { useSyncExternalStore } from 'react';
 import { readStored, writeStored } from './storage.js';
 
-/** The person's choice of colour scheme; `system` follows the operating system. */
+/** A colour scheme choice; `system` follows the operating system. */
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
 const KEY = 'adoc.theme';
 const listeners = new Set<() => void>();
-let choice: ThemeChoice = readStored<ThemeChoice>(KEY, 'system');
+const root = document.documentElement;
+/** The default of the _Adoc_Config_ (`ui.theme`), which the server writes into the page as `data-theme`. */
+const configured: ThemeChoice = root.dataset.theme === 'light' || root.dataset.theme === 'system' ? root.dataset.theme : 'dark';
+/** This browser's own choice, if the person made one. */
+let chosen: ThemeChoice | undefined = readStored<ThemeChoice | undefined>(KEY, undefined);
 
-/** Applies the choice: the tokens use `light-dark()`, so `color-scheme` alone switches every colour. */
+const current = (): ThemeChoice => chosen ?? configured;
+
+/** Applies the choice: the tokens use `light-dark()`, so `color-scheme` (set by `data-theme` in app.css) switches every colour. */
 function apply(): void {
-  if (choice === 'system') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = choice;
+  root.dataset.theme = current();
 }
 
 const system = window.matchMedia('(prefers-color-scheme: dark)');
@@ -19,15 +24,15 @@ system.addEventListener('change', () => listeners.forEach((l) => l()));
 apply();
 
 export const themeStore = {
-  get: (): ThemeChoice => choice,
+  get: current,
   set(next: ThemeChoice): void {
-    choice = next;
-    writeStored(KEY, next === 'system' ? undefined : next);
+    chosen = next;
+    writeStored(KEY, next);
     apply();
     listeners.forEach((l) => l());
   },
   /** Whether dark colours are showing now, after resolving `system`. */
-  dark: (): boolean => (choice === 'system' ? system.matches : choice === 'dark'),
+  dark: (): boolean => (current() === 'system' ? system.matches : current() === 'dark'),
   subscribe(listener: () => void): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);

@@ -32,6 +32,13 @@ function terminalTheme() {
 
 const FONT = '"D2Coding", "Symbols Nerd Font Mono", ui-monospace, monospace';
 
+/** Loads the bundled monospace fonts (regular and bold, with Hangul) once; later terminals reuse the promise. */
+let monoFonts: Promise<unknown> | undefined;
+function monoFontsReady(): Promise<unknown> {
+  monoFonts ??= Promise.all(['13px "D2Coding"', 'bold 13px "D2Coding"', '13px "Symbols Nerd Font Mono"'].map((font) => document.fonts.load(font, 'a가\ue0b0'))).catch(() => undefined);
+  return monoFonts;
+}
+
 function decode(base64: string): Uint8Array {
   const text = atob(base64);
   const bytes = new Uint8Array(text.length);
@@ -53,134 +60,143 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
   useEffect(() => {
     const element = host.current;
     if (!element) return;
-    const term = new Terminal({ fontSize: 13, fontFamily: FONT, cursorBlink: true, allowProposedApi: true, scrollback: 0, theme: terminalTheme() });
-    const fit = new FitAddon();
-    term.loadAddon(fit);
-    term.open(element);
-    fit.fit();
-    // The bundled fonts load on first use; measure the cells again once they are there.
-    void Promise.all([document.fonts.load(`13px "D2Coding"`), document.fonts.load(`13px "Symbols Nerd Font Mono"`)]).then(() => {
-      term.options.fontFamily = FONT;
+    /** Opens the terminal in the element and wires it to the stream; returns the cleanup. */
+    const attach = () => {
+      const term = new Terminal({ fontSize: 13, fontFamily: FONT, cursorBlink: true, allowProposedApi: true, scrollback: 0, theme: terminalTheme() });
+      const fit = new FitAddon();
+      term.loadAddon(fit);
+      term.open(element);
       fit.fit();
-    });
-    const offTheme = themeStore.subscribe(() => {
-      term.options.theme = terminalTheme();
-    });
-    const open = (wanted: 'observe' | 'control') => {
-      mode.current = wanted;
-      sendTerminal({ type: 'terminal.open', mode: wanted, cols: term.cols, rows: term.rows });
-    };
-    let lastFrame = Date.now();
-    const off = onTerminal((message) => {
-      if (message.type === 'terminal.frame' && typeof message.bytes === 'string') {
-        lastFrame = Date.now();
-        if (message.full) term.reset();
-        term.write(decode(message.bytes));
-      } else if (message.type === 'terminal.mode') {
-        mode.current = message.mode === 'control' ? 'control' : 'observe';
-        onPhase(mode.current);
-      } else if (message.type === 'terminal.closed') {
-        onPhase('closed');
-      }
-    });
-    const data = term.onData((text) => {
-      if (mode.current === 'control') sendTerminal({ type: 'terminal.input', data: text });
-    });
-    const textarea = element.querySelector('textarea');
-    const takeControl = () => {
-      if (mode.current !== 'control') open('control');
-    };
-    textarea?.addEventListener('focus', takeControl);
-    window.addEventListener('pointerdown', takeControl, true);
-    window.addEventListener('keydown', takeControl, true);
-    window.addEventListener('focus', takeControl);
-    const refresh = window.setInterval(() => {
-      if (mode.current === 'observe' && Date.now() - lastFrame > 3000) open('observe');
-    }, 1000);
-    const resized = () => {
-      fit.fit();
-      open('control');
-    };
-    window.addEventListener('adoc:panel-resized', resized);
-    // The wheel scrolls the pane's scrollback through herdr. Catch it before xterm.js, which would otherwise
-    // turn it into arrow keys for full-screen apps and move the agent's input instead of the screen.
-    let pending = 0;
-    let flush: number | undefined;
-    const wheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      takeControl();
-      pending += e.deltaMode === 1 ? -e.deltaY : -e.deltaY / 40;
-      if (flush === undefined) {
-        flush = window.setTimeout(() => {
-          const lines = Math.trunc(pending) || Math.sign(pending);
-          pending = 0;
-          flush = undefined;
-          if (lines) sendTerminal({ type: 'terminal.scroll', lines: lines * 3 });
-        }, 50);
-      }
-    };
-    element.addEventListener('wheel', wheel, { passive: false, capture: true });
-    // Mouse buttons go to the pane as 0-based cells; herdr passes them on when the program tracks the mouse.
-    const BUTTONS = ['left', 'middle', 'right'] as const;
-    let held: (typeof BUTTONS)[number] | undefined;
-    let lastCell = '';
-    const cell = (e: MouseEvent) => {
-      const screen = element.querySelector('.xterm-screen')?.getBoundingClientRect();
-      if (!screen || e.clientX < screen.left || e.clientY < screen.top || e.clientX >= screen.right || e.clientY >= screen.bottom) return undefined;
-      return { column: Math.floor(((e.clientX - screen.left) / screen.width) * term.cols), row: Math.floor(((e.clientY - screen.top) / screen.height) * term.rows) };
-    };
-    const mouse = (action: 'down' | 'up' | 'drag', e: MouseEvent, button: (typeof BUTTONS)[number]) => {
-      const at = cell(e);
-      if (!at || mode.current !== 'control') return;
-      const key = `${action}:${at.column}:${at.row}`;
-      if (action === 'drag' && key === lastCell) return;
-      lastCell = key;
-      sendTerminal({ type: 'terminal.mouse', action, button, ...at });
-    };
-    const down = (e: MouseEvent) => {
-      held = BUTTONS[e.button] ?? 'left';
-      takeControl();
-      mouse('down', e, held);
-    };
-    const move = (e: MouseEvent) => {
-      if (held) mouse('drag', e, held);
-    };
-    const up = (e: MouseEvent) => {
-      if (!held) return;
-      mouse('up', e, held);
-      held = undefined;
-    };
-    element.addEventListener('mousedown', down, true);
-    window.addEventListener('mousemove', move, true);
-    window.addEventListener('mouseup', up, true);
-    let timer: number | undefined;
-    const observer = new ResizeObserver(() => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
+      const offTheme = themeStore.subscribe(() => {
+        term.options.theme = terminalTheme();
+      });
+      const open = (wanted: 'observe' | 'control') => {
+        mode.current = wanted;
+        sendTerminal({ type: 'terminal.open', mode: wanted, cols: term.cols, rows: term.rows });
+      };
+      let lastFrame = Date.now();
+      const off = onTerminal((message) => {
+        if (message.type === 'terminal.frame' && typeof message.bytes === 'string') {
+          lastFrame = Date.now();
+          if (message.full) term.reset();
+          term.write(decode(message.bytes));
+        } else if (message.type === 'terminal.mode') {
+          mode.current = message.mode === 'control' ? 'control' : 'observe';
+          onPhase(mode.current);
+        } else if (message.type === 'terminal.closed') {
+          onPhase('closed');
+        }
+      });
+      const data = term.onData((text) => {
+        if (mode.current === 'control') sendTerminal({ type: 'terminal.input', data: text });
+      });
+      const textarea = element.querySelector('textarea');
+      const takeControl = () => {
+        if (mode.current !== 'control') open('control');
+      };
+      textarea?.addEventListener('focus', takeControl);
+      window.addEventListener('pointerdown', takeControl, true);
+      window.addEventListener('keydown', takeControl, true);
+      window.addEventListener('focus', takeControl);
+      const refresh = window.setInterval(() => {
+        if (mode.current === 'observe' && Date.now() - lastFrame > 3000) open('observe');
+      }, 1000);
+      const resized = () => {
         fit.fit();
-        sendTerminal({ type: 'terminal.resize', cols: term.cols, rows: term.rows });
-      }, 120);
+        open('control');
+      };
+      window.addEventListener('adoc:panel-resized', resized);
+      // The wheel scrolls the pane's scrollback through herdr. Catch it before xterm.js, which would otherwise
+      // turn it into arrow keys for full-screen apps and move the agent's input instead of the screen.
+      let pending = 0;
+      let flush: number | undefined;
+      const wheel = (e: WheelEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        takeControl();
+        pending += e.deltaMode === 1 ? -e.deltaY : -e.deltaY / 40;
+        if (flush === undefined) {
+          flush = window.setTimeout(() => {
+            const lines = Math.trunc(pending) || Math.sign(pending);
+            pending = 0;
+            flush = undefined;
+            if (lines) sendTerminal({ type: 'terminal.scroll', lines: lines * 3 });
+          }, 50);
+        }
+      };
+      element.addEventListener('wheel', wheel, { passive: false, capture: true });
+      // Mouse buttons go to the pane as 0-based cells; herdr passes them on when the program tracks the mouse.
+      const BUTTONS = ['left', 'middle', 'right'] as const;
+      let held: (typeof BUTTONS)[number] | undefined;
+      let lastCell = '';
+      const cell = (e: MouseEvent) => {
+        const screen = element.querySelector('.xterm-screen')?.getBoundingClientRect();
+        if (!screen || e.clientX < screen.left || e.clientY < screen.top || e.clientX >= screen.right || e.clientY >= screen.bottom) return undefined;
+        return { column: Math.floor(((e.clientX - screen.left) / screen.width) * term.cols), row: Math.floor(((e.clientY - screen.top) / screen.height) * term.rows) };
+      };
+      const mouse = (action: 'down' | 'up' | 'drag', e: MouseEvent, button: (typeof BUTTONS)[number]) => {
+        const at = cell(e);
+        if (!at || mode.current !== 'control') return;
+        const key = `${action}:${at.column}:${at.row}`;
+        if (action === 'drag' && key === lastCell) return;
+        lastCell = key;
+        sendTerminal({ type: 'terminal.mouse', action, button, ...at });
+      };
+      const down = (e: MouseEvent) => {
+        held = BUTTONS[e.button] ?? 'left';
+        takeControl();
+        mouse('down', e, held);
+      };
+      const move = (e: MouseEvent) => {
+        if (held) mouse('drag', e, held);
+      };
+      const up = (e: MouseEvent) => {
+        if (!held) return;
+        mouse('up', e, held);
+        held = undefined;
+      };
+      element.addEventListener('mousedown', down, true);
+      window.addEventListener('mousemove', move, true);
+      window.addEventListener('mouseup', up, true);
+      let timer: number | undefined;
+      const observer = new ResizeObserver(() => {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          fit.fit();
+          sendTerminal({ type: 'terminal.resize', cols: term.cols, rows: term.rows });
+        }, 120);
+      });
+      observer.observe(element);
+      open(document.hasFocus() ? 'control' : 'observe');
+      return () => {
+        off();
+        offTheme();
+        data.dispose();
+        observer.disconnect();
+        textarea?.removeEventListener('focus', takeControl);
+        window.removeEventListener('pointerdown', takeControl, true);
+        window.removeEventListener('keydown', takeControl, true);
+        window.removeEventListener('focus', takeControl);
+        window.clearInterval(refresh);
+        window.removeEventListener('adoc:panel-resized', resized);
+        element.removeEventListener('wheel', wheel, { capture: true });
+        element.removeEventListener('mousedown', down, true);
+        window.removeEventListener('mousemove', move, true);
+        window.removeEventListener('mouseup', up, true);
+        sendTerminal({ type: 'terminal.close' });
+        term.dispose();
+      };
+    };
+    // xterm.js measures its cells when it opens: open it only once the bundled monospace fonts are there, or the
+    // cells keep the fallback font's width and the IME composition drifts further right with every character.
+    let detach: (() => void) | undefined;
+    let cancelled = false;
+    void monoFontsReady().then(() => {
+      if (!cancelled) detach = attach();
     });
-    observer.observe(element);
-    open(document.hasFocus() ? 'control' : 'observe');
     return () => {
-      off();
-      offTheme();
-      data.dispose();
-      observer.disconnect();
-      textarea?.removeEventListener('focus', takeControl);
-      window.removeEventListener('pointerdown', takeControl, true);
-      window.removeEventListener('keydown', takeControl, true);
-      window.removeEventListener('focus', takeControl);
-      window.clearInterval(refresh);
-      window.removeEventListener('adoc:panel-resized', resized);
-      element.removeEventListener('wheel', wheel, { capture: true });
-      element.removeEventListener('mousedown', down, true);
-      window.removeEventListener('mousemove', move, true);
-      window.removeEventListener('mouseup', up, true);
-      sendTerminal({ type: 'terminal.close' });
-      term.dispose();
+      cancelled = true;
+      detach?.();
     };
   }, [claim.pane, claim.herdrSession, connection]);
 

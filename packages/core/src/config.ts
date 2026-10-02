@@ -33,6 +33,11 @@ export const configSchema = z.object({
       port: z.number().int().min(1).max(65535).default(7700),
     })
     .default({ host: '127.0.0.1', port: 7700 }),
+  ui: z
+    .object({
+      theme: z.enum(['dark', 'light', 'system']).default('dark'),
+    })
+    .default({ theme: 'dark' }),
 });
 
 /** The parsed _Adoc_Config_. */
@@ -70,4 +75,6 @@ agent:
 server:
   host: 127.0.0.1               # 0.0.0.0 to accept connections from the internal network
   port: 7700
+ui:
+  theme: dark                   # default colour scheme of the web UI: dark | light | system; each browser may choose another
 `;

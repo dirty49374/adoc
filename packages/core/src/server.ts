@@ -485,7 +485,9 @@ export class AdocServer {
   private async serveWebapp(path: string, response: ServerResponse): Promise<void> {
     const file = path.startsWith('/assets/') && /^\/assets(\/[\w-][\w.-]*)+$/.test(path) ? path.slice(1) : 'index.html';
     try {
-      const body = await readFile(join(this.webappDirectory, file));
+      let body: Buffer | string = await readFile(join(this.webappDirectory, file));
+      // The configured colour scheme is in the page from the first paint; a browser's own choice replaces it.
+      if (file === 'index.html') body = body.toString('utf8').replace('__ADOC_THEME__', this.workspace.config.ui.theme);
       response.writeHead(200, { 'content-type': WEBAPP_TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
       response.end(body);
     } catch {

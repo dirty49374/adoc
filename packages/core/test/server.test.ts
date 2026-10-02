@@ -51,6 +51,7 @@ describe('AdocServer', () => {
 
   it('serves built files under /assets/ and index.html for every client route', async () => {
     const { server } = await start();
+    expect(await (await fetch(`${server.url}/p/TODO`)).text()).toContain('data-theme="dark"');
     const css = await fetch(`${server.url}/assets/app.css`);
     expect(css.headers.get('content-type')).toMatch(/text\/css/);
     const font = await fetch(`${server.url}/assets/fonts/D2Coding.woff2`);
