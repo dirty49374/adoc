@@ -11,4 +11,7 @@
 - [ ] Terminal: Shift+Enter does not work (xterm.js sends a plain Enter; the agent expects its newline sequence)
 - [ ] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list)
 - [ ] Web UI: switch the terminal into the main area (the side panel stays fixed), and back
-- [ ] Web UI: tell the terminal from the main area: a subtly different background, or a very thin horizontal rule between them
+- [ ] Web UI: tell the terminal from the main area: a subtly different background, or a very thin vertical rule between them
+- [ ] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover
+- [ ] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status)
+- [ ] Document list pane: show the last update in small text, relative ("updated 5 min ago")
