@@ -9,7 +9,7 @@ description: "What adoc is (plugins, documents, configuration, scopes) and how i
 
 adoc is a place where a person and an agent work on documents together. The person uses the adoc web UI in a browser; the agent uses the `adoc` command line or its MCP tool. Both connect to the **adoc server** of the workspace and talk through the documents: the person reads the rendered documents, comments on them, edits them or presses their buttons, and each of those reaches the agent as a **message**; the agent edits the files.
 
-- The adoc server watches the documents for changes, renders them for the web UI, holds the person's messages and delivers them to the agent.
+- The adoc server watches the documents for changes, calls each document's plugin to summarize and render it for the web UI (adoc renders nothing itself), runs the plugin's actions, holds the person's messages and delivers them to the agent.
 - What a document is and how it looks comes from **plugins**: adoc itself knows no document kind.
 - adoc never starts an agent. Run the agent in a herdr pane: adoc then pushes every message straight into that pane, and the web UI shows its terminal.
 - A workspace is usually a git repository, so that the agent can commit every change; adoc also works without git and then warns in `adoc check`.
@@ -45,15 +45,38 @@ Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes 
 
 ## Configuration
 
-`.adoc/adoc.yaml` (created by `adoc init`):
+`.adoc/adoc.yaml`, created by `adoc init`. A complete example:
+
+```yaml
+plugins:                    # the plugins of this workspace; the web UI shows their tabs in this order
+  - key: NOTE               # plugin key: uppercase letters; documents are named NOTE-<id>
+    from: note              # .adoc/plugins/note/, then ~/.config/adoc/plugins/note/
+  - key: TASK
+    from: ./plugins/task    # a path from the workspace root
+  - key: BUG
+    from: adoc-plugin-bug   # an npm package
+watch:                      # folders that hold documents
+  - docs
+agent:
+  name: dev                 # shown in the web UI
+  transport:
+    kind: herdr             # herdr: push into the pane of `adoc agent claim`; wait: the agent runs `adoc message wait`
+server:
+  host: 127.0.0.1           # 0.0.0.0 to accept the internal network (no authentication)
+  port: 7700
+ui:
+  theme: dark               # default colours of the web UI: dark | light | system; each browser may choose another
+```
+
+Only `plugins` is needed in practice; every other key has the default shown in the table.
 
 | key | meaning |
 |---|---|
 | `plugins` | list of `{ key, from }`; the web UI shows the tabs in this order |
 | `watch` | folders that hold documents, default `[docs]` |
-| `agent.name` | the agent's name, shown in the web UI |
+| `agent.name` | the agent's name, shown in the web UI, default `agent` |
 | `agent.transport.kind` | `herdr` (default: push messages into the claimed pane) or `wait` (the agent runs `adoc message wait`) |
-| `server.host`, `server.port` | where the server listens; `0.0.0.0` for the internal network, no authentication |
+| `server.host`, `server.port` | where the server listens, default `127.0.0.1:7700`; `0.0.0.0` for the internal network, no authentication |
 | `ui.theme` | default colours of the web UI: `dark` (default), `light` or `system` |
 
 ## Project scope and user scope
