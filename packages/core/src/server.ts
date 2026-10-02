@@ -11,7 +11,7 @@ import { formatMessage, messageFields, MessageQueue, type MessageTarget, type Us
 import { LOCAL_ID_PATTERN, PLUGIN_KEY_PATTERN, parseDocumentTarget } from './names.js';
 import { attachTransport, createTransport, type MessageTransport } from './transports.js';
 import { formatCheck } from './report.js';
-import { checkSkills, listSkills, viewSkill } from './skills.js';
+import { checkSkills, editSkillFile, listSkills, readSkillFile, viewSkill } from './skills.js';
 import { readServerRecord, removeServerRecord, writeServerRecord } from './registry.js';
 import { readClaim, CLAIM_FILE, type AgentClaim } from './claim.js';
 import { herdrPanes, herdrSubscribe } from './herdr.js';
@@ -44,6 +44,7 @@ const targetSchema = z.discriminatedUnion('level', [
   z.object({ level: z.literal('plugin'), pluginKey: z.string().regex(PLUGIN_KEY_PATTERN) }),
   z.object({ level: z.literal('document'), key: z.string() }),
   z.object({ level: z.literal('anchor'), key: z.string(), anchor: z.string().min(1) }),
+  z.object({ level: z.literal('skill'), name: z.string().regex(/^[a-z0-9][a-z0-9.-]*$/, 'a skill name is lowercase words with hyphens') }),
 ]);
 
 const commentSchema = z.object({
@@ -448,6 +449,21 @@ export class AdocServer {
     if (path === '/api/skills' && method === 'GET') {
       const skills = await listSkills(ws);
       return sendJson(response, 200, { skills: skills.map(({ name, description, scope, pluginKey }) => ({ name, description, scope, pluginKey })) });
+    }
+    match = /^\/api\/skills\/([\w.-]+)\/file$/.exec(path);
+    if (match && method === 'GET') {
+      try {
+        return sendJson(response, 200, await readSkillFile(ws, match[1]!));
+      } catch (error) {
+        return sendJson(response, 404, { error: errorMessage(error) });
+      }
+    }
+    if (match && method === 'POST') {
+      const parsed = editSchema.safeParse(await readBody(request));
+      if (!parsed.success) return sendJson(response, 400, { error: 'an edit needs version and text' });
+      const name = match[1]!;
+      const outcome = await this.run(() => editSkillFile(ws, name, parsed.data.version, parsed.data.text, parsed.data.since));
+      return sendJson(response, outcome.status === 'refused' ? 409 : 200, outcome);
     }
     match = /^\/api\/skills\/([\w.-]+)$/.exec(path);
     if (match && method === 'GET') {

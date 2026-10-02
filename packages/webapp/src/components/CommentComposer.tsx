@@ -1,18 +1,20 @@
 import { MessageSquare, SendHorizontal } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useMatch, useParams } from 'react-router';
 import { api, formatTarget, type MessageTarget, type UserComment } from '../api.js';
 import { draftStore, sentComment, type DraftComment } from '../drafts.js';
 import { PinButton, usePinned } from '../fold.js';
 import { readStored, writeStored } from '../storage.js';
+import { useWorkspace } from '../workspace.js';
 import { DraftChipList } from './DraftChipList.js';
 
 const TEXT_KEY = 'adoc.composer';
 
-/** The targets the route allows, narrowest first: document, plugin, workspace. */
-function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[] {
+/** The targets the route allows, narrowest first: document or skill, plugin, workspace. */
+function routeTargets(pluginKey?: string, documentKey?: string, skill?: string): MessageTarget[] {
   const targets: MessageTarget[] = [];
   if (documentKey) targets.push({ level: 'document', key: documentKey });
+  if (skill) targets.push({ level: 'skill', name: skill });
   if (pluginKey) targets.push({ level: 'plugin', pluginKey });
   targets.push({ level: 'workspace' });
   return targets;
@@ -26,13 +28,18 @@ function routeTargets(pluginKey?: string, documentKey?: string): MessageTarget[]
  */
 export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const { pluginKey, documentKey } = useParams();
-  const targets = routeTargets(pluginKey, documentKey);
+  // On a skill view the skill is the narrowest target: the plugin's skill at /p/:plugin/skill, or /skills/:name.
+  const plugins = useWorkspace()?.plugins ?? [];
+  const onPluginSkill = useMatch('/p/:pluginKey/skill') !== null;
+  const standaloneSkill = useMatch('/skills/:skillName')?.params.skillName;
+  const skill = onPluginSkill ? plugins.find((p) => p.key === pluginKey)?.skill : standaloneSkill;
+  const targets = routeTargets(pluginKey, documentKey, skill);
   const [chosen, setChosen] = useState(0);
   const [text, setText] = useState(() => readStored(TEXT_KEY, ''));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
   const [pinned, pin] = usePinned('adoc.composer-pinned');
-  useEffect(() => setChosen(0), [pluginKey, documentKey]);
+  useEffect(() => setChosen(0), [pluginKey, documentKey, skill]);
   const area = useRef<HTMLTextAreaElement>(null);
   const box = useRef<HTMLDivElement>(null);
   /** Grows the input with its text; a folded (hidden) input is measured again when it unfolds. */

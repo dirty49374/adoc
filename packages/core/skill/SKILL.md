@@ -45,7 +45,7 @@ applied: true
 ```
 
 - The header names the main target; the text right after it is what the person typed (or, for an action, what the plugin reports). Everything after `--` is attached: for a comment message the draft `comments` the person collected, each with its own target; handle all of them, in order, before committing.
-- A target is `workspace`, a plugin key (`TASK`: about the plugin, e.g. "create a new one"), a document key (`TODO-gui`) or a document key with an anchor (`TASK-…#method`). The plugin guide says what an anchor means.
+- A target is `workspace`, a plugin key (`TASK`: about the plugin, e.g. "create a new one"), a document key (`TODO-gui`), a document key with an anchor (`TASK-…#method`), or `skill <name>` (about an agent skill: change its `SKILL.md`, in the folder that `adoc skill list --output json` shows, then run `adoc skill update`). The plugin guide says what an anchor means.
 - `source` is the file and line the person pointed at; `quote` is the exact text they selected. A comment made with the comment button of an element has no `quote`; use `target` and `source`. If the file changed since, find the place by the quote or the surrounding text.
 - An `action` message with `applied: false` is a **request**: make the change yourself (for example set a status, move a card). With `applied: true` the plugin already changed the file; follow up only if needed.
 

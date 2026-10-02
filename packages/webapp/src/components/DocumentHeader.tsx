@@ -13,7 +13,7 @@ interface Props {
   onPickBase: (version: string) => void;
   /** Triggers the _Document_Action_ `archive` or `unarchive`. */
   onArchive: (name: 'archive' | 'unarchive') => void;
-  /** Whether the _Document_Editor_ is open, and how to open it. */
+  /** Whether the _File_Editor_ is open, and how to open it. */
   editing: boolean;
   onEdit: () => void;
 }

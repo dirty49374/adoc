@@ -1,9 +1,11 @@
 import { spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { unifiedDiff } from '@adoc/plugin-kit';
 import { AdocError } from './errors.js';
 import { readSkillSource, type SkillSource } from './plugins.js';
 import type { CheckEntry, Workspace } from './workspace.js';
@@ -104,4 +106,37 @@ export async function checkSkills(workspace: Workspace, home = homedir()): Promi
     else if (!installed.includes(source)) found.push({ level: 'warning', kind: 'skill-outdated', message: `The installed agent skill ${entry.name} differs from this adoc; run adoc skill update.` });
   }
   return found;
+}
+
+/** The version of a skill file: a hash of its text, as for documents. */
+function skillVersion(text: string): string {
+  return createHash('sha256').update(text).digest('hex').slice(0, 16);
+}
+
+/** The path of a skill file as people read it: relative to the workspace when inside it, otherwise from the home. */
+function shownPath(workspace: Workspace, path: string): string {
+  const rel = relative(workspace.root, path);
+  if (!rel.startsWith('..') && !isAbsolute(rel)) return rel;
+  const home = homedir();
+  return path.startsWith(`${home}/`) ? `~/${path.slice(home.length + 1)}` : path;
+}
+
+/** The `SKILL.md` of a skill with its version, for the _File_Editor_. */
+export async function readSkillFile(workspace: Workspace, name: string): Promise<{ name: string; file: string; version: string; text: string }> {
+  const entry = (await listSkills(workspace)).find((e) => e.name === name);
+  if (!entry) throw new AdocError('skill.missing', `No skill ${name}.`);
+  const text = await readFile(join(entry.directory, 'SKILL.md'), 'utf8');
+  return { name, file: shownPath(workspace, join(entry.directory, 'SKILL.md')), version: skillVersion(text), text };
+}
+
+/**
+ * Writes a `SKILL.md` that the person edited in the _File_Editor_, when `version` is still current; answers with the
+ * new version and the unified diff from `since` (the text the unsent edits started from) to the new text.
+ */
+export async function editSkillFile(workspace: Workspace, name: string, version: string, text: string, since?: string): Promise<{ status: 'applied'; version: string; diff: string } | { status: 'refused'; reason: string }> {
+  const current = await readSkillFile(workspace, name);
+  if (current.version !== version) return { status: 'refused', reason: `${current.file} changed while you were editing; your text is kept, copy it and edit again.` };
+  const entry = (await listSkills(workspace)).find((e) => e.name === name)!;
+  await writeFile(join(entry.directory, 'SKILL.md'), text);
+  return { status: 'applied', version: skillVersion(text), diff: unifiedDiff(since ?? current.text, text, current.file) };
 }

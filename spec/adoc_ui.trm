@@ -112,6 +112,8 @@ list _Plugin_Tab_Bar_ in shell = {
 panel _Skill_View_ in shell = {
   The view that shows one _adoc:Agent_Skill_ read-only: its name and description, and its `SKILL.md` rendered like a document body; a _adoc:Plugin_Skill_ beside the _Document_List_Pane_ of its plugin at `/p/:plugin/skill`, a skill of no plugin as the main area at `/skills/:name`.
 .relations
+  references _adoc_ui:Comment_Composer_
+  references _adoc_ui:File_Editor_
   references _adoc:Plugin_Skill_
   references _adoc_ui:Document_List_Pane_
   shows _adoc:Agent_Skill_
@@ -119,7 +121,7 @@ panel _Skill_View_ in shell = {
   references _Document_Body_
 .contract
   - _Skill_View_ must show the name and the description from the front matter as its header, and the rest of the `SKILL.md` rendered with the same Markdown rendering as a _Document_Body_.
-  - _Skill_View_ must offer no editing and no comments: a skill is part of adoc or of a plugin, not a document.
+  - _Skill_View_ must offer the edit button of the _File_Editor_, and the _Comment_Composer_ must offer the skill as its narrowest target while a _Skill_View_ is shown.
 .states
   - _Skill_View_ is one of loading, showing, missing; in missing the user sees that no skill has that name.
 }
@@ -217,9 +219,11 @@ panel _Document_Detail_Pane_ in document = {
   - Through _Document_Detail_Pane_ the user must never lose an open comment input when the _adoc:Document_ re-renders.
 }
 
-panel _Document_Editor_ in document = {
-  The text editor that replaces the _Document_Body_ while the person edits the whole main file of the shown _adoc:Document_.
+panel _File_Editor_ in document = {
+  The text editor that replaces the rendered view while the person edits a whole file: the main file of the shown _adoc:Document_ in place of the _Document_Body_, or the `SKILL.md` of the shown _adoc:Agent_Skill_ in the _Skill_View_.
 .relations
+  references _adoc:Agent_Skill_
+  references _adoc_ui:Skill_View_
   references _adoc_ui:Change_Toggle_
   references _adoc_ui:Document_Body_
   references _adoc_ui:Document_Header_
@@ -230,18 +234,18 @@ panel _Document_Editor_ in document = {
   part of _Document_Detail_Pane_
   adds to _Draft_Chip_List_
 .contract
-  - _Document_Editor_ must open from the edit button of the _Document_Header_ with the current text of the main file, and must save it at once on the save button or Ctrl+S through the _adoc:Adoc_Server_.
-  - When a save is refused because the _adoc:Document_ changed, _Document_Editor_ must keep the typed text and say so.
-  - After a save, _Document_Editor_ must put one draft _adoc:User_Comment_ on the _adoc:Document_ with the unified diff since the text before the first edit that has not been sent, replacing the earlier one, and must remove it when the text is back to that text.
+  - _File_Editor_ must open from the edit button of the _Document_Header_ or of the _Skill_View_ with the current text of the file, and must save it at once on the save button or Ctrl+S through the _adoc:Adoc_Server_.
+  - When a save is refused because the file changed, _File_Editor_ must keep the typed text and say so.
+  - After a save, _File_Editor_ must put one draft _adoc:User_Comment_ on the _adoc:Document_ or the _adoc:Agent_Skill_ with the unified diff since the text before the first edit that has not been sent, replacing the earlier one, and must remove it when the text is back to that text; the draft of a skill also asks the agent to run `adoc skill update`.
   - A version that a save of this browser produced counts as shown, so that the person's own edit never turns the _Change_Toggle_ on.
 .states
-  - _Document_Editor_ is one of editing, saving, refused.
+  - _File_Editor_ is one of editing, saving, refused.
 }
 
 label _Document_Header_ in document = {
   The header at the top of the _Document_Detail_Pane_ that shows the identity and state of the shown _adoc:Document_.
 .relations
-  references _adoc_ui:Document_Editor_
+  references _adoc_ui:File_Editor_
   references _adoc:Document_Action_
   references _adoc:Document_
   shows _adoc:Document_Key_
@@ -251,7 +255,7 @@ label _Document_Header_ in document = {
   part of _Document_Detail_Pane_
 .contract
   - _Document_Header_ must show the _adoc:Document_Key_, the title and the status of the _adoc:Document_Summary_, and the file path, updated on every change.
-  - _Document_Header_ must contain the _Change_Toggle_ and the _Change_Base_Picker_, and an edit button that opens the _Document_Editor_.
+  - _Document_Header_ must contain the _Change_Toggle_ and the _Change_Base_Picker_, and an edit button that opens the _File_Editor_.
   - _Document_Header_ must mark an archived _adoc:Document_ as archived, and must offer a button that triggers the _adoc:Document_Action_ `archive`, or `unarchive` for an archived one.
 }
 
@@ -335,6 +339,7 @@ input _Draft_Comment_Input_ in comment = {
 input _Comment_Composer_ in comment = {
   The single text input with a send button and the _Draft_Chip_List_ above it, floating over the bottom of the main area of _App_Shell_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
 .relations
+  references _adoc:Agent_Skill_
   references _adoc:Document_
   references _adoc:Plugin_
   references _adoc:User_Comment_
@@ -346,8 +351,8 @@ input _Comment_Composer_ in comment = {
   sends to _adoc:Adoc_Server_
   placed in _App_Shell_
 .contract
-  - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.
-  - _Comment_Composer_ must let the user widen its target from document to plugin to workspace, and must show the chosen target, written as in _adoc:User_Message_Format_.
+  - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the shown _adoc:Agent_Skill_ at `/p/:plugin/skill` and `/skills/:name`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.
+  - _Comment_Composer_ must let the user widen its target from document or skill to plugin to workspace, and must show the chosen target, written as in _adoc:User_Message_Format_.
   - _Comment_Composer_ takes multi-line text; it starts with three lines and grows with its text; it is enabled when the text is not empty after trimming or the _Draft_Chip_List_ is not empty.
   - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose composer text is its own text on the chosen target, and whose _adoc:User_Comment_ entries are the drafts in their order.
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.

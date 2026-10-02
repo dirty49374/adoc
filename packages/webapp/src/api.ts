@@ -91,7 +91,8 @@ export type MessageTarget =
   | { level: 'workspace' }
   | { level: 'plugin'; pluginKey: string }
   | { level: 'document'; key: string }
-  | { level: 'anchor'; key: string; anchor: string };
+  | { level: 'anchor'; key: string; anchor: string }
+  | { level: 'skill'; name: string };
 
 /** One _User_Comment_: a draft before sending, an entry of a comment message after. */
 export interface UserComment {
@@ -145,6 +146,9 @@ export const api = {
   sendComments: (body: { target?: MessageTarget; text?: string; comments: UserComment[] }) => request<{ message: PublicMessage }>('/api/messages', post(body)),
   sendAction: (body: ActionRequest) => request<ActionResponse>('/api/actions', post(body)),
   skills: () => request<{ skills: SkillInfo[] }>('/api/skills'),
+  skillFile: (name: string) => request<{ name: string; file: string; version: string; text: string }>(`/api/skills/${encodeURIComponent(name)}/file`),
+  editSkillFile: (name: string, body: { version: string; text: string; since?: string }) =>
+    request<EditResponse>(`/api/skills/${encodeURIComponent(name)}/file`, post(body)),
   skill: (name: string) => request<SkillInfo & { html: string }>(`/api/skills/${encodeURIComponent(name)}`),
   file: (key: string) => request<{ key: string; version: string; file: string; text: string }>(`/api/documents/${encodeURIComponent(key)}/file`),
   editFile: (key: string, body: { version: string; text: string; since?: string }) =>
@@ -162,7 +166,15 @@ export function formatTarget(target: MessageTarget): string {
       return target.key;
     case 'anchor':
       return `${target.key}#${target.anchor}`;
+    case 'skill':
+      return `skill ${target.name}`;
   }
+}
+
+/** Where a skill is shown: beside its plugin's list pane, or on its own when it belongs to no plugin. */
+export function skillRoute(name: string, plugins: readonly PluginInfo[]): string {
+  const plugin = plugins.find((p) => p.skill === name);
+  return plugin ? `/p/${plugin.key}/skill` : `/skills/${name}`;
 }
 
 /** The plugin key of a document key: `TASK-a` → `TASK`. */

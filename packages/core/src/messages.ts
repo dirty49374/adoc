@@ -1,12 +1,13 @@
 import { EventEmitter } from 'node:events';
 import { stringify } from 'yaml';
 
-/** _User_Message_Target_: one of four levels. */
+/** _User_Message_Target_: one of five levels. */
 export type MessageTarget =
   | { level: 'workspace' }
   | { level: 'plugin'; pluginKey: string }
   | { level: 'document'; key: string }
-  | { level: 'anchor'; key: string; anchor: string };
+  | { level: 'anchor'; key: string; anchor: string }
+  | { level: 'skill'; name: string };
 
 /** One _User_Comment_ inside a comment message. */
 export interface UserComment {
@@ -47,6 +48,8 @@ export function formatTarget(target: MessageTarget): string {
       return target.key;
     case 'anchor':
       return `${target.key}#${target.anchor}`;
+    case 'skill':
+      return `skill ${target.name}`;
   }
 }
 

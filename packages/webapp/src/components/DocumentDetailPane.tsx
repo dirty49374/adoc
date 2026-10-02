@@ -4,7 +4,7 @@ import { useLive } from '../live.js';
 import { seenVersions } from '../storage.js';
 import { ActionNotice } from './ActionNotice.js';
 import { DocumentBody } from './DocumentBody.js';
-import { DocumentEditor } from './DocumentEditor.js';
+import { FileEditor } from './FileEditor.js';
 import { DocumentHeader } from './DocumentHeader.js';
 
 type DetailState = { phase: 'loading' } | { phase: 'missing' } | { phase: 'failed'; error: string } | { phase: 'showing'; view: DocumentView };
@@ -128,7 +128,7 @@ export function DocumentDetailPane({ documentKey }: { documentKey: string }) {
       {notice && <ActionNotice text={notice} onDismiss={() => setNotice(undefined)} />}
       {showChanges && changes.error && <ActionNotice text={`renderChanges failed: ${changes.error}`} onDismiss={() => undefined} />}
       {editing ? (
-        <DocumentEditor documentKey={documentKey} onSave={saveEdit} onClose={() => setEditing(false)} />
+        <FileEditor target={{ level: 'document', key: documentKey }} load={() => api.file(documentKey)} onSave={saveEdit} onClose={() => setEditing(false)} />
       ) : html !== undefined ? (
         <DocumentBody documentKey={documentKey} html={html} onAction={onAction} />
       ) : (

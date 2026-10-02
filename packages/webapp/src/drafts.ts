@@ -1,13 +1,13 @@
 import { useSyncExternalStore } from 'react';
-import type { UserComment } from './api.js';
+import { formatTarget, type MessageTarget, type UserComment } from './api.js';
 
 /** A draft _User_Comment_ waiting in the _Draft_Comment_List_. */
-/** Where a document's own draft comes from: an element of a plugin client module (`adoc-draft`), or the _Document_Editor_. */
+/** Where a target's own draft comes from: an element of a plugin client module (`adoc-draft`), or the _File_Editor_. */
 export type DraftOrigin = 'element' | 'edit';
 
 export interface DraftComment extends UserComment {
   id: number;
-  /** Set for a document's own draft: there is at most one per document and origin, and a later one replaces it. */
+  /** Set for a target's own draft: there is at most one per target and origin, and a later one replaces it. */
   origin?: DraftOrigin;
   /** `edit` only: the text before the first edit that has not been sent, the start of the draft's diff. Not sent. */
   base?: string;
@@ -18,7 +18,7 @@ export function sentComment({ id: _id, origin: _origin, base: _base, ...comment 
   return comment;
 }
 
-const isDocumentDraft = (d: DraftComment, origin: DraftOrigin, key: string) => d.origin === origin && d.target.level === 'document' && d.target.key === key;
+const isOwnDraft = (d: DraftComment, origin: DraftOrigin, target: MessageTarget) => d.origin === origin && formatTarget(d.target) === formatTarget(target);
 
 const STORAGE_KEY = 'adoc.drafts';
 const listeners = new Set<() => void>();
@@ -49,16 +49,16 @@ export const draftStore = {
   add(comment: UserComment): void {
     save([...drafts, { ...comment, id: Date.now() + Math.random() }]);
   },
-  /** Puts the one draft of `origin` on a document, replacing the earlier one. */
-  putDocumentDraft(origin: DraftOrigin, key: string, text: string, base?: string): void {
-    const others = drafts.filter((d) => !isDocumentDraft(d, origin, key));
-    save([...others, { target: { level: 'document', key }, text, id: Date.now() + Math.random(), origin, ...(base !== undefined ? { base } : {}) }]);
+  /** Puts the one draft of `origin` on a target (a document or a skill), replacing the earlier one. */
+  putOwnDraft(origin: DraftOrigin, target: MessageTarget, text: string, base?: string): void {
+    const others = drafts.filter((d) => !isOwnDraft(d, origin, target));
+    save([...others, { target, text, id: Date.now() + Math.random(), origin, ...(base !== undefined ? { base } : {}) }]);
   },
-  documentDraft(origin: DraftOrigin, key: string): DraftComment | undefined {
-    return drafts.find((d) => isDocumentDraft(d, origin, key));
+  ownDraft(origin: DraftOrigin, target: MessageTarget): DraftComment | undefined {
+    return drafts.find((d) => isOwnDraft(d, origin, target));
   },
-  removeDocumentDraft(origin: DraftOrigin, key: string): void {
-    save(drafts.filter((d) => !isDocumentDraft(d, origin, key)));
+  removeOwnDraft(origin: DraftOrigin, target: MessageTarget): void {
+    save(drafts.filter((d) => !isOwnDraft(d, origin, target)));
   },
   remove(id: number): void {
     save(drafts.filter((d) => d.id !== id));

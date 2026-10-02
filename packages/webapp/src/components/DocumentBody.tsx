@@ -148,7 +148,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     const onAction = (e: Event) => elementAction.current(e);
     const onDraft = (e: Event) => {
       const text = (e as CustomEvent<{ text?: unknown }>).detail?.text;
-      if (typeof text === 'string' && text.trim()) draftStore.putDocumentDraft('element', documentKey, text);
+      if (typeof text === 'string' && text.trim()) draftStore.putOwnDraft('element', { level: 'document', key: documentKey }, text);
     };
     element.addEventListener('adoc-action', onAction);
     element.addEventListener('adoc-draft', onDraft);

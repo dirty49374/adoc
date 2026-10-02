@@ -725,18 +725,19 @@ concept _User_Action_Message_ in message = {
 }
 
 concept _User_Message_Target_ in message = {
-  What a _User_Message_ is about, at one of four levels: the whole _Adoc_Workspace_, one _Plugin_, one _Document_ or one _Document_Anchor_.
+  What a _User_Message_ is about, at one of five levels: the whole _Adoc_Workspace_, one _Plugin_, one _Document_, one _Document_Anchor_ or one _Agent_Skill_.
 .relations
   scope of _User_Message_
   may be _Adoc_Workspace_
   may be _Plugin_
   may be _Document_
   may be _Document_Anchor_
+  may be _Agent_Skill_
   composed in _Adoc_Web_UI_
   composed as _User_Comment_
 .contract
-  - A _User_Message_Target_ must be exactly one of the workspace, plugin, document and anchor levels.
-  - An _Adoc_Web_UI_ must let the user give a _User_Comment_ any of the four levels.
+  - A _User_Message_Target_ must be exactly one of the workspace, plugin, document, anchor and skill levels.
+  - An _Adoc_Web_UI_ must let the user give a _User_Comment_ any of the five levels.
 .remarks
   - Example: "create a new issue" targets a _Plugin_ because no _Document_ exists yet.
 }
@@ -744,6 +745,7 @@ concept _User_Message_Target_ in message = {
 concept _User_Message_Format_ in message = {
   The text form in which every _User_Message_ reaches the agent: a header line, the main text, and the attached fields in YAML after a line `--`.
 .relations
+  references _adoc:Agent_Skill_
   fields from _Adoc_Web_UI_
   formats _User_Message_
   used by _User_Message_Transport_
@@ -758,7 +760,7 @@ concept _User_Message_Format_ in message = {
   run of _Adoc_Server_
 .contract
   - A message in _User_Message_Format_ must start with the line `[adoc message <number>] <kind>`, followed by ` · <target>` when the message has a main target; kind is comment or action and the number increases within one run of the _Adoc_Server_.
-  - A target in _User_Message_Format_ must be written as `workspace`, a _Plugin_Key_, a _Document_Key_ or a _Document_Key_ with a _Document_Anchor_.
+  - A target in _User_Message_Format_ must be written as `workspace`, a _Plugin_Key_, a _Document_Key_, a _Document_Key_ with a _Document_Anchor_, or `skill <name>` for an _Agent_Skill_.
   - The main text must follow the header line as plain text: the composer text of a comment message, or the handler text of an action message.
   - Attached fields must follow a line `--` as YAML: for a comment message the field comments, a list with one entry per _User_Comment_ with target and text and, when present, quote and source; for an action message the fields action, value and applied, and to for a drag.
   - A comment message without composer text must start its body with the line `--`; a comment message without drafts must have no `--` part.
@@ -812,7 +814,7 @@ concept _Adoc_Server_ in runtime = {
   - An _Adoc_Server_ must refuse to start on a port that is already in use.
   - An _Adoc_Server_ must write its _Server_Record_ when it starts and remove it when it stops, and must refuse to start while the _Server_Record_ of the same _Adoc_Workspace_ names a running process.
   - An _Adoc_Server_ must reload a _Plugin_ loaded from a local path whenever a file at the top of its folder, such as `index.ts`, changes, and refresh the _Adoc_Web_UI_.
-  - An _Adoc_Server_ must write an edited main file sent by the _Adoc_Web_UI_ only when the _Document_Version_ it was edited from is still current, and must answer with the new version and the unified diff from the text the edit started from.
+  - An _Adoc_Server_ must write an edited main file or `SKILL.md` sent by the _Adoc_Web_UI_ only when the version it was edited from is still current, and must answer with the new version and the unified diff from the text the edit started from.
   - An _Adoc_Server_ must remove scripts and inline event attributes from every body HTML before serving it.
 .remarks
   - Chosen: implemented in TypeScript.

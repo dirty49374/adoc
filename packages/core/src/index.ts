@@ -14,4 +14,4 @@ export { readServerRecord, type ServerRecord } from './registry.js';
 export { ServerClient } from './client.js';
 export { formatCheck } from './report.js';
 export { isGitRepository } from './git.js';
-export { listSkills, viewSkill, installSkills, uninstallSkills, checkSkills, type SkillEntry, type SkillInstallOptions } from './skills.js';
+export { listSkills, viewSkill, installSkills, uninstallSkills, checkSkills, readSkillFile, editSkillFile, type SkillEntry, type SkillInstallOptions } from './skills.js';

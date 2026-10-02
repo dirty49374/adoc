@@ -1,16 +1,19 @@
 import { useNavigate } from 'react-router';
-import { formatTarget, pluginOf } from '../api.js';
+import { formatTarget, pluginOf, skillRoute } from '../api.js';
+import { useWorkspace } from '../workspace.js';
 import { draftStore, type DraftComment } from '../drafts.js';
 
 /** _Draft_Chip_List_: one chip per draft across documents; a click opens its document at its marker. */
 export function DraftChipList({ drafts }: { drafts: DraftComment[] }) {
   const navigate = useNavigate();
+  const plugins = useWorkspace()?.plugins ?? [];
   if (drafts.length === 0) return null;
   const open = (d: DraftComment) => {
     if (d.target.level === 'document' || d.target.level === 'anchor') {
       const key = d.target.key;
       navigate(`/p/${pluginOf(key)}/${key}${d.target.level === 'anchor' ? `#${encodeURIComponent(d.target.anchor)}` : ''}`);
     } else if (d.target.level === 'plugin') navigate(`/p/${d.target.pluginKey}`);
+    else if (d.target.level === 'skill') navigate(skillRoute(d.target.name, plugins));
     else navigate('/');
   };
   return (

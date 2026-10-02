@@ -59,6 +59,11 @@ describe('AdocServer', () => {
     const todo = await json(`${server.url}/api/skills/adoc-todo`);
     expect(todo.html).toContain('<h1>TODO documents</h1>');
     expect((await fetch(`${server.url}/api/skills/nope`)).status).toBe(404);
+    const file = await json(`${server.url}/api/skills/adoc-todo/file`);
+    expect(file).toMatchObject({ name: 'adoc-todo', file: expect.stringContaining('skill/SKILL.md'), text: expect.stringContaining('name: adoc-todo') });
+    expect((await fetch(`${server.url}/api/skills/adoc-todo/file`, post({ version: 'stale', text: 'x' }))).status).toBe(409);
+    const sent = await json(`${server.url}/api/messages`, post({ target: { level: 'skill', name: 'adoc-todo' }, text: 'shorter please', comments: [] }));
+    expect(sent.message.formatted).toContain('[adoc message 1] comment · skill adoc-todo');
   });
 
   it('writes an edited main file when its version is current, with the diff since the first unsent edit', async () => {
