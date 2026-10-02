@@ -9,14 +9,13 @@ import { PanelResizer } from './PanelResizer.js';
 import { readStored, writeStored } from '../storage.js';
 import { useDrafts } from '../drafts.js';
 import { CommentComposer } from './CommentComposer.js';
-import { DraftChipList } from './DraftChipList.js';
 import { MessageDock } from './MessageDock.js';
 import { PluginTabBar } from './PluginTabBar.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { WarningLink } from './WarningLink.js';
 import { WarningPanel } from './WarningPanel.js';
 
-/** _App_Shell_: the top bar with the plugin tabs, the routed main area with the drafts and the composer below it, and the message dock. */
+/** _App_Shell_: the top bar with the plugin tabs, the routed main area with the composer below it, and the message dock. */
 export function AppShell() {
   return (
     <WorkspaceProvider>
@@ -79,7 +78,6 @@ function ShellLayout() {
           <main className="shell-main">
             <Outlet />
           </main>
-          <DraftChipList drafts={drafts} />
           <CommentComposer drafts={drafts} />
         </div>
         <PanelResizer width={dockWidth} onWidth={resize} />

@@ -69,6 +69,7 @@
   --adoc-size-small: 12px;
   --adoc-size-tiny: 11px;
   --adoc-bar: 3px;
+  --adoc-reading-width: 860px;
 }
 :root[data-theme='light'] { color-scheme: light; }
 :root[data-theme='dark'] { color-scheme: dark; }
@@ -169,7 +170,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 /* ---- plugin route: list (folds into a rail while a document is shown) + detail ---- */
 .plugin-route { display: flex; height: 100%; position: relative; }
 .document-list-slot { width: 280px; flex-shrink: 0; position: relative; }
-.plugin-route.folded .document-list-slot { width: 32px; }
+.plugin-route.folded .document-list-slot { width: 0; } /* the rail overlays the detail pane's left padding, so the reading column lines up with the composer */
 .document-list-pane { position: absolute; inset: 0; background: var(--adoc-surface-panel); display: flex; flex-direction: column; z-index: 6; }
 .plugin-route.folded .document-list-pane { width: 32px; overflow: hidden; }
 .plugin-route.folded .document-list-pane:hover { width: 280px; box-shadow: var(--adoc-shadow); }
@@ -189,7 +190,7 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .row-key { font-family: var(--adoc-font-mono); }
 
 .document-detail-pane { flex: 1; min-width: 0; overflow: auto; display: flex; flex-direction: column; }
-.document-detail-pane > * { width: 100%; max-width: 860px; margin-inline: auto; }
+.document-detail-pane > * { width: 100%; max-width: var(--adoc-reading-width); margin-inline: auto; }
 .document-header { padding: 20px 32px 8px; }
 .header-key { font-family: var(--adoc-font-mono); color: var(--adoc-text-muted); font-size: var(--adoc-size-tiny); }
 .header-title { margin: 0 0 4px; font-weight: 700; }
@@ -300,14 +301,18 @@ body.resizing { user-select: none; cursor: col-resize; }
 .pending-comment { margin-top: 4px; }
 
 /* _Draft_Chip_List_ */
-.draft-chip-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 12px 0; }
+.draft-chip-list { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
 .draft-chip { padding: 0; color: var(--adoc-secondary); font-family: var(--adoc-font-mono); }
 .draft-chip button { background: transparent; color: inherit; font-size: inherit; padding: 0 2px 0 6px; }
 .draft-chip .chip-remove { color: var(--adoc-text-muted); padding: 0 4px 0 2px; }
 .draft-chip .chip-remove:hover { color: var(--adoc-error); background: transparent; }
 
-/* _Comment_Composer_: below the main area, three lines that grow, on the element surface with the agent's accent bar */
-.comment-composer { margin: 6px 12px 10px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
+/* _Comment_Composer_: below the main area, as wide as the reading column; three lines that grow, on the element surface with
+   the agent's accent bar; folded, one line */
+.composer-area { width: 100%; max-width: var(--adoc-reading-width); margin-inline: auto; padding: 0 32px 10px; }
+.composer-area .spacer, .composer-target .spacer { flex: 1; }
+.composer-folded { width: 100%; margin-top: 6px; padding: 4px 8px 4px calc(10px + var(--adoc-bar)); color: var(--adoc-text-muted); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); }
+.comment-composer { margin-top: 6px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
 .composer-row { display: flex; align-items: flex-end; gap: 6px; }
 .comment-composer textarea { flex: 1; resize: none; border: none; background: transparent; padding: 2px 0; max-height: 30vh; line-height: 1.5; }
 .comment-composer textarea:focus { outline: none; }

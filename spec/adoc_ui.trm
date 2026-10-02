@@ -9,7 +9,7 @@
 }
 
 panel _App_Shell_ in shell = {
-  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area with the _Draft_Chip_List_ and the _Comment_Composer_ below it, and the _Message_Dock_.
+  The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area with the _Comment_Composer_ below it, and the _Message_Dock_.
 .relations
   references _adoc_ui:Terminal_Panel_
   references _adoc:Adoc_Web_UI_
@@ -23,7 +23,6 @@ panel _App_Shell_ in shell = {
   contains _Panel_Resizer_
   contains _Warning_Link_
   contains _Message_Dock_
-  contains _Draft_Chip_List_
   contains _Comment_Composer_
   contains _Workspace_Home_Panel_
   contains _Document_List_Pane_
@@ -32,7 +31,7 @@ panel _App_Shell_ in shell = {
   - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
   - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
-  - _App_Shell_ must show the _Draft_Chip_List_ and the _Comment_Composer_ below the main area at every route, apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
+  - _App_Shell_ must show the _Comment_Composer_ below the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.
 .states
   - _App_Shell_ is one of connecting, connected, disconnected; in disconnected the user sees the last loaded content and the _Connection_Status_Label_ says the server is unreachable.
 .rules
@@ -261,7 +260,7 @@ input _Draft_Comment_Input_ in comment = {
 }
 
 input _Comment_Composer_ in comment = {
-  The single text input with a send button, below the main area of _App_Shell_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
+  The single text input with a send button and the _Draft_Chip_List_ above it, below the main area of _App_Shell_, that sends every draft in the _Draft_Chip_List_ together with an optional comment on the current target as one _adoc:User_Comment_Message_.
 .relations
   references _adoc:Document_
   references _adoc:Plugin_
@@ -269,6 +268,7 @@ input _Comment_Composer_ in comment = {
   references _adoc:User_Message_Format_
   composes _adoc:User_Comment_Message_
   targets _adoc:User_Message_Target_
+  contains _Draft_Chip_List_
   sends _Draft_Chip_List_
   sends to _adoc:Adoc_Server_
   placed in _App_Shell_
@@ -279,6 +279,7 @@ input _Comment_Composer_ in comment = {
   - _Comment_Composer_ must send one _adoc:User_Comment_Message_ whose composer text is its own text on the chosen target, and whose _adoc:User_Comment_ entries are the drafts in their order.
   - _Comment_Composer_ must clear its text and the _Draft_Chip_List_ only after the server accepts the message, and must keep both and show the error when the send fails.
   - _Comment_Composer_ must keep its text across navigation and page reloads in the same browser.
+  - _Comment_Composer_ must fold into one line on request and unfold on a click on that line, keeping its text and the drafts; the line shows the number of drafts and whether text is typed, and hides the _Draft_Chip_List_; and the choice is kept across page reloads in the same browser.
 .rules
   - Through _Comment_Composer_ the user must never send an empty message.
   - Through _Comment_Composer_ the user must never lose typed text or drafts because the page re-rendered.
@@ -367,7 +368,7 @@ list _Draft_Chip_List_ in comment = {
   references _adoc:Document_
   references _adoc_ui:Draft_Marker_Column_
   shows _adoc:User_Comment_
-  part of _App_Shell_
+  part of _Comment_Composer_
   filled by _Draft_Comment_Input_
   sent by _Comment_Composer_
 .contract
