@@ -98,7 +98,7 @@ Any other key fails the action.
 
 A content is text, or `{ base64 }` for binary data.
 
-adoc sends the agent a message only when the handler returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
+A handler sends the agent a message only when it returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
 
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` (for a toggle the value is the new checked state, for a drag `<value> to <to>`) and changes nothing. That is often all you need: the agent then edits the file.
 
