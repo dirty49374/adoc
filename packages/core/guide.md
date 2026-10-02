@@ -2,6 +2,10 @@
 
 An adoc workspace is a git repository whose documents (TODO lists, TASK work orders, KANBAN boards, …) are files that **you edit directly**. A person reads them in the adoc web UI and sends you **messages**: comments on a document, a section or selected text, and notices of buttons, checkboxes and drags. adoc never edits on your behalf except when a plugin's action already applied a change (the message then says `applied: true`).
 
+## Start
+
+If you run in a herdr pane, run `adoc agent claim` once at the start of your session. It makes your pane the assigned agent: the person's comments and actions are pushed into your pane as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over; `adoc agent show` says who holds it.
+
 ## The loop
 
 1. `adoc message wait` — blocks until messages arrive, then prints all of them and forgets them. Use `--timeout 600` to return after ten minutes with `(no messages)`.
@@ -11,7 +15,7 @@ An adoc workspace is a git repository whose documents (TODO lists, TASK work ord
 5. When you created or substantially changed a document the person should look at, show it: `adoc ui open <KEY>` (or `<KEY>#<anchor>`). It moves the browser tab the person used last.
 6. Go back to 1.
 
-The loop above is for the default `wait` transport. When `.adoc/adoc.yaml` sets `agent.transport.kind` to `hc` or `herdr`, adoc pushes each message to you as a prompt in the same format; then skip step 1 and handle each pushed message with steps 2–4.
+With the default `herdr` transport and a claim, adoc pushes each message to you as a prompt in the same format; then skip step 1 and handle each pushed message with steps 2–4. Without a claim, or with the `wait` transport, messages wait until `adoc message wait` takes them.
 
 Before the loop, read the guide of every plugin you will touch: `adoc skill list`, then `adoc skill view adoc-todo` (plugin guides are named `adoc-<plugin key in lowercase>`). Each guide explains the file layout, what an anchor means and what to do for each action.
 

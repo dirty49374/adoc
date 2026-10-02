@@ -11,6 +11,9 @@ import { LOCAL_ID_PATTERN, PLUGIN_KEY_PATTERN, parseDocumentTarget } from './nam
 import { attachTransport, createTransport, type MessageTransport } from './transports.js';
 import { formatCheck } from './report.js';
 import { readServerRecord, removeServerRecord, writeServerRecord } from './registry.js';
+import { readClaim, CLAIM_FILE, type AgentClaim } from './claim.js';
+import { herdrPanes, herdrSubscribe } from './herdr.js';
+import { TerminalRelay } from './terminal.js';
 import type { Workspace } from './workspace.js';
 
 export const PROTOCOL = 'adoc/1';
@@ -117,6 +120,11 @@ export class AdocServer {
   private readonly sockets: WebSocketServer;
   private watchers: FSWatcher[] = [];
   private readonly sessions = new Map<string, BrowserSession & { sockets: Set<WebSocket> }>();
+  private claim: AgentClaim | undefined;
+  private agentStatus: { status?: string; gone: boolean } = { gone: false };
+  private unsubscribe: (() => void) | undefined;
+  private retryHeld: () => void = () => undefined;
+  private readonly terminal: TerminalRelay;
   private debounce: NodeJS.Timeout | undefined;
   private chain: Promise<unknown> = Promise.resolve();
   private readonly host: string;
@@ -131,8 +139,9 @@ export class AdocServer {
     this.host = options.host ?? workspace.config.server.host;
     this.port = options.port ?? workspace.config.server.port;
     this.log = options.log ?? ((line) => process.stderr.write(line + '\n'));
-    this.transport = createTransport(workspace.config.agent.transport);
-    attachTransport(this.queue, this.transport, this.log);
+    this.transport = createTransport(workspace.config.agent.transport, undefined, () => (this.agentStatus.gone ? undefined : this.claim));
+    this.retryHeld = attachTransport(this.queue, this.transport, this.log);
+    this.terminal = new TerminalRelay(() => (this.agentStatus.gone ? undefined : this.claim), this.log);
     this.listener = createServer((request, response) => {
       void this.handle(request, response).catch((error) => {
         if (!response.headersSent) sendJson(response, error instanceof AdocError ? 400 : 500, { error: errorMessage(error) });
@@ -168,6 +177,12 @@ export class AdocServer {
       throw new AdocError('server.listen', `Cannot listen at ${this.host}:${this.port}: ${errorMessage(error)}`);
     }
     await writeServerRecord({ pid: process.pid, url: this.url, workspace: this.workspace.root });
+    await this.loadClaim();
+    this.watchers.push(
+      watch(this.workspace.home.home, (_event, file) => {
+        if (file === CLAIM_FILE) void this.loadClaim();
+      }),
+    );
     for (const path of this.workspace.config.watch) {
       const absolute = resolve(this.workspace.root, path);
       try {
@@ -195,6 +210,8 @@ export class AdocServer {
   async stop(): Promise<void> {
     clearTimeout(this.debounce);
     clearTimeout(this.pluginDebounce);
+    this.unsubscribe?.();
+    this.terminal.stopAll('server-stopped');
     for (const watcher of this.watchers) watcher.close();
     for (const client of this.sockets.clients) client.terminate();
     this.sockets.close();
@@ -235,6 +252,20 @@ export class AdocServer {
   }
 
   private welcome(ws: WebSocket, id: string): void {
+    ws.on('message', (data) => {
+      try {
+        const event = JSON.parse(String(data)) as { type?: string; mode?: 'observe' | 'control'; cols?: number; rows?: number; data?: string; lines?: number };
+        const size = (n: unknown, fallback: number) => (typeof n === 'number' && n >= 10 && n <= 500 ? Math.floor(n) : fallback);
+        if (event.type === 'terminal.open') this.terminal.open(ws, event.mode === 'control' ? 'control' : 'observe', size(event.cols, 100), size(event.rows, 30));
+        else if (event.type === 'terminal.input' && typeof event.data === 'string') this.terminal.input(ws, event.data);
+        else if (event.type === 'terminal.resize') this.terminal.resize(ws, size(event.cols, 100), size(event.rows, 30));
+        else if (event.type === 'terminal.scroll' && typeof event.lines === 'number') this.terminal.scroll(ws, event.lines);
+        else if (event.type === 'terminal.close') this.terminal.stop(ws);
+      } catch {
+        // Ignore malformed browser events.
+      }
+    });
+    ws.on('close', () => this.terminal.stop(ws));
     if (id) {
       const session = this.sessions.get(id) ?? { id, connected: true, lastAccess: new Date().toISOString(), location: '/', sockets: new Set<WebSocket>() };
       session.sockets.add(ws);
@@ -256,7 +287,54 @@ export class AdocServer {
         session.connected = session.sockets.size > 0;
       });
     }
-    ws.send(JSON.stringify({ type: 'hello', revision: this.workspace.revision, messages: this.queue.list().map(publicMessage) }));
+    ws.send(JSON.stringify({ type: 'hello', revision: this.workspace.revision, messages: this.queue.list().map(publicMessage), agent: this.agentInfo() }));
+  }
+
+  /** Reads `.adoc/claim.yaml`, follows the claimed pane's agent status, and retries held messages. */
+  private async loadClaim(): Promise<void> {
+    const claim = await readClaim(this.workspace.home);
+    const changed = claim?.pane !== this.claim?.pane || claim?.socket !== this.claim?.socket || claim?.claimedAt !== this.claim?.claimedAt;
+    if (!changed) return;
+    this.claim = claim;
+    this.unsubscribe?.();
+    this.unsubscribe = undefined;
+    this.terminal.stopAll('claim-changed');
+    if (claim) {
+      const pane = (await herdrPanes(claim.socket).catch(() => [])).find((p) => p.pane_id === claim.pane);
+      this.agentStatus = pane ? (pane.agent_status ? { status: pane.agent_status, gone: false } : { gone: false }) : { gone: true };
+      this.unsubscribe = herdrSubscribe(
+        claim.socket,
+        [{ type: 'pane.agent_status_changed', pane_id: claim.pane }, { type: 'pane.closed' }, { type: 'pane.exited' }],
+        (event) => {
+          const data = (event.data ?? {}) as { pane_id?: string; agent_status?: string; pane?: { pane_id?: string; agent_status?: string } };
+          const paneId = data.pane_id ?? data.pane?.pane_id;
+          if (paneId !== claim.pane) return;
+          if (event.event?.includes('closed') || event.event?.includes('exited')) this.agentStatus = { gone: true };
+          else {
+            const status = data.agent_status ?? data.pane?.agent_status;
+            this.agentStatus = status ? { status, gone: false } : { gone: false };
+          }
+          this.broadcastAgent();
+        },
+        () => undefined,
+      );
+      this.log(`adoc: assigned agent is herdr pane ${claim.pane} (${claim.herdrSession})${this.agentStatus.gone ? ', which is gone' : ''}`);
+      if (!this.agentStatus.gone) this.retryHeld();
+    } else {
+      this.agentStatus = { gone: false };
+    }
+    this.broadcastAgent();
+  }
+
+  /** The assigned agent as the web UI shows it. */
+  agentInfo() {
+    const info: Record<string, unknown> = { name: this.workspace.config.agent.name, transport: this.transport.kind };
+    if (this.claim) info.claim = { pane: this.claim.pane, herdrSession: this.claim.herdrSession, agent: this.claim.agent, status: this.agentStatus.status, gone: this.agentStatus.gone };
+    return info;
+  }
+
+  private broadcastAgent(): void {
+    this.broadcast({ type: 'agent', agent: this.agentInfo() });
   }
 
   /** Every _Browser_Session_, most recent access first. */
@@ -304,7 +382,7 @@ export class AdocServer {
         name: ws.name,
         root: ws.root,
         revision: ws.revision,
-        agent: { name: ws.config.agent.name, transport: this.transport.kind },
+        agent: this.agentInfo(),
         git: ws.git,
         plugins: ws.pluginInfos(),
         check: ws.check(),
@@ -384,7 +462,7 @@ export class AdocServer {
   }
 
   private async serveWebapp(path: string, response: ServerResponse): Promise<void> {
-    const file = /^\/(app\.js|app\.css|app\.js\.map)$/.test(path) ? path.slice(1) : 'index.html';
+    const file = /^\/(app\.js|app\.css|app\.js\.map|xterm\.css)$/.test(path) ? path.slice(1) : 'index.html';
     try {
       const body = await readFile(join(this.webappDirectory, file));
       response.writeHead(200, { 'content-type': WEBAPP_TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });

@@ -131,7 +131,7 @@ button.secondary { background: transparent; color: var(--text); border-color: va
 .composer-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
 /* Message_Dock */
-.message-dock { width: 320px; flex-shrink: 0; border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; }
+.message-dock { flex-shrink: 0; border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; }
 .message-dock.collapsed { width: auto; }
 .dock-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: transparent; color: var(--text); border: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 12px; text-align: left; }
 .pending-message-list { flex: 1; overflow: auto; list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
@@ -209,3 +209,36 @@ button.secondary { background: transparent; color: var(--text); border-color: va
 @keyframes adoc-flash { from { background: color-mix(in srgb, var(--accent) 35%, transparent); } to { background: transparent; } }
 
 .change-base-picker { font: inherit; font-size: 11px; padding: 0 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); }
+
+/* Panel_Resizer, Terminal_Panel, Agent_Pane_Label */
+.panel-resizer { width: 5px; cursor: col-resize; background: var(--line); flex-shrink: 0; }
+.panel-resizer:hover, body.resizing .panel-resizer { background: var(--accent); }
+body.resizing { user-select: none; cursor: col-resize; }
+.message-dock { width: 420px; }
+.terminal-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #14171c; }
+.terminal-header { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 4px 8px; font-size: 12px; color: #c9d1d9; border-bottom: 1px solid #2c323c; }
+.terminal-header .muted { color: #8b949e; }
+.terminal-phase { font-size: 11px; color: #8b949e; }
+.terminal-phase.control { color: #69db7c; }
+.agent-status { font-size: 11px; color: #ffc078; }
+.agent-status.idle, .agent-status.done { color: #8b949e; }
+.terminal-host { flex: 1; min-height: 0; padding: 4px; }
+.agent-pane-label { font-size: 12px; color: var(--muted); font-family: ui-monospace, monospace; }
+.agent-pane-label.none { color: var(--warn); }
+.agent-pane-label.gone { color: var(--danger); }
+.dock-note { padding: 6px 10px; margin: 0; }
+
+/* Draft_Chip_List */
+.draft-chip-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px 0; border-top: 1px solid var(--line); }
+.draft-chip { display: inline-flex; align-items: center; border: 1px dashed var(--accent); border-radius: 999px; background: var(--accent-soft); font-size: 11px; }
+.draft-chip button { background: transparent; border: none; color: var(--accent); padding: 0 6px; font-family: ui-monospace, monospace; font-size: 11px; }
+.draft-chip .chip-remove { color: var(--muted); padding: 0 6px 0 0; }
+
+/* Draft_Marker_Column */
+.draft-marker-column { position: absolute; top: 0; bottom: 0; right: 36px; width: 1ch; }
+.draft-marker { position: absolute; right: 0; color: var(--accent); font-size: 11px; cursor: default; line-height: 1.4; }
+.draft-card { position: absolute; right: 1.5ch; top: -4px; width: 260px; background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow); padding: 8px 10px; color: var(--text); font-size: 12.5px; z-index: 15; }
+.draft-card blockquote { margin: 4px 0; padding: 2px 6px; border-left: 2px solid var(--line); color: var(--muted); }
+.draft-card-target { font-family: ui-monospace, monospace; font-size: 11px; color: var(--accent); }
+.draft-card-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; }
+.draft-card-actions button { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 0 6px; }

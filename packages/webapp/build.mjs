@@ -6,6 +6,7 @@ const out = new URL('./dist/', import.meta.url).pathname;
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await cp(new URL('./public/', import.meta.url).pathname, out, { recursive: true });
+await cp(new URL('./node_modules/@xterm/xterm/css/xterm.css', import.meta.url).pathname, `${out}xterm.css`);
 await build({
   entryPoints: [new URL('./src/main.tsx', import.meta.url).pathname],
   outfile: `${out}app.js`,

@@ -6,9 +6,9 @@ import type { AdocHome } from './home.js';
 import { PLUGIN_KEY_PATTERN } from './names.js';
 
 const transportSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('wait') }),
+  z.object({ kind: z.literal('herdr') }),
   z.object({ kind: z.literal('hc'), target: z.string().min(1) }),
-  z.object({ kind: z.literal('herdr'), target: z.string().min(1) }),
+  z.object({ kind: z.literal('wait') }),
 ]);
 
 export const configSchema = z.object({
@@ -24,9 +24,9 @@ export const configSchema = z.object({
   agent: z
     .object({
       name: z.string().min(1).default('agent'),
-      transport: transportSchema.default({ kind: 'wait' }),
+      transport: transportSchema.default({ kind: 'herdr' }),
     })
-    .default({ name: 'agent', transport: { kind: 'wait' } }),
+    .default({ name: 'agent', transport: { kind: 'herdr' } }),
   server: z
     .object({
       host: z.string().default('127.0.0.1'),
@@ -66,7 +66,7 @@ watch:
 agent:
   name: agent
   transport:
-    kind: wait                  # wait | hc (target: <hc address>) | herdr (target: <herdr pane or agent>)
+    kind: herdr                 # herdr (the pane from adoc agent claim) | hc (target: <hc address>) | wait
 server:
   host: 127.0.0.1               # 0.0.0.0 to accept connections from the internal network
   port: 7700

@@ -9,7 +9,11 @@ import {
   formatCheck,
   installSkills,
   listSkills,
+  readClaim,
   readConfig,
+  resolveAgentPane,
+  writeClaim,
+  CLAIM_FILE,
   ServerClient,
   uninstallSkills,
   viewSkill,
@@ -82,6 +86,7 @@ export const commands: readonly CommandDefinition[] = [
       await mkdir(join(root, '.adoc'), { recursive: true });
       await mkdir(join(root, 'docs'), { recursive: true });
       await writeFile(configPath, CONFIG_TEMPLATE);
+      await writeFile(join(root, '.adoc', '.gitignore'), `${CLAIM_FILE}\n`);
       return { data: { configPath }, text: `Initialized ${configPath}\nNext: declare plugins in it, then run adoc server run.` };
     },
   },
@@ -90,6 +95,7 @@ export const commands: readonly CommandDefinition[] = [
     options: [
       ['--host <address>', 'override server.host'],
       ['--port <port>', 'override server.port'],
+      ['--agent-pane <pane>', 'claim this herdr pane for the assigned agent before starting'],
     ],
     summary: 'Run the adoc server for this workspace in the foreground.',
     behavior:
@@ -98,6 +104,7 @@ export const commands: readonly CommandDefinition[] = [
     localOnly: true,
     async run(_args, options, context) {
       const workspace = await openWorkspace(options, context);
+      if (typeof options.agentPane === 'string') await writeClaim(workspace.home, await resolveAgentPane(context.env, { pane: options.agentPane }));
       const serverOptions: ConstructorParameters<typeof AdocServer>[1] = { extensions: [createMcpEndpoint(context)], log: (line) => context.streams.stderr(line + '\n') };
       if (typeof options.host === 'string') serverOptions.host = options.host;
       if (options.port !== undefined) serverOptions.port = Number(options.port);
@@ -253,6 +260,37 @@ export const commands: readonly CommandDefinition[] = [
     },
   },
   {
+    name: 'agent claim',
+    options: [
+      ['--pane <pane>', 'the herdr pane to claim, such as w2B:p1'],
+      ['--herdr-session <name>', 'look for the pane only in this herdr session'],
+    ],
+    summary: 'Make your herdr pane the assigned agent of this workspace.',
+    behavior:
+      'Finds your herdr pane: --pane if given; else the pane whose agent session is your session id (CLAUDE_CODE_SESSION_ID or CODEX_SESSION_ID); else HERDR_PANE_ID, unless you run under a shared agent daemon. Writes .adoc/claim.yaml; a running adoc server follows it at once, pushes user messages to that pane and shows its terminal. Claiming from another pane takes the role over.',
+    example: 'adoc agent claim',
+    async run(_args, options, context) {
+      const home = await discoverHome(context.cwd, options.home, context.env);
+      const resolveOptions: { pane?: string; herdrSession?: string } = {};
+      if (typeof options.pane === 'string') resolveOptions.pane = options.pane;
+      if (typeof options.herdrSession === 'string') resolveOptions.herdrSession = options.herdrSession;
+      const resolved = await resolveAgentPane(context.env, resolveOptions);
+      const claim = await writeClaim(home, resolved);
+      return { data: { ...claim, via: resolved.via }, text: `Claimed herdr pane ${claim.pane} (${claim.herdrSession}${claim.agent ? `, ${claim.agent}` : ''}) as the assigned agent, found by ${resolved.via}.` };
+    },
+  },
+  {
+    name: 'agent show',
+    options: [],
+    summary: 'Show which herdr pane is the assigned agent.',
+    behavior: 'Prints the claim in .adoc/claim.yaml, or says that no agent has claimed the workspace.',
+    example: 'adoc agent show',
+    async run(_args, options, context) {
+      const claim = await readClaim(await discoverHome(context.cwd, options.home, context.env));
+      return { data: claim ?? null, text: claim ? `herdr pane ${claim.pane} (${claim.herdrSession}${claim.agent ? `, ${claim.agent}` : ''}), claimed ${claim.claimedAt}` : 'No agent has claimed this workspace; run adoc agent claim in the agent pane.' };
+    },
+  },
+  {
     name: 'check',
     options: [],
     summary: 'Report every warning and error of the workspace.',
@@ -273,4 +311,5 @@ export const groups: Record<string, string> = {
   plugin: 'Inspect declared plugins',
   skill: 'Show and install agent guides',
   ui: 'Inspect and control browser sessions of the web UI',
+  agent: 'Claim and show the assigned agent',
 };

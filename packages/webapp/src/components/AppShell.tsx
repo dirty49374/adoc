@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { reportActivity } from '../live.js';
 import { WorkspaceProvider, useWorkspace } from '../workspace.js';
 import { ConnectionStatusLabel } from './ConnectionStatusLabel.js';
+import { AgentPaneLabel } from './AgentPaneLabel.js';
 import { GitStatusLabel } from './GitStatusLabel.js';
+import { PanelResizer } from './PanelResizer.js';
+import { readStored, writeStored } from '../storage.js';
 import { MessageDock } from './MessageDock.js';
 import { PluginTabBar } from './PluginTabBar.js';
 import { WarningLink } from './WarningLink.js';
@@ -45,6 +48,11 @@ function ShellLayout() {
   const workspace = useWorkspace();
   useActivityReports();
   const [warningsOpen, setWarningsOpen] = useState(false);
+  const [dockWidth, setDockWidth] = useState(() => readStored('adoc.dock-width', 420));
+  const resize = useCallback((width: number) => {
+    setDockWidth(width);
+    writeStored('adoc.dock-width', width);
+  }, []);
   return (
     <div className="app-shell">
       <header className="top-bar">
@@ -55,6 +63,7 @@ function ShellLayout() {
           <WarningLink count={workspace?.check.length ?? 0} onOpen={() => setWarningsOpen(true)} />
           <ConnectionStatusLabel />
           {workspace && <GitStatusLabel git={workspace.git} />}
+          <AgentPaneLabel />
         </div>
       </header>
       <PluginTabBar />
@@ -62,7 +71,8 @@ function ShellLayout() {
         <main className="shell-main">
           <Outlet />
         </main>
-        <MessageDock />
+        <PanelResizer width={dockWidth} onWidth={resize} />
+        <MessageDock width={dockWidth} />
       </div>
       {warningsOpen && <WarningPanel entries={workspace?.check ?? []} onClose={() => setWarningsOpen(false)} />}
     </div>

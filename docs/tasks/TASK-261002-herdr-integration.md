@@ -1,6 +1,6 @@
 ---
 title: herdr integration and the terminal panel
-status: RUNNING
+status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261002-herdr-integration, NOTE-261002-right-panel-layout]
 related: [KANBAN-adoc]
@@ -37,3 +37,8 @@ Spec Terms (aterm, `spec/adoc.trm` and `spec/adoc_ui.trm`):
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-herdr-integration]] and [[NOTE-261002-right-panel-layout]].
+- 2026-10-02: core: herdr socket client, pane lookup (session id → HERDR_PANE_ID unless under codex app-server), `.adoc/claim.yaml`, herdr as the default transport (`agent.prompt`, typed input while no agent is detected), terminal relay over `herdr terminal session control | observe`, agent status through herdr events.
+- 2026-10-02: CLI: `adoc agent claim | show`, `adoc server run --agent-pane`, `adoc init` writes `.adoc/.gitignore`.
+- 2026-10-02: web UI: terminal panel (xterm.js, click to control, resize follows the panel), panel resizer, agent pane label, draft markers with hover cards, draft chips.
+- 2026-10-02: verified on a scratch shell pane: live frames, typing (including Korean text), resize 55 → 88 columns, message push; then claimed this session's pane w2B:p1. Tests: 28 passing.
+- 2026-10-02: left for review: real Korean IME composition from a keyboard (Playwright only typed characters).

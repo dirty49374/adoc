@@ -4,6 +4,8 @@ import { openComments } from '../openComments.js';
 import { api, pluginOf, type ActionRequest, type ReferenceInfo } from '../api.js';
 import { AnchorCommentButton } from './AnchorCommentButton.js';
 import { CommentPopover, type PopoverRequest } from './CommentPopover.js';
+import { DraftMarkerColumn } from './DraftMarkerColumn.js';
+import { draftStore, type DraftComment } from '../drafts.js';
 import { ReferenceTooltip } from './ReferenceTooltip.js';
 
 type ActionEvent = ActionRequest['event'];
@@ -175,6 +177,18 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
     setPopover(request);
   };
 
+  /** ✎ on a draft card: reopens the popover with the draft's text and removes the draft until it is added again. */
+  const editDraft = (draft: DraftComment) => {
+    const element = draft.target.level === 'anchor' ? content.current?.querySelector(`[data-adoc-anchor="${CSS.escape(draft.target.anchor)}"]`) : null;
+    const box = container.current!.getBoundingClientRect();
+    const rect = (element ?? content.current!).getBoundingClientRect();
+    const request: PopoverRequest = { target: draft.target, text: draft.text, top: rect.bottom - box.top + 6, left: Math.max(0, Math.min(rect.left - box.left, box.width - 380)) };
+    if (draft.quote) request.quote = draft.quote;
+    if (draft.source) request.source = draft.source;
+    draftStore.remove(draft.id);
+    setPopover(request);
+  };
+
   const dropZone = (e: DragEvent) => (e.target as Element).closest('[data-adoc-drop]');
   const onDragStart = (e: DragEvent<HTMLDivElement>) => {
     const control = (e.target as Element).closest('[data-adoc-kind="drag"]');
@@ -225,6 +239,7 @@ export function DocumentBody({ documentKey, html, onAction }: Props) {
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       />
+      <DraftMarkerColumn documentKey={documentKey} content={content.current} container={container.current} html={shown} onEdit={editDraft} />
       {hover && !popover && <AnchorCommentButton top={hover.top} left={hover.left} anchor={hover.anchor} onOpen={openAnchorComment} />}
       {tooltip && <ReferenceTooltip top={tooltip.top} left={tooltip.left} target={tooltip.target} info={references.current.get(tooltip.target)} />}
       {popover && (
