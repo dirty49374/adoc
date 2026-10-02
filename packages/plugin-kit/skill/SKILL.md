@@ -15,11 +15,11 @@ plugins/note/
   client/          ← optional: browser code (index.js, index.css), see "Browser code"
 ```
 
-Register it in the workspace's `.adoc/adoc.yaml`, then check:
+Register it in the workspace's `.adoc/adoc.yaml` (restart a running `adoc server run` to load it), then check:
 
 ```yaml
 plugins:
-  - key: NOTE                 # uppercase letters only; documents are named NOTE-<id>.<ext>
+  - key: NOTE                 # uppercase letters only; documents are named NOTE-<local id>.<ext>
     from: note                # where it comes from: see "Installing plugins" in the adoc skill
 ```
 
@@ -39,18 +39,18 @@ A running `adoc server run` reloads the plugin whenever a file at the top of its
 | field | type | meaning |
 |---|---|---|
 | `description` | `string` | one line for `adoc plugin list` |
-| `layout` | `{ kind: 'file', extension: '.md', companions?: ['.png'] }` or `{ kind: 'folder', entry: 'bug.yaml' }` | a document is the file `NOTE-<id>.md` (with optional companion files, see below), or the folder `NOTE-<id>/` with the main file `bug.yaml` |
+| `layout` | `{ kind: 'file', extension: '.md', companions?: ['.png'] }` or `{ kind: 'folder', entry: 'bug.yaml' }` | a document is the file `NOTE-<local id>.md` (with optional companion files, see below), or the folder `NOTE-<local id>/` with the main file `bug.yaml` |
 | `summarize(doc)` | returns `{ title, status, fields? }` | shown in the list and in reference tooltips; `status` is free text; `fields` values are string, number or boolean, so join lists: `attendees.join(', ')` |
 | `render(doc)` | returns `html\`…\`` | the document body; adoc draws the header (key, title, status) around it, so do not repeat the title |
 | `renderChanges(doc, previous)` | returns `html\`…\`` | optional; the body showing what changed since `previous`, an earlier version that the person saw last. Without it adoc shows a line diff of the main file |
 | `actions` | `{ [name]: (doc, event) => { text?, files?, companions?, message? } }` | optional; see Actions |
 
-The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.ts`, and a plugin without it fails to load.
+The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.ts`, with front matter `name` and `description`; a plugin without it fails to load.
 
 `doc` is `{ key, pluginKey, localId, path, file, text, files }`:
 - `path`: the workspace-relative path of the document itself, the file or the folder;
 - `file`: the workspace-relative path of the main file (the file itself, or the folder's entry file); use it for `source` and `markdown({ file })`;
-- `text`: the main file's text; `files`: the text files of the document: for a folder document every file by path relative to the folder, for a file document the main file under its name (companion files are not in it).
+- `text`: the main file's text; `files`: the files of the document, read as UTF-8 text: for a folder document every file by path relative to the folder (keep binary files out of folder documents), for a file document the main file under its name (companion files are not in it).
 
 If a function throws, adoc shows the message as the document's error and in `adoc check`; you do not need try/catch.
 
@@ -94,6 +94,8 @@ Return any of:
 - `companions`: new contents of companion files of a file document, by extension, such as `{ '.png': { base64 } }`;
 - `message`: text sent to the agent.
 
+Any other key fails the action.
+
 A content is text, or `{ base64 }` for binary data.
 
 adoc sends the agent a message only when the handler returns `message`: with `applied: true` when adoc also wrote files, with `applied: false` when it wrote nothing (a request: the agent makes the change). A handler that writes without a `message` tells the agent nothing; it sees the change only as an uncommitted edit. When a write is due but the file changed since the person saw it, adoc writes nothing, sends nothing and shows the person why.
@@ -117,9 +119,9 @@ The element talks to adoc only through DOM events and two URLs:
 | what | how |
 |---|---|
 | read the main file | `fetch('/api/documents/<key>/file')` → `{ key, version, file, text }` |
-| change files | dispatch `new CustomEvent('adoc-action', { bubbles: true, detail: { name, value, reply } })`; adoc runs the action (kind `client`) with the shown version and calls `reply({ status, version?, reason? })` with `applied`, `sent`, `refused`, `failed` or `busy` (another action was running: try again) |
+| change files | dispatch `new CustomEvent('adoc-action', { bubbles: true, detail: { name, value, reply } })`; adoc runs the action (kind `client`) with the shown version and calls `reply({ status, version?, reason?, error? })`: `applied` (with the new `version`), `sent`, `refused` (with `reason`), `failed` (with `error`) or `busy` (another action was running: try again). Pass `value` as a string, or it arrives empty |
 | tell the agent | dispatch `new CustomEvent('adoc-draft', { bubbles: true, detail: { text } })`: one draft comment on the document waits in the composer; a later one replaces it |
-| follow changes | `window.addEventListener('adoc-documents-changed', (e) => e.detail.keys…)` |
+| follow changes | `window.addEventListener('adoc-documents-changed', (e) => e.detail.keys…)`: the changed keys, or `['*']` for all (after a plugin reload) |
 
 Keep the `render` output the same across changes of the document (load the content in the element, not in attributes), or the page replaces the element on every change and it loses its state. A `client/` built from sources (with esbuild, for example) is a build output; see the SKETCH plugin for a complete example.
 
@@ -151,7 +153,7 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 - Import types with `import type { PluginDocument } from '@adoc/plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
 - No TypeScript `enum`, `namespace` or parameter properties (`constructor(private x)`): Node cannot strip them.
 - `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@adoc/plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
-- Action names are lowercase kebab-case: `toggle`, `move`, `add-card`.
+- Action names are lowercase kebab-case: `toggle`, `move`, `add-card`. Never name one `archive` or `unarchive`: the document header sends those, and the agent archives or restores the document.
 
 ## Complete example: the TODO plugin
 
@@ -210,7 +212,7 @@ export default definePlugin({
 
 ## skill/SKILL.md
 
-The plugin's skill is what the agent reads before it touches the plugin's documents, and what the person reads in the web UI (`SKILL.md` beside the plugin key, where they may comment on it or edit it; `adoc skill update` installs a changed one). `adoc skill install` installs the folder `skill/` for every agent, so keep only the skill in it, never code.
+The plugin's skill is what the agent reads before it touches the plugin's documents, and what the person reads in the web UI (`SKILL.md` beside the plugin key, where they may comment on it or edit it; `adoc skill update` installs a changed one). `adoc skill install` installs the folder `skill/` for the agents the skills CLI detects, so keep only the skill in it, never code.
 
 **Front matter.** `name` is `adoc-` and the plugin key in lowercase. The `description` is all an agent sees when it chooses a skill, so write it in the third person and say what the documents are and **when to use them**, with the words a person would use (the plugin key, the file extension, the kind of work). At most 1024 characters, no XML tags.
 
@@ -219,7 +221,7 @@ The plugin's skill is what the agent reads before it touches the plugin's docume
 1. **Purpose:** where these documents are used and what they achieve.
 2. **States and workflow:** the states a document goes through and the recommended flow between them, including who moves it (the agent, or only the person).
 3. **Instructions for the agent:** what to do, what not to do, and what to do when something happens: "do X", "never do Y", "when Z, do W".
-4. **File:** the format, with a short example, and the recommended document id.
+4. **File:** the format, with a short example, and the recommended local id.
 5. **Anchors:** what an anchor is, so that the agent finds a commented place.
 6. **Actions:** for each action, what the plugin already did and what the agent is expected to do.
 
@@ -235,7 +237,7 @@ description: "REVIEW documents: one code review each, with its findings and thei
 
 # REVIEW documents
 
-Document keys look like `REVIEW-<id>`. Read the general workflow with `adoc skill view adoc`.
+Document keys look like `REVIEW-<local id>`. Read the general workflow with `adoc skill view adoc`.
 
 ## Purpose
 One REVIEW records the review of one change: what was looked at, each finding, and how it was resolved, so that nothing found in a review is lost.
@@ -249,7 +251,7 @@ One REVIEW records the review of one change: what was looked at, each finding, a
 - When a comment disagrees with a finding, answer it under the finding and keep the review `ANSWERED`.
 
 ## File
-`REVIEW-<id>.md`: front matter `title`, `status`, then one `##` section per finding. Recommended id: date and change, `REVIEW-261002-login-form`.
+`REVIEW-<local id>.md`: front matter `title`, `status`, then one `##` section per finding. Recommended local id: today's date (yymmdd) and a title, such as `REVIEW-261002-login-form`.
 
 ## Anchors
 The anchor of a finding is its heading in lowercase with hyphens: `REVIEW-…#sql-in-loop`.
