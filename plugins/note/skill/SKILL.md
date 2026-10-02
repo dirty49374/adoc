@@ -14,16 +14,16 @@ A NOTE is the shared space where the person and the agent think together: an ide
 ## States and workflow
 
 - `OPEN` while the idea is being developed: items move from **Open questions** to **Decisions** as the person answers.
-- When the idea is ready, agree with the person in the conversation on what it becomes: TODO items, a TASK (which lists the note in `notes:`), a spec change, or nothing. When it went into one document, set `status: MOVED` and `moved_to: <KEY>`.
+- When the idea is ready, agree with the person in the conversation on what it becomes: TODO items, a TASK (which lists the note in `notes:`), a spec change, or nothing. When it went into documents, set `status: MOVED` and `moved_to:` the key of the main one, and name the others under **Decisions**. A note that led to nothing stays `OPEN` until it is archived.
 - Finished notes are archived like any document (moved into `docs/notes/_archive/`), when the person asks or together with the TASK they led to.
 
 ## Instructions
 
-- Write the body in the person's language; keep the section headings as below.
+- Write the body in the person's language; the section headings stay in English as below, so that their anchors stay stable.
 - When a conversation produced an idea worth keeping, write a note yourself: summarize what was said into the sections, run `adoc check`, commit, and open it for the person with `adoc ui open NOTE-<id>`.
 - Draw state machines, sequences and structures with Mermaid (```` ```mermaid ````) whenever a picture explains faster than prose.
 - Keep **Open questions** and **Decisions** short and current: rewrite instead of appending history (git keeps the history).
-- When the person answers a question, move it to **Decisions** with the answer; say so when you decided on their behalf.
+- Ask the person in **Open questions**, not with `> Question:`. When the person answers a question, move it to **Decisions** with the answer; mark a decision you made on their behalf with `(agent's decision)`.
 - Never turn a note into a TASK without the person's agreement; propose it.
 
 ## File
@@ -64,4 +64,4 @@ The anchor of a section is its heading in lowercase with hyphens: `## Open quest
 
 ## Actions
 
-None of its own. The archive button of the document header sends the common `archive` request (see the `adoc` skill).
+None.
