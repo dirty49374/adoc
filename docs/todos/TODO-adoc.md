@@ -8,7 +8,7 @@
 - [x] Terminal scroll speed: wheel scrolling feels slow; tune lines per wheel step and frame latency, see [[TASK-261002-herdr-integration]]; done: 10 lines per wheel notch (was 6), sent every animation frame (was every 50 ms); to check by the person
 - [x] Terminal: Shift+Enter does not work (xterm.js sends a plain Enter; the agent expects its newline sequence); done: sent as ESC CR (Alt+Enter); to check by the person on the claimed pane
 - [x] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list); done: `## Heading` starts a group with a done count, anchor = heading line
-- [ ] Web UI: switch the terminal into the main area (the side panel stays fixed), and back
+- [x] Web UI: switch the terminal into the main area (the side panel stays fixed), and back; done: the ↔ button on the panel resizer swaps the sides of the main area and the dock
 - [x] Web UI: tell the terminal from the main area: a subtly different background, or a very thin vertical rule between them; done: the _Panel_Resizer_ shows a 1px rule in --adoc-border-subtle
 - [x] Document list pane: show each title on exactly two lines (fitted to the current titles); a longer title is cut and shown whole in a popup on hover; done: fixed two-line title block (line-clamp), the whole title in a fixed floating card over a cut title
 - [x] Document list pane: sort by last update, newest first, by default; add a sort control with more orders (key, title, status); done: summary list entries carry updatedAt (newest file mtime), the _Document_Sort_Picker_ in the pane title sorts in the browser, remembered as adoc.list-sort
