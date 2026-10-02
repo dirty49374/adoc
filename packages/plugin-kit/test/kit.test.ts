@@ -54,7 +54,7 @@ describe('diff', () => {
 });
 
 describe('definePlugin', () => {
-  const valid = { description: 'd', layout: { kind: 'file' as const, extension: '.md' }, summarize: () => ({ title: 't', status: 's' }), render: () => '', guide: 'g' };
+  const valid = { description: 'd', layout: { kind: 'file' as const, extension: '.md' }, summarize: () => ({ title: 't', status: 's' }), render: () => '' };
 
   it('accepts a valid definition', () => {
     expect(definePlugin(valid)).toBe(valid);

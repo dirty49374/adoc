@@ -1,3 +1,8 @@
+---
+name: adoc
+description: "Work as the assigned agent of an adoc workspace: wait for user messages, edit documents, check, commit."
+---
+
 # Working as the assigned agent of an adoc workspace
 
 An adoc workspace is a git repository whose documents (TODO lists, TASK work orders, KANBAN boards, …) are files that **you edit directly**. A person reads them in the adoc web UI and sends you **messages**: comments on a document, a section or selected text, and notices of buttons, checkboxes and drags. adoc never edits on your behalf except when a plugin's action already applied a change (the message then says `applied: true`).

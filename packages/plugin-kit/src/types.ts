@@ -74,8 +74,6 @@ export interface PluginDefinition {
   renderChanges?(doc: PluginDocument, previous: PluginDocument): HtmlFragment | string;
   /** Handlers by action name. An action without a handler goes to adoc's default handler, which only sends a request to the agent. */
   actions?: Record<string, ActionHandler>;
-  /** The agent guide in Markdown, or a URL of a Markdown file such as `new URL('./guide.md', import.meta.url)`. */
-  guide: string | URL;
 }
 
 /** Trusted HTML produced by `html`, `raw` and the markup helpers. */

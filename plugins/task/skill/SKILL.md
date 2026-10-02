@@ -1,3 +1,12 @@
+---
+name: adoc-task
+description: "TASK documents: A detailed work order: front matter with title and status, and ## sections."
+---
+
+# TASK documents
+
+Document keys look like `TASK-<id>`. Read the general workflow with `adoc skill view adoc`.
+
 A TASK document is a detailed work order for one piece of work.
 
 ## File

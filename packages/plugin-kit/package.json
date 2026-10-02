@@ -8,7 +8,7 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./guide.md": "./guide.md",
+    "./skill/SKILL.md": "./skill/SKILL.md",
     "./package.json": "./package.json"
   },
   "dependencies": {

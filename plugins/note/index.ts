@@ -75,6 +75,4 @@ export default definePlugin({
 
   render: (doc) => renderNote(doc),
   renderChanges: (doc, previous) => renderNote(doc, previous),
-
-  guide: new URL('./guide.md', import.meta.url),
 });

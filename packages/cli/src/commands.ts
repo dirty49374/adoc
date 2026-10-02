@@ -4,7 +4,7 @@ import {
   AdocError,
   AdocServer,
   CONFIG_TEMPLATE,
-  DEFAULT_SKILL_DIRECTORY,
+  checkSkills,
   discoverHome,
   formatCheck,
   installSkills,
@@ -26,8 +26,27 @@ type Options = Record<string, unknown> & { home?: string };
 
 const WAIT_ROUND_MS = 60_000;
 
-async function openWorkspace(options: Options, context: CommandContext): Promise<Workspace> {
-  return Workspace.open(await discoverHome(context.cwd, options.home, context.env));
+const opened = new WeakMap<CommandContext, Promise<Workspace>>();
+
+/** Opens the workspace once per command run; the command and the _Skill_Check_ after it share it. */
+function openWorkspace(options: Options, context: CommandContext): Promise<Workspace> {
+  let workspace = opened.get(context);
+  if (!workspace) {
+    workspace = discoverHome(context.cwd, options.home, context.env).then((home) => Workspace.open(home));
+    opened.set(context, workspace);
+  }
+  return workspace;
+}
+
+/** The _Skill_Check_ findings for the workspace of the command; none when there is no workspace. */
+export async function skillWarnings(options: Options, context: CommandContext): Promise<string[]> {
+  let workspace: Workspace;
+  try {
+    workspace = await openWorkspace(options, context);
+  } catch {
+    return [];
+  }
+  return (await checkSkills(workspace, context.env.HOME)).map((entry) => entry.message);
 }
 
 async function client(options: Options, context: CommandContext): Promise<ServerClient> {
@@ -35,6 +54,10 @@ async function client(options: Options, context: CommandContext): Promise<Server
   const server = await ServerClient.find(await readConfig(home), home.workspace);
   await server.ensure();
   return server;
+}
+
+function agentsOption(options: Options): string[] | undefined {
+  return Array.isArray(options.agent) ? options.agent.map(String) : undefined;
 }
 
 /** An ISO time as local `YYYY-MM-DD HH:MM`. */
@@ -225,20 +248,20 @@ export const commands: readonly CommandDefinition[] = [
   {
     name: 'skill list',
     options: [],
-    summary: 'List the agent guides adoc can show or install.',
-    behavior: 'Lists the adoc workflow guide, the plugin authoring guide and one guide per loaded plugin.',
+    summary: 'List the agent skills adoc can show or install.',
+    behavior: 'Lists the skill adoc (the assigned agent\'s workflow) and adoc-plugin-authoring in user scope, and the skill of every loaded plugin in the scope of that plugin, with its folder.',
     example: 'adoc skill list',
     async run(_args, options, context) {
-      const skills = listSkills(await openWorkspace(options, context));
-      return { data: skills, text: table([['NAME', 'DESCRIPTION'], ...skills.map((s) => [s.name, s.description])]) };
+      const skills = await listSkills(await openWorkspace(options, context));
+      return { data: skills, text: table([['NAME', 'SCOPE', 'DESCRIPTION'], ...skills.map((s) => [s.name, s.scope, s.description])]) };
     },
   },
   {
     name: 'skill view',
     argument: '<name>',
     options: [],
-    summary: 'Show one agent guide by its name from adoc skill list.',
-    behavior: 'Prints the guide as Markdown. Plugin guides are named adoc-<plugin key in lowercase>, such as adoc-todo.',
+    summary: 'Show one agent skill by its name from adoc skill list.',
+    behavior: 'Prints the SKILL.md of the skill without its front matter. Plugin skills are named adoc-<plugin key in lowercase>, such as adoc-todo.',
     example: 'adoc skill view adoc-todo',
     async run(args, options, context) {
       const { entry, body } = await viewSkill(await openWorkspace(options, context), args[0]!);
@@ -248,28 +271,28 @@ export const commands: readonly CommandDefinition[] = [
   ...(['install', 'update'] as const).map(
     (verb): CommandDefinition => ({
       name: `skill ${verb}`,
-      options: [['--dir <directory>', `skill directory relative to the workspace (default ${DEFAULT_SKILL_DIRECTORY})`]],
-      summary: verb === 'install' ? 'Install every agent guide as a skill in the workspace.' : 'Rewrite the installed skills and remove stale ones.',
-      behavior: `Writes <dir>/<name>/SKILL.md for each guide listed by adoc skill list and records the managed names in .adoc/skills.json; names no longer listed are removed.`,
-      example: `adoc skill ${verb}`,
+      options: [['--agent <names...>', 'the agents to install for, such as claude-code codex (default: what the skills CLI detects)']],
+      summary: verb === 'install' ? 'Install every agent skill for the agents.' : 'Install every agent skill again, replacing the installed copies.',
+      behavior:
+        'Runs the Vercel skills CLI (npx -y skills@1, or ADOC_SKILLS_CLI) as `skills add <folder>` for each skill listed by adoc skill list: user scope (--global) for adoc and adoc-plugin-authoring and for plugins outside the workspace, project scope for plugins inside it. Only the skill/ folder is installed, never plugin code.',
+      example: `adoc skill ${verb} --agent claude-code codex`,
       localOnly: true,
       async run(_args, options, context) {
-        const directory = typeof options.dir === 'string' ? options.dir : DEFAULT_SKILL_DIRECTORY;
-        const skills = await installSkills(await openWorkspace(options, context), directory);
-        return { data: skills, text: `Installed ${skills.length} skills in ${directory}: ${skills.map((s) => s.name).join(', ')}` };
+        const skills = await installSkills(await openWorkspace(options, context), { agents: agentsOption(options), env: context.env });
+        return { data: skills, text: `Installed ${skills.length} skills: ${skills.map((s) => `${s.name} (${s.scope})`).join(', ')}` };
       },
     }),
   ),
   {
     name: 'skill uninstall',
-    options: [],
-    summary: 'Remove every skill installed by adoc skill install.',
-    behavior: 'Removes the names recorded in .adoc/skills.json and the record itself.',
+    options: [['--agent <names...>', 'the agents to remove the skills from (default: what the skills CLI detects)']],
+    summary: 'Remove every agent skill of the workspace from the agents.',
+    behavior: 'Runs `skills remove <names>` of the Vercel skills CLI for the skills listed by adoc skill list, per scope.',
     example: 'adoc skill uninstall',
     localOnly: true,
     async run(_args, options, context) {
-      const names = await uninstallSkills(await openWorkspace(options, context));
-      return { data: names, text: names.length ? `Removed ${names.join(', ')}` : 'No adoc skills are installed.' };
+      const skills = await uninstallSkills(await openWorkspace(options, context), { agents: agentsOption(options), env: context.env });
+      return { data: skills, text: `Removed ${skills.map((s) => s.name).join(', ')}` };
     },
   },
   {

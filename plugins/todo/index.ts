@@ -80,6 +80,4 @@ export default definePlugin({
       return { text: lines.join('\n'), message: `${doc.key}#${event.value} ${event.checked ? 'checked' : 'unchecked'}: ${m[3]}` };
     },
   },
-
-  guide: new URL('./guide.md', import.meta.url),
 });

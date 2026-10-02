@@ -1,3 +1,12 @@
+---
+name: adoc-kanban
+description: "KANBAN documents: One screen of about ten cards in columns, to see where work stands."
+---
+
+# KANBAN documents
+
+Document keys look like `KANBAN-<id>`. Read the general workflow with `adoc skill view adoc`.
+
 A KANBAN document is one screen showing where about ten pieces of work stand. It keeps no history.
 
 ## File

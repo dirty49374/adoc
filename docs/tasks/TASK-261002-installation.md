@@ -1,6 +1,6 @@
 ---
 title: skills through the skills CLI, plugin directories, skill check
-status: DOING
+status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261002-installation]
 related: [KANBAN-adoc]
@@ -37,3 +37,10 @@ Spec Terms (aterm, `spec/adoc.trm`):
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-installation]]; `_Plugin_Agent_Guide_` renamed to `_Plugin_Skill_`.
+- 2026-10-02: every guide moved to `skill/SKILL.md` with front matter (core `adoc`, plugin-kit `adoc-plugin-authoring`, the four plugins); `guide` removed from `definePlugin`; README and the authoring skill follow.
+- 2026-10-02: core: plugin loader with the plugin directories (bare names, project first), scope by location, required plugin skill, `@adoc/plugin-kit` resolve hook (`module.registerHooks`); `skills.ts` runs `skills add | remove` (`--yes`, `--global` for user scope, `--agent`), `ADOC_SKILLS_CLI`; `checkSkills` compares `SKILL.md` in `.agents/skills` and `.claude/skills` of the workspace and the home.
+- 2026-10-02: CLI: skill commands on the skills CLI; every command prints the skill check as `adoc: warning: …` on stderr (the MCP result carries stderr); the server log and `/api/workspace` include it.
+- 2026-10-02: tests: fake skills CLI (install, missing, outdated, uninstall); plugin directories in a plain Node process (vitest's module runner skips Node resolve hooks). End-to-end with the real `skills@1` in a scratch HOME: 4 skills, user ones in HOME, the project one in the workspace, no `index.ts` copied, no warnings afterwards.
+- 2026-10-02: this repository: the old `.adoc/skills.json` is gone; the copies in `.claude/skills` stay until the person runs `adoc skill install` (it writes user-scope skills into the home).
+- Not done: publishing the npm package (its name is undecided).
+

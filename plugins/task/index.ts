@@ -57,6 +57,4 @@ export default definePlugin({
           </section>`,
       )}`;
   },
-
-  guide: new URL('./guide.md', import.meta.url),
 });

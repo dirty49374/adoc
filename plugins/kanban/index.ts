@@ -60,6 +60,4 @@ export default definePlugin({
       return { message: `user request: move card ${card.id} "${card.text}": ${card.column} => ${event.to}` };
     },
   },
-
-  guide: new URL('./guide.md', import.meta.url),
 });

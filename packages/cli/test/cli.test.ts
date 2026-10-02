@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -14,10 +14,10 @@ afterEach(async () => {
   current = undefined;
 });
 
-async function run(argv: string[], cwd: string) {
+async function run(argv: string[], cwd: string, env: NodeJS.ProcessEnv = {}) {
   let stdout = '';
   let stderr = '';
-  const code = await runCommand(argv, { cwd, env: {}, mcp: false, streams: { stdout: (t) => (stdout += t), stderr: (t) => (stderr += t) }, stdin: async () => '' });
+  const code = await runCommand(argv, { cwd, env, mcp: false, streams: { stdout: (t) => (stdout += t), stderr: (t) => (stderr += t) }, stdin: async () => '' });
   return { code, stdout, stderr };
 }
 
@@ -43,11 +43,20 @@ describe('adoc CLI', () => {
     expect((await run(['document', 'search', 'archived', '--archived'], current.root)).stdout).toMatch(/TODO-old/);
   });
 
-  it('installs and uninstalls skills', async () => {
+  it('installs skills through the skills CLI and warns about missing or outdated skills on every command', async () => {
     current = await fixture();
-    expect((await run(['skill', 'install'], current.root)).stdout).toContain('Installed 5 skills');
-    expect(await readFile(join(current.root, '.claude/skills/adoc-task/SKILL.md'), 'utf8')).toMatch(/^---\nname: adoc-task\n/);
-    expect((await run(['skill', 'uninstall'], current.root)).stdout).toContain('adoc-task');
+    const home = join(current.root, 'home');
+    await mkdir(home);
+    const env = { HOME: home, ADOC_SKILLS_CLI: `node ${resolve(import.meta.dirname, 'fake-skills.mjs')}` };
+    expect((await run(['plugin', 'list'], current.root, env)).stderr).toContain('adoc: warning: The agent skill adoc is not installed; run adoc skill install.');
+    // The repository's plugins lie outside the test workspace, so every skill goes to user scope.
+    expect((await run(['skill', 'install'], current.root, env)).stdout).toContain('Installed 5 skills: adoc (user), adoc-plugin-authoring (user), adoc-todo (user)');
+    expect(await readdir(join(home, '.claude/skills/adoc-task'))).toEqual(['SKILL.md']);
+    expect((await run(['plugin', 'list'], current.root, env)).stderr).toBe('');
+    await writeFile(join(home, '.claude/skills/adoc-todo/SKILL.md'), 'old');
+    expect((await run(['plugin', 'list'], current.root, env)).stderr).toContain('The installed agent skill adoc-todo differs from this adoc; run adoc skill update.');
+    expect((await run(['skill', 'uninstall'], current.root, env)).stdout).toContain('adoc-task');
+    expect(await readdir(join(home, '.claude/skills'))).toEqual([]);
   });
 
   it('fails clearly without a home or a server', async () => {

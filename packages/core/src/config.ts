@@ -65,7 +65,7 @@ export async function readConfig(home: AdocHome): Promise<AdocConfig> {
 export const CONFIG_TEMPLATE = `# adoc workspace configuration. Paths are relative to the workspace root.
 plugins: []
 #  - key: TODO
-#    from: ./plugins/todo        # a local folder with index.ts, or an npm package name
+#    from: todo                  # a folder in .adoc/plugins/ or ~/.config/adoc/plugins/, a path such as ./plugins/todo, or an npm package
 watch:
   - docs
 agent:

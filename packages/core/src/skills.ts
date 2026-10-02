@@ -1,80 +1,107 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { AdocError } from './errors.js';
-import type { Workspace } from './workspace.js';
+import { readSkillSource, type SkillSource } from './plugins.js';
+import type { CheckEntry, Workspace } from './workspace.js';
 
-/** One guide that `adoc skill` can show or install as an agent skill. */
-export interface SkillEntry {
-  name: string;
-  description: string;
-  pluginKey?: string;
+/** One _Agent_Skill_ of the workspace; `pluginKey` for a _Plugin_Skill_. */
+export interface SkillEntry extends SkillSource {
+  readonly pluginKey?: string;
 }
 
-const AGENT_SKILL = 'adoc';
-const AUTHORING_SKILL = 'adoc-plugin-authoring';
-const MANIFEST = 'skills.json';
-export const DEFAULT_SKILL_DIRECTORY = '.claude/skills';
+/** The folders of the core package and the _Plugin_Kit_, which own the skills `adoc` and `adoc-plugin-authoring`. */
+const OWNERS = [dirname(dirname(fileURLToPath(import.meta.url))), dirname(dirname(createRequire(import.meta.url).resolve('@adoc/plugin-kit/skill/SKILL.md')))];
 
-export function skillNameOf(pluginKey: string): string {
-  return `adoc-${pluginKey.toLowerCase()}`;
+/** Every _Agent_Skill_: the core package and the kit in user scope, then each loaded plugin's skill in its scope. */
+export async function listSkills(workspace: Workspace): Promise<SkillEntry[]> {
+  const entries: SkillEntry[] = [];
+  for (const owner of OWNERS) entries.push(await readSkillSource(owner, 'user'));
+  for (const plugin of workspace.loadedPlugins()) if (plugin.skill) entries.push({ ...plugin.skill, pluginKey: plugin.key });
+  return entries;
 }
 
-export function listSkills(workspace: Workspace): SkillEntry[] {
-  const entries: SkillEntry[] = [
-    { name: AGENT_SKILL, description: 'Work as the assigned agent of an adoc workspace: wait for user messages, edit documents, check, commit.' },
-    { name: AUTHORING_SKILL, description: 'Write an adoc plugin: one index.ts with definePlugin, summarize, render, actions and a guide.' },
-  ];
-  for (const plugin of workspace.pluginInfos()) {
-    if (plugin.error) continue;
-    entries.push({ name: skillNameOf(plugin.key), description: `${plugin.key} documents: ${plugin.description}`, pluginKey: plugin.key });
+/** The `SKILL.md` of a skill, selected by its name as `adoc skill list` shows it, without its front matter. */
+export async function viewSkill(workspace: Workspace, name: string): Promise<{ entry: SkillEntry; body: string }> {
+  const entries = await listSkills(workspace);
+  const entry = entries.find((e) => e.name === name);
+  if (!entry) throw new AdocError('skill.missing', `No skill ${name}. Known: ${entries.map((e) => e.name).join(', ')}.`);
+  const text = await readFile(join(entry.directory, 'SKILL.md'), 'utf8');
+  return { entry, body: text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n+/, '') };
+}
+
+/** How to run the Vercel `skills` CLI: `ADOC_SKILLS_CLI`, by default `npx -y skills@1`. */
+function skillsCommand(env: NodeJS.ProcessEnv): string[] {
+  return (env.ADOC_SKILLS_CLI || 'npx -y skills@1').split(/\s+/).filter(Boolean);
+}
+
+function runSkills(args: string[], cwd: string, env: NodeJS.ProcessEnv): Promise<string> {
+  const [command, ...prefix] = skillsCommand(env);
+  return new Promise((done, fail) => {
+    const child = spawn(command!, [...prefix, ...args], { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    child.stdout.on('data', (chunk: Buffer) => (output += chunk.toString('utf8')));
+    child.stderr.on('data', (chunk: Buffer) => (output += chunk.toString('utf8')));
+    child.on('error', (error) => fail(new AdocError('skill.install', `cannot run ${command}: ${error.message}`)));
+    child.on('exit', (code) => (code === 0 ? done(output) : fail(new AdocError('skill.install', `${[command, ...prefix, ...args].join(' ')} failed (exit ${code}):\n${output.trim()}`))));
+  });
+}
+
+export interface SkillInstallOptions {
+  /** Agent names passed on to `skills --agent`, such as `claude-code` or `codex`; the skills CLI picks them when empty. */
+  agents?: string[];
+  env?: NodeJS.ProcessEnv;
+}
+
+/** _Skill_Install_Command_ `install` / `update`: `skills add <folder>` for each skill, `-g` for user scope. */
+export async function installSkills(workspace: Workspace, options: SkillInstallOptions = {}): Promise<SkillEntry[]> {
+  const env = options.env ?? process.env;
+  const entries = await listSkills(workspace);
+  const agents = options.agents?.length ? ['--agent', ...options.agents] : [];
+  for (const entry of entries) await runSkills(['add', entry.directory, '--yes', ...(entry.scope === 'user' ? ['--global'] : []), ...agents], workspace.root, env);
+  return entries;
+}
+
+/** _Skill_Install_Command_ `uninstall`: `skills remove` for the skills of each scope. */
+export async function uninstallSkills(workspace: Workspace, options: SkillInstallOptions = {}): Promise<SkillEntry[]> {
+  const env = options.env ?? process.env;
+  const entries = await listSkills(workspace);
+  const agents = options.agents?.length ? ['--agent', ...options.agents] : [];
+  for (const scope of ['project', 'user'] as const) {
+    const names = entries.filter((e) => e.scope === scope).map((e) => e.name);
+    if (names.length) await runSkills(['remove', ...names, '--yes', ...(scope === 'user' ? ['--global'] : []), ...agents], workspace.root, env);
   }
   return entries;
 }
 
-/** The Markdown body of a skill, selected by its name as `adoc skill list` shows it. */
-export async function viewSkill(workspace: Workspace, selector: string): Promise<{ entry: SkillEntry; body: string }> {
-  const entries = listSkills(workspace);
-  const entry = entries.find((e) => e.name === selector);
-  if (!entry) throw new AdocError('skill.missing', `No skill ${selector}. Known: ${entries.map((e) => e.name).join(', ')}.`);
-  let body: string;
-  if (entry.name === AGENT_SKILL) body = await readFile(new URL('../guide.md', import.meta.url), 'utf8');
-  else if (entry.name === AUTHORING_SKILL) body = await readFile(createRequire(import.meta.url).resolve('@adoc/plugin-kit/guide.md'), 'utf8');
-  else body = `# ${entry.pluginKey} documents\n\nDocument keys look like \`${entry.pluginKey}-<id>\`. Read the general workflow with \`adoc skill view adoc\`.\n\n${await workspace.guide(entry.pluginKey!)}`;
-  return { entry, body };
-}
-
-async function readManifest(workspace: Workspace): Promise<{ directory: string; names: string[] } | undefined> {
+async function readIfThere(path: string): Promise<string | undefined> {
   try {
-    return JSON.parse(await readFile(join(workspace.home.home, MANIFEST), 'utf8'));
+    return await readFile(path, 'utf8');
   } catch {
     return undefined;
   }
 }
 
-/** Writes every skill as `<directory>/<name>/SKILL.md` and records the managed names; removes names no longer listed. */
-export async function installSkills(workspace: Workspace, directory = DEFAULT_SKILL_DIRECTORY): Promise<SkillEntry[]> {
-  const previous = await readManifest(workspace);
-  const entries = listSkills(workspace);
-  for (const entry of entries) {
-    const { body } = await viewSkill(workspace, entry.name);
-    const target = join(workspace.root, directory, entry.name);
-    await mkdir(target, { recursive: true });
-    await writeFile(join(target, 'SKILL.md'), `---\nname: ${entry.name}\ndescription: ${JSON.stringify(entry.description)}\n---\n\n${body}`);
-  }
-  if (previous) {
-    for (const name of previous.names) {
-      if (!entries.some((e) => e.name === name)) await rm(join(workspace.root, previous.directory, name), { recursive: true, force: true });
+/**
+ * _Skill_Check_: each skill must be installed in `.agents/skills` or `.claude/skills` of the workspace or of the user's
+ * home, with the same `SKILL.md` as its source.
+ */
+export async function checkSkills(workspace: Workspace, home = homedir()): Promise<CheckEntry[]> {
+  const found: CheckEntry[] = [];
+  for (const entry of await listSkills(workspace)) {
+    const source = await readFile(join(entry.directory, 'SKILL.md'), 'utf8');
+    const installed = [];
+    for (const base of [workspace.root, home]) {
+      for (const place of ['.agents/skills', '.claude/skills']) {
+        const text = await readIfThere(join(base, place, entry.name, 'SKILL.md'));
+        if (text !== undefined) installed.push(text);
+      }
     }
+    if (!installed.length) found.push({ level: 'warning', kind: 'skill-missing', message: `The agent skill ${entry.name} is not installed; run adoc skill install.` });
+    else if (!installed.includes(source)) found.push({ level: 'warning', kind: 'skill-outdated', message: `The installed agent skill ${entry.name} differs from this adoc; run adoc skill update.` });
   }
-  await writeFile(join(workspace.home.home, MANIFEST), JSON.stringify({ directory, names: entries.map((e) => e.name) }, null, 2) + '\n');
-  return entries;
-}
-
-export async function uninstallSkills(workspace: Workspace): Promise<string[]> {
-  const previous = await readManifest(workspace);
-  if (!previous) return [];
-  for (const name of previous.names) await rm(join(workspace.root, previous.directory, name), { recursive: true, force: true });
-  await rm(join(workspace.home.home, MANIFEST), { force: true });
-  return previous.names;
+  return found;
 }

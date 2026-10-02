@@ -16,18 +16,18 @@ Run `aterm corpus check` to validate it.
 ```
 spec/                 aterm corpus (adoc.trm, adoc_ui.trm); .aterm/ is its Home
 packages/             every folder is a package: package.json, src/, test/, tsconfig.json, its own build
-  plugin-kit/           @adoc/plugin-kit: the only package a plugin imports; guide.md = how to write a plugin
-  core/                 workspace, plugins, documents, messages, transports, server; guide.md = the agent's workflow
+  plugin-kit/           @adoc/plugin-kit: the package every plugin imports; skill/ = how to write a plugin
+  core/                 workspace, plugins, documents, messages, transports, server; skill/ = the agent's workflow
   cli/                  the adoc command line and the MCP tool
   webapp/               React 19 + react-router web UI, bundled into its dist/ for core to serve
   testing/              @adoc/testing (private): test helpers every package's tests share (temporary workspaces, free ports)
-plugins/              every folder is a plugin: index.ts + guide.md (TODO, TASK, KANBAN, NOTE)
+plugins/              every folder is a plugin: index.ts + skill/SKILL.md (TODO, TASK, KANBAN, NOTE)
 examples/demo/        a demo workspace (port 7701)
 docs/                 this repository's own adoc documents (port 7700)
 bin/adoc              runs the CLI of this checkout
 ```
 
-Every guide that `adoc skill` shows is the `guide.md` of its owner folder.
+Every agent skill that `adoc skill` shows and installs is the `skill/` folder (with `SKILL.md`) of its owner folder.
 
 ## Use
 
@@ -39,11 +39,13 @@ cd examples/demo
 adoc server run            # web UI at http://127.0.0.1:7701
 adoc message wait          # in another terminal: what the agent receives
 adoc check                 # problems in the workspace
-adoc skill view adoc       # the agent's workflow guide
+adoc skill view adoc       # the agent's workflow skill
 adoc skill view adoc-plugin-authoring   # how to write a plugin
 ```
 
 A new workspace is a git repository with `adoc init`, plugins declared in `.adoc/adoc.yaml`, and documents under `docs/`.
+
+Install the agent skills with `adoc skill install` (it runs the Vercel `skills` CLI, `npx skills add`, for every skill folder: adoc's own in user scope, each plugin's in its scope). Every adoc command warns while a skill is missing or older than the running adoc. Plugins can also live in `.adoc/plugins/<name>/` or `~/.config/adoc/plugins/<name>/` and be declared with `from: <name>`.
 
 ## Workflow for this repository
 

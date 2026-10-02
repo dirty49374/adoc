@@ -1,3 +1,12 @@
+---
+name: adoc-note
+description: "NOTE documents: A free-form shared note: ideas from a conversation, open questions, decisions, or anything the two of you want to keep."
+---
+
+# NOTE documents
+
+Document keys look like `NOTE-<id>`. Read the general workflow with `adoc skill view adoc`.
+
 A NOTE is a free-form shared space for the person and the agent: an idea taken from a conversation and developed with comments, a comparison, meeting notes, or just banter. It has no fixed destination.
 
 ## What notes are for

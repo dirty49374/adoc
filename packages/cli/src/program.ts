@@ -1,7 +1,7 @@
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { AdocError, errorMessage } from '@adoc/core';
-import { commands, groups } from './commands.js';
+import { commands, groups, skillWarnings } from './commands.js';
 import type { CommandContext, CommandDefinition, CommandResult, OutputFormat } from './contracts.js';
 import { VERSION } from './version.js';
 
@@ -45,6 +45,8 @@ export function buildProgram(context: CommandContext, exitCode: (code: number) =
       context.streams.stderr(`adoc: ${errorMessage(error)}\n`);
       exitCode(1);
     }
+    // _Skill_Check_ after every command, also through MCP (whose result carries stderr).
+    for (const warning of await skillWarnings(options, context)) context.streams.stderr(`adoc: warning: ${warning}\n`);
   };
 
   for (const definition of commands) {

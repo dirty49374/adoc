@@ -1,11 +1,17 @@
+---
+name: adoc-plugin-authoring
+description: "Write an adoc plugin: a folder with index.ts (definePlugin: summarize, render, actions) and skill/SKILL.md."
+---
+
 # Writing an adoc plugin
 
-A plugin defines one kind of document. It is **one folder with `index.ts` and `guide.md`**. No build step: adoc loads `index.ts` directly with Node's type stripping.
+A plugin defines one kind of document. It is **one folder with `index.ts` and `skill/SKILL.md`**. No build step: adoc loads `index.ts` directly with Node's type stripping.
 
 ```
 plugins/note/
-  index.ts     ← export default definePlugin({ … })
-  guide.md     ← tells the agent how to edit these documents
+  index.ts         ← export default definePlugin({ … })
+  skill/SKILL.md   ← the plugin's agent skill: tells the agent how to edit these documents
+  package.json     ← optional: only when the plugin needs npm packages
 ```
 
 Register it in the workspace's `.adoc/adoc.yaml`, then check:
@@ -13,8 +19,11 @@ Register it in the workspace's `.adoc/adoc.yaml`, then check:
 ```yaml
 plugins:
   - key: NOTE                 # uppercase letters only; documents are named NOTE-<id>.<ext>
-    from: ./plugins/note      # path relative to the workspace root
+    from: note                # a folder name in .adoc/plugins/ (project) or ~/.config/adoc/plugins/ (user),
+                              # or a path such as ./plugins/note, or an npm package name
 ```
+
+A plugin in `.adoc/plugins/` or inside the workspace has project scope; one in `~/.config/adoc/plugins/` has user scope. `adoc skill install` installs its skill in the same scope.
 
 ```sh
 adoc plugin list      # shows the plugin, or its load error
@@ -35,7 +44,8 @@ A running `adoc server run` reloads the plugin whenever a file in its folder cha
 | `render(doc)` | returns `html\`…\`` | the document body; adoc draws the header (key, title, status) around it, so do not repeat the title |
 | `renderChanges(doc, previous)` | returns `html\`…\`` | optional; the body showing what changed since `previous`, an earlier version that the person saw last. Without it adoc shows a line diff of the main file |
 | `actions` | `{ [name]: (doc, event) => { text?, files?, message? } }` | optional; see Actions |
-| `guide` | `new URL('./guide.md', import.meta.url)` | the agent guide |
+
+The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.ts`, and a plugin without it fails to load.
 
 `doc` is `{ key, pluginKey, localId, path, file, text, files }`:
 - `path`: the workspace-relative path of the document itself, the file or the folder;
@@ -109,7 +119,7 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 
 - Import types with `import type { PluginDocument } from '@adoc/plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
 - No TypeScript `enum`, `namespace` or parameter properties (`constructor(private x)`): Node cannot strip them.
-- Keep the plugin in `index.ts`; import only `@adoc/plugin-kit` and Node built-ins.
+- Keep the plugin in `index.ts`. Import `@adoc/plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
 - Action names are lowercase kebab-case: `toggle`, `set-status`.
 
 ## Complete example: the TODO plugin
@@ -164,16 +174,23 @@ export default definePlugin({
       return { text: lines.join('\n'), message: `${doc.key}#${event.value} ${event.checked ? 'checked' : 'unchecked'}: ${m[3]}` };
     },
   },
-
-  guide: new URL('./guide.md', import.meta.url),
 });
 ```
 
-## guide.md template
+## skill/SKILL.md template
 
-Write it for the agent that edits these documents:
+Write it for the agent that edits these documents. It is an agent skill: `adoc skill install` installs the folder `skill/` for every agent, so keep only the skill in it (never code). The `name` is `adoc-` and the plugin key in lowercase.
 
 ```markdown
+---
+name: adoc-note
+description: "NOTE documents: (the description of definePlugin)."
+---
+
+# NOTE documents
+
+Document keys look like `NOTE-<id>`. Read the general workflow with `adoc skill view adoc`.
+
 A NOTE document is … (one sentence).
 
 ## File

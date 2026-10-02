@@ -1,3 +1,12 @@
+---
+name: adoc-todo
+description: "TODO documents: A list of one-line things to do, as a Markdown task list."
+---
+
+# TODO documents
+
+Document keys look like `TODO-<id>`. Read the general workflow with `adoc skill view adoc`.
+
 A TODO document is a short list of one-line things to do.
 
 ## File

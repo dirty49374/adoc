@@ -16,7 +16,6 @@ const definitionSchema = z.object({
   render: fn,
   renderChanges: fn.optional(),
   actions: z.record(z.string().regex(/^[a-z][a-z0-9-]*$/, 'action names must be lowercase words such as "toggle"'), fn).optional(),
-  guide: z.union([z.string().min(1), z.instanceof(URL)], { error: 'must be Markdown text or new URL("./guide.md", import.meta.url)' }),
 });
 
 /** Validates what `summarize` returned. */

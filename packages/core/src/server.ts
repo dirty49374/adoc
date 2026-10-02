@@ -10,6 +10,7 @@ import { formatMessage, messageFields, MessageQueue, type MessageTarget, type Us
 import { LOCAL_ID_PATTERN, PLUGIN_KEY_PATTERN, parseDocumentTarget } from './names.js';
 import { attachTransport, createTransport, type MessageTransport } from './transports.js';
 import { formatCheck } from './report.js';
+import { checkSkills } from './skills.js';
 import { readServerRecord, removeServerRecord, writeServerRecord } from './registry.js';
 import { readClaim, CLAIM_FILE, type AgentClaim } from './claim.js';
 import { herdrPanes, herdrSubscribe } from './herdr.js';
@@ -196,16 +197,16 @@ export class AdocServer {
         this.log(`adoc: watch path ${path} does not exist`);
       }
     }
-    for (const plugin of this.workspace.config.plugins) {
-      if (!plugin.from.startsWith('.') && !plugin.from.startsWith('/')) continue;
+    for (const plugin of this.workspace.pluginInfos()) {
+      // npm packages are not watched: they change only through npm.
+      if (!plugin.directory || plugin.directory.split(/[\\/]/).includes('node_modules')) continue;
       try {
-        const directory = resolve(this.workspace.root, plugin.from);
-        if ((await stat(directory)).isDirectory()) this.watchers.push(watch(directory, { recursive: true }, () => this.schedulePluginReload()));
+        if ((await stat(plugin.directory)).isDirectory()) this.watchers.push(watch(plugin.directory, { recursive: true }, () => this.schedulePluginReload()));
       } catch {
         // A missing plugin folder is already reported as a load error.
       }
     }
-    const report = this.workspace.check();
+    const report = [...this.workspace.check(), ...(await checkSkills(this.workspace))];
     this.log(report.length ? formatCheck(report) : 'adoc check: no problems');
     const git = this.workspace.git ? 'git' : 'no git';
     this.log(`adoc server for ${this.workspace.root} at ${this.url} (transport: ${this.transport.kind}, ${git})`);
@@ -400,7 +401,7 @@ export class AdocServer {
         agent: this.agentInfo(),
         git: ws.git,
         plugins: ws.pluginInfos(),
-        check: ws.check(),
+        check: [...ws.check(), ...(await checkSkills(ws))],
       });
     }
     let match = /^\/api\/plugins\/([A-Z]+)\/documents$/.exec(path);

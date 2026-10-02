@@ -15,7 +15,7 @@ import { AdocError, errorMessage } from './errors.js';
 import type { AdocHome } from './home.js';
 import { isGitRepository } from './git.js';
 import { parseDocumentTarget } from './names.js';
-import { loadPlugins, readGuide, type LoadedPlugin } from './plugins.js';
+import { loadPlugins, type LoadedPlugin, type Scope } from './plugins.js';
 import { readDocument, scanDocuments, type DocumentRecord, type ScanProblem } from './scan.js';
 import type { ActionMessageInput } from './messages.js';
 
@@ -63,7 +63,7 @@ export interface StoredVersion {
 /** One entry of the report of _Adoc_Check_Command_. */
 export interface CheckEntry {
   level: 'error' | 'warning';
-  kind: ScanProblem['kind'] | 'plugin-load' | 'parse-error' | 'broken-reference' | 'no-git';
+  kind: ScanProblem['kind'] | 'plugin-load' | 'parse-error' | 'broken-reference' | 'no-git' | 'skill-missing' | 'skill-outdated';
   message: string;
   path?: string;
   key?: string;
@@ -74,6 +74,9 @@ export interface PluginInfo {
   from: string;
   description?: string;
   layout?: string;
+  /** The plugin folder and the scope of the place it was loaded from (_Plugin_Directory_). */
+  directory?: string;
+  scope?: Scope;
   error?: string;
   documents: number;
 }
@@ -122,14 +125,14 @@ export class Workspace {
 
   static async open(home: AdocHome): Promise<Workspace> {
     const workspace = new Workspace(home, await readConfig(home));
-    workspace.plugins = await loadPlugins(home.workspace, workspace.config);
+    workspace.plugins = await loadPlugins(home, workspace.config);
     await workspace.refresh();
     return workspace;
   }
 
   /** Reloads every plugin from disk, for example after its index.ts changed, and rescans. */
   async reloadPlugins(): Promise<void> {
-    this.plugins = await loadPlugins(this.root, this.config, true);
+    this.plugins = await loadPlugins(this.home, this.config, true);
     this.cache.clear();
     this.changeCache.clear();
     this.documents.clear();
@@ -213,9 +216,16 @@ export class Workspace {
         info.description = p.definition.description;
         info.layout = p.definition.layout.kind === 'file' ? `file ${p.key}-<id>${p.definition.layout.extension}` : `folder ${p.key}-<id>/${p.definition.layout.entry}`;
       }
+      if (p.directory) info.directory = p.directory;
+      if (p.skill) info.scope = p.skill.scope;
       if (p.error) info.error = p.error;
       return info;
     });
+  }
+
+  /** Every declared plugin, loaded or failed, in the order of the _Adoc_Config_. */
+  loadedPlugins(): LoadedPlugin[] {
+    return [...this.plugins.values()];
   }
 
   plugin(key: string): LoadedPlugin | undefined {
@@ -355,13 +365,6 @@ export class Workspace {
       }
     }
     return entries;
-  }
-
-  async guide(pluginKey: string): Promise<string> {
-    const plugin = this.plugins.get(pluginKey);
-    if (!plugin) throw new AdocError('plugin.missing', `No plugin with the key ${pluginKey}.`);
-    if (!plugin.definition) throw new AdocError('plugin.unavailable', `plugin ${pluginKey} failed to load: ${plugin.error}`);
-    return readGuide(plugin.definition);
   }
 
   /**
