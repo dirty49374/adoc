@@ -72,6 +72,8 @@ adoc을 다른 프로젝트나 다른 사람이 쓰려면 설치 방법이 필�
 - **검사:** adoc을 쓸 때마다 skill이 없거나(missing) 프로그램보다 오래되었는지(outdated) 항상 검사해서 알려 줍니다.
 - **plugin 디렉터리:** 관례를 그대로 따릅니다(XDG: `~/.config/adoc/plugins/`, 프로젝트: `.adoc/plugins/`).
 - **패키지 이름:** 더 고민합니다(npm의 `adoc`은 다른 패키지가 쓰고 있음).
+- **plugin skill 배치:** plugin 폴더 안의 하위 폴더에 SKILL.md를 둡니다(예: `plugins/todo/skill/SKILL.md`). Vercel `skills`가 그 하위 폴더만 복사하므로 코드는 skill 디렉터리로 가지 않습니다.
+- **commit 여부는 사용자가 정합니다:** `skills-lock.json`과 `.adoc/`를 git에 넣을지는 adoc이 정하지 않습니다. adoc은 기계마다 달라지는 파일(`.adoc/claim.yaml`)만 지금처럼 `.adoc/.gitignore`로 제외합니다.
 
 ## Findings: Vercel `skills` 실험
 
