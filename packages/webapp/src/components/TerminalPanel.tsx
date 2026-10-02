@@ -90,6 +90,13 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
       const data = term.onData((text) => {
         if (mode.current === 'control') sendTerminal({ type: 'terminal.input', data: text });
       });
+      // xterm.js sends Shift+Enter as a plain Enter, which submits the agent's input. Send ESC CR instead, the Alt+Enter
+      // sequence that coding agents (Claude Code, Codex) take as a new line.
+      term.attachCustomKeyEventHandler((e) => {
+        if (e.key !== 'Enter' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return true;
+        if (e.type === 'keydown' && mode.current === 'control') sendTerminal({ type: 'terminal.input', data: '\x1b\r' });
+        return false;
+      });
       const textarea = element.querySelector('textarea');
       const takeControl = () => {
         if (mode.current !== 'control') open('control');
