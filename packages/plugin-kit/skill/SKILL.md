@@ -5,13 +5,14 @@ description: "Write an adoc plugin: a folder with index.ts (definePlugin: summar
 
 # Writing an adoc plugin
 
-A plugin defines one kind of document. It is **one folder with `index.ts` and `skill/SKILL.md`**. No build step: adoc loads `index.ts` directly with Node's type stripping.
+A plugin defines one kind of document. It is **one folder with `index.ts` and `skill/SKILL.md`**. No build step: adoc loads `index.ts` directly with Node's type stripping (only a browser `client/`, below, is built).
 
 ```
 plugins/note/
   index.ts         ← export default definePlugin({ … })
   skill/SKILL.md   ← the plugin's agent skill: tells the agent how to edit these documents
   package.json     ← optional: only when the plugin needs npm packages
+  client/          ← optional: browser code (index.js, index.css), see "Browser code"
 ```
 
 Register it in the workspace's `.adoc/adoc.yaml`, then check:
@@ -30,20 +31,20 @@ adoc plugin list      # shows the plugin, or its load error
 adoc check            # runs summarize and render on every document; exits 1 on errors (warnings do not fail it)
 ```
 
-Actions run only from the web UI: start `adoc server run`, open a sample document and click, toggle or drag.
+Actions run only from the web UI: start `adoc server run`, open a sample document and click, toggle or drag (or use the elements of your client module).
 
-A running `adoc server run` reloads the plugin whenever a file at the top of its folder, such as `index.ts`, changes.
+A running `adoc server run` reloads the plugin whenever a file at the top of its folder, such as `index.ts`, changes. Other files that `index.ts` imports are not reloaded: restart the server after changing them.
 
 ## What a plugin provides
 
 | field | type | meaning |
 |---|---|---|
 | `description` | `string` | one line for `adoc plugin list` |
-| `layout` | `{ kind: 'file', extension: '.md' }` or `{ kind: 'folder', entry: 'bug.yaml' }` | a document is the file `NOTE-<id>.md`, or the folder `NOTE-<id>/` with the main file `bug.yaml` |
+| `layout` | `{ kind: 'file', extension: '.md', companions?: ['.png'] }` or `{ kind: 'folder', entry: 'bug.yaml' }` | a document is the file `NOTE-<id>.md` (with optional companion files, see below), or the folder `NOTE-<id>/` with the main file `bug.yaml` |
 | `summarize(doc)` | returns `{ title, status, fields? }` | shown in the list and in reference tooltips; `status` is free text; `fields` values are string, number or boolean, so join lists: `attendees.join(', ')` |
 | `render(doc)` | returns `html\`…\`` | the document body; adoc draws the header (key, title, status) around it, so do not repeat the title |
 | `renderChanges(doc, previous)` | returns `html\`…\`` | optional; the body showing what changed since `previous`, an earlier version that the person saw last. Without it adoc shows a line diff of the main file |
-| `actions` | `{ [name]: (doc, event) => { text?, files?, message? } }` | optional; see Actions |
+| `actions` | `{ [name]: (doc, event) => { text?, files?, companions?, message? } }` | optional; see Actions |
 
 The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.ts`, and a plugin without it fails to load.
 
@@ -53,6 +54,8 @@ The agent skill is not a field: it is the file `skill/SKILL.md` next to `index.t
 - `text`: the main file's text; `files`: every file of the document by path relative to it.
 
 If a function throws, adoc shows the message as the document's error and in `adoc check`; you do not need try/catch.
+
+The main file is written by hand, too: the agent edits it directly, and the person can edit the whole main file in the web UI. Parse it leniently (ignore lines you do not understand, give defaults for missing fields) and throw only when the file cannot be read at all.
 
 ## Helpers (`import { … } from '@adoc/plugin-kit'`)
 
@@ -71,6 +74,7 @@ If a function throws, adoc shows the message as the document's error and in `ado
 | `slug(text)` | `'Done when'` → `'done-when'`, handy for section anchors |
 | `diffLines(oldText, newText)` | `[{ op: 'same' \| 'added' \| 'removed', text, line }]` for your own `renderChanges` |
 | `sourceDiff(oldText, newText, { file })` | the line diff adoc shows by default, as HTML |
+| `unifiedDiff(oldText, newText, file, context?)` | a unified diff (`--- a/…`, `+++ b/…`, `@@` hunks) as text, for example for an action's message |
 
 Markup helpers go **inside** start tags: `html\`<li ${anchor(n)} ${source(doc.file, n)}>…</li>\``. Nesting is fine: a section with `anchor()` can contain blocks with their own `source()`; adoc uses the nearest one.
 
@@ -81,14 +85,17 @@ Never add `<script>` or `on…=` attributes; adoc removes them. Every interactio
 The person clicks, toggles or drags a control marked with `action()`. adoc calls `actions[name](doc, event)` on the server.
 
 `event` is `{ kind, name, value, checked?, to?, anchor? }`:
-- `kind` is the control type you gave `action()` (`click`, `toggle` or `drag`); `name` selects the handler; `value` is the value you gave `action()`;
+- `kind` is the control type you gave `action()` (`click`, `toggle` or `drag`), or `client` for an `adoc-action` event of your client module; `name` selects the handler; `value` is the value you gave `action()` (or the event's `value`);
 - `checked`: the new state, for toggle; `to`: the drop target's value, for drag;
 - `anchor`: the bare value of the nearest enclosing `anchor()`, such as `goal` (not `KEY#goal`).
 
 Return any of:
 - `text`: new text of the main file (adoc writes it, refusing if the file changed since it was shown);
-- `files`: new texts of files in a folder document, by path relative to the folder;
+- `files`: new contents of files in a folder document, by path relative to the folder;
+- `companions`: new contents of companion files of a file document, by extension, such as `{ '.png': { base64 } }`;
 - `message`: text sent to the agent.
+
+A content is text, or `{ base64 }` for binary data.
 
 **Without a handler** for a name, adoc sends the agent a request `user request: <name> <value>` and changes nothing. That is often all you need: the agent then edits the file.
 
@@ -143,7 +150,7 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 - Import types with `import type { PluginDocument } from '@adoc/plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
 - No TypeScript `enum`, `namespace` or parameter properties (`constructor(private x)`): Node cannot strip them.
 - Keep the plugin in `index.ts`. Import `@adoc/plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
-- Action names are lowercase kebab-case: `toggle`, `set-status`.
+- Action names are lowercase kebab-case: `toggle`, `move`, `add-card`.
 
 ## Complete example: the TODO plugin
 
@@ -203,6 +210,8 @@ export default definePlugin({
 ## skill/SKILL.md template
 
 Write it for the agent that edits these documents. It is an agent skill: `adoc skill install` installs the folder `skill/` for every agent, so keep only the skill in it (never code). The `name` is `adoc-` and the plugin key in lowercase.
+
+The person reads the same file in the web UI (`SKILL.md` beside the plugin key), comments on it and may edit it; after a change, `adoc skill update` installs it again. Say what the plugin is for and how to use it, not only the file format: the agent reads this skill before it touches the plugin's documents.
 
 ```markdown
 ---
