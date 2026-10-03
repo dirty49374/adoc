@@ -30,7 +30,7 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 2. Server: Ranch Api welcome, Directory subscription, routing-client choice per machine, host list, names and approvals in the data dir.
 3. Tunnel: framing for streams (open, data, close, WebSocket messages), server side in axum, client side forwarding to `127.0.0.1`.
 4. Browser side of the server: `/adoc-discovery` (JSON and SSE), `/<host>/…` remap for HTTP and WebSocket, the approval page and cookie.
-5. Client: local discovery with the `adoc` lookup, reports, tunnel when asked, `name` command through the client.
+5. Client: local discovery with the `adoc` lookup, reports on change, tunnel when asked; the `name` command as a transient client sending to the server.
 6. Status screen from herdr-glasses' console: hosts, names (edit), waiting approvals (approve, reject), revocation; plain output when not a TTY; never open the pane itself when ranch is on; re-exec on `plugin_updated`; end on Ctrl-C.
 7. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; the exposed port in the Ranch Server's `server.toml` and a k3s Service port (set up by the ranch owner once the port number is chosen); install with `herdr-ranch install`.
 8. Check on the real network: mldev and segv-mbp, two hosts, approval from each machine, switching, `adoc ui open` across machines, a client leaving and the routing moving.
