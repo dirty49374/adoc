@@ -15,7 +15,7 @@ One browser at the hub's address shows every adoc on the ranch network: the pers
 Spec Terms (aterm, `spec/adoc_hub.trm`):
 
 - `_Adoc_Hub_`: a ranch plugin in `ranch-plugin/` of this repository, laid out like herdr-connect (one crate, one binary: `server`, `client run`, `client status`, `name`).
-- `_Hub_Server_`: exposed port `web` for browsers, forwarded port `tunnel` for clients; state in `RANCH_PLUGIN_DATA_DIR`.
+- `_Hub_Server_`: exposed port `web` for browsers (address from `RANCH_EXPOSED_PORTS`, plain HTTP at `/`), forwarded port `tunnel` for clients; state in `RANCH_PLUGIN_DATA_DIR`.
 - `_Hub_Client_` and `_Local_Discovery_`: `adoc server list --output json` every few seconds, `adoc` found by `ADOC_BIN`, `PATH`, then the user's login shell; details from `/api/workspace`.
 - `_Hub_Host_`, `_Hub_Host_Name_`: `<machine>_<port>` or a given name, both answering.
 - `_Routing_Client_`: one per machine, the lowest session name with a client in the Directory; picked again on `peer_left`, `directory_change` and server start (seeded from the snapshot).
@@ -32,7 +32,7 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 4. Browser side of the server: `/adoc-discovery` (JSON and SSE), `/<host>/…` remap for HTTP and WebSocket, the approval page and cookie.
 5. Client: local discovery with the `adoc` lookup, reports on change, tunnel when asked; the `name` command as a transient client sending to the server.
 6. Status screen from herdr-glasses' console: hosts, names (edit), waiting approvals (approve, reject), revocation; plain output when not a TTY; never open the pane itself when ranch is on; re-exec on `plugin_updated`; end on Ctrl-C.
-7. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; the exposed port in the Ranch Server's `server.toml` and a k3s Service port (set up by the ranch owner once the port number is chosen); install with `herdr-ranch install`.
+7. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; the exposed port (10954, `[exposed_ports.adoc-hub] web` in the Ranch Server's `server.toml`, set) and a k3s Service port and LAN DNS name (asked of the k3s owner); the Ranch Server restart that makes `web` appear is done by the herdr-ranch agent at install; install with `herdr-ranch install`.
 8. Check on the real network: mldev and segv-mbp, two hosts, approval from each machine, switching, `adoc ui open` across machines, a client leaving and the routing moving.
 
 ## Done when
@@ -48,3 +48,4 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-ranch-adoc-hub]]; plugin layout surveyed from herdr-connect, herdr-claude-voice and echo-plugin.
 - 2026-10-02: reviewed by the herdr-ranch agent (thread #548): tunnel token, forwarded port per welcome, deterministic routing client, first-answer approvals, herdr-glasses' pairing as the model, agents only from the Directory.
+- 2026-10-02: the Owner approved a DNS name for the browser entry (thread #555): port 10954 set in `server.toml`; plugin id must be `adoc-hub`, `[server] exposed_ports = ["web"]`, address from `RANCH_EXPOSED_PORTS`, no prefix, plain HTTP; DNS name and Service port pending with the k3s owner.
