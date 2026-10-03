@@ -3,6 +3,19 @@
   "version": "0.1.0",
   "license": "0BSD",
   "type": "module",
+  "description": "adoc: the command line and MCP tool for a user and an agent working on plugin-defined documents.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirty49374/adoc.git",
+    "directory": "packages/cli"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "bin": {
     "adoc": "./dist/entry.js"
   },
