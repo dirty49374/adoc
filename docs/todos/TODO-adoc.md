@@ -3,13 +3,13 @@
 ## Plugins
 
 - [ ] Plugin hot reload re-imports only index.ts; decide whether multi-file plugins are allowed
-- [ ] Plugins: register a source (GitHub URL etc.) for a plugin so that `adoc plugin update` can update it, see [[NOTE-261002-installation]]
+- [x] Plugins: register a source (GitHub URL etc.) for a plugin so that `adoc plugin update` can update it, see [[NOTE-261002-installation]]; done: [[TASK-261002-plugin-sources]] (`github:` sources, `adoc plugin install`/`update`, `plugins-lock.json`)
 - [x] TODO plugin: grouping, e.g. `## Group` headings between items (today headings are ignored and all items show as one flat list); done: `## Heading` starts a group with a done count, anchor = heading line
 
 ## Release
 
 - [ ] Ship the web UI with the published packages: publish `@agent-workshop/adoc-webapp`, or put its build into the core package (to decide)
-- [ ] Ship the five plugins (NOTE, TODO, TASK, KANBAN, SKETCH) with adoc, and let `adoc init` declare them; then change the `adoc` skill, which tells to declare them by a path into this repository
+- [x] Ship the five plugins (NOTE, TODO, TASK, KANBAN, SKETCH) with adoc, and let `adoc init` declare them; then change the `adoc` skill, which tells to declare them by a path into this repository; done: [[TASK-261002-plugin-sources]] (npm packages `@agent-workshop/adoc-plugin-<name>`, `adoc init` declares them)
 - [ ] Build the SKETCH client (`plugins/sketch/client/`, not in git) as part of the release build, with its libraries bundled
 - [ ] Package metadata for every published package: `files` (dist and `skill/`), `repository`, `engines.node >=24`, `publishConfig.access: public`; a notice file for the third-party code and fonts the bundles carry
 - [x] License: 0BSD, as aterm; done: LICENSE and `license` in every package.json

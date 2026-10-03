@@ -1,6 +1,6 @@
 ---
 title: plugin sources, layered config and the five plugins as packages
-status: RUNNING
+status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261002-plugin-sources]
 related: [TODO-adoc]
@@ -33,14 +33,18 @@ Spec Terms (aterm, `spec/adoc.trm`):
 
 ## Done when
 
-- [ ] `adoc init` in an empty folder writes the five `npm:` plugins, and they load from adoc's installation.
-- [ ] A key in `~/.config/adoc/adoc.yaml` appears in every workspace, and `KEY: off` in a workspace removes it.
-- [ ] `./plugins/x` in `.adoc/adoc.yaml` loads `.adoc/plugins/x`, and `watch: [../docs]` watches `docs`.
-- [ ] A `github:` source is fetched by `adoc plugin install` into `.adoc/plugins/<key>/` with its commit in `plugins-lock.json`; `adoc plugin update` refuses when the folder was changed.
-- [ ] A plugin whose `peerDependencies` range does not match the kit fails to load with both versions named.
-- [ ] Tabs follow `ui.tabs`; an old-format config is refused with the new format shown.
-- [ ] Tests, `pnpm check`, `aterm corpus check` and `adoc check` pass.
+- [x] `adoc init` in an empty folder writes the five `npm:` plugins, and they load from adoc's installation.
+- [x] A key in `~/.config/adoc/adoc.yaml` appears in every workspace, and `KEY: off` in a workspace removes it.
+- [x] `./plugins/x` in `.adoc/adoc.yaml` loads `.adoc/plugins/x`, and `watch: [../docs]` watches `docs`.
+- [x] A `github:` source is fetched by `adoc plugin install` into `.adoc/plugins/<key>/` with its commit in `plugins-lock.json`; `adoc plugin update` refuses when the folder was changed.
+- [x] A plugin whose `peerDependencies` range does not match the kit fails to load with both versions named.
+- [x] Tabs follow `ui.tabs`; an old-format config is refused with the new format shown.
+- [x] Tests, `pnpm check`, `aterm corpus check` and `adoc check` pass.
 
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-plugin-sources]].
+- 2026-10-02: packages: NOTE, TODO, TASK, KANBAN became `@agent-workshop/adoc-plugin-<name>` like SKETCH; each builds `dist/index.js` (Node does not strip types inside `node_modules`) and declares `peerDependencies` on the kit; core depends on all five. This repository and the demo keep directory sources (`../plugins/<name>`) so that editing a plugin reloads it.
+- 2026-10-02: core: `readConfig(home, env)` lays `.adoc/adoc.yaml` over `~/.config/adoc/adoc.yaml` setting by setting; plugins as `KEY: source` or `off`; paths, `watch` included, from the file; `ui.tabs`; the list format is refused with the new one shown. Sources `npm:` (from the declaring folder upwards, then adoc's installation, with an optional version range), `github:` (from `plugins/<key>/` next to the file), paths; the kit range in `peerDependencies` is checked with semver.
+- 2026-10-02: CLI: `adoc plugin install` / `update [KEY…]` fetch GitHub sources with git (`ADOC_GITHUB_URL` overrides the host for tests) into `plugins/<key>/` with `plugins-lock.json` (commit and a hash of the files); update refuses a changed folder; both refused through MCP. `adoc init` declares the five plugins as `npm:` with `watch: [../docs]` and `ui.tabs`; `plugin list` shows the source.
+- 2026-10-02: checked: tests for layering and `off`, directory and npm sources, the kit range, tab order, the old format, GitHub fetch / present / update / refused, `adoc init` loading all five from adoc's installation (core 25, CLI 6, kit 11); `pnpm check`, `aterm corpus check`, `adoc check`; servers 7700 and 7701 restarted on the new configs. Not checked: an install from the npm registry (comes with the release checks).
