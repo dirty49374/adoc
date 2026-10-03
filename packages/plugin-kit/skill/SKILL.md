@@ -15,7 +15,7 @@ plugins/note/
   client/          ← optional: browser code (index.js, index.css), see "Browser code"
 ```
 
-Register it in the workspace's `.adoc/adoc.yaml` (restart a running `adoc server run` to load it), then check:
+Register it in the workspace's `.adoc/adoc.yaml` (restart a running `adoc server run` to load it; a restart loses held messages, see "Start: claim" in the adoc skill), then check:
 
 ```yaml
 plugins:
