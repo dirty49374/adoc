@@ -1,6 +1,6 @@
 ---
 title: plugin sources, layered config and the five plugins as packages
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-plugin-sources]
 related: [TODO-adoc]
@@ -48,3 +48,4 @@ Spec Terms (aterm, `spec/adoc.trm`):
 - 2026-10-02: core: `readConfig(home, env)` lays `.adoc/adoc.yaml` over `~/.config/adoc/adoc.yaml` setting by setting; plugins as `KEY: source` or `off`; paths, `watch` included, from the file; `ui.tabs`; the list format is refused with the new one shown. Sources `npm:` (from the declaring folder upwards, then adoc's installation, with an optional version range), `github:` (from `plugins/<key>/` next to the file), paths; the kit range in `peerDependencies` is checked with semver.
 - 2026-10-02: CLI: `adoc plugin install` / `update [KEY…]` fetch GitHub sources with git (`ADOC_GITHUB_URL` overrides the host for tests) into `plugins/<key>/` with `plugins-lock.json` (commit and a hash of the files); update refuses a changed folder; both refused through MCP. `adoc init` declares the five plugins as `npm:` with `watch: [../docs]` and `ui.tabs`; `plugin list` shows the source.
 - 2026-10-02: checked: tests for layering and `off`, directory and npm sources, the kit range, tab order, the old format, GitHub fetch / present / update / refused, `adoc init` loading all five from adoc's installation (core 25, CLI 6, kit 11); `pnpm check`, `aterm corpus check`, `adoc check`; servers 7700 and 7701 restarted on the new configs. Not checked: an install from the npm registry (comes with the release checks).
+- 2026-10-02: accepted by the user.
