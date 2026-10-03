@@ -9,6 +9,7 @@ import {
   fetchGithubPlugins,
   formatCheck,
   installSkills,
+  listServers,
   listSkills,
   readClaim,
   readConfig,
@@ -159,6 +160,19 @@ export const commands: readonly CommandDefinition[] = [
       const server = new AdocServer(workspace, serverOptions);
       await server.start();
       await foreground(() => server.stop());
+    },
+  },
+  {
+    name: 'server list',
+    options: [],
+    summary: 'List the adoc servers recorded on this computer, online or offline.',
+    behavior:
+      'Shows each recorded server with its workspace, URL, process id and status: online when its process runs and its URL answers for the same workspace, offline when it stopped without removing its record. Deletes the records of workspaces that no longer have .adoc/adoc.yaml. Works from any directory. With --output json, programs read the fields workspace, url, pid and status.',
+    example: 'adoc server list --output json',
+    async run(_args, _options, context) {
+      const servers = await listServers(context.env);
+      const rows = [['STATUS', 'URL', 'PID', 'WORKSPACE'], ...servers.map((s) => [s.status, s.url, String(s.pid), s.workspace])];
+      return { data: servers, text: servers.length ? table(rows) : 'No adoc servers are recorded on this computer.' };
     },
   },
   {

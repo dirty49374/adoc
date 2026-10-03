@@ -11,7 +11,7 @@ export { createTransport, attachTransport, type MessageTransport, type ClaimSour
 export { readClaim, writeClaim, removeClaim, claimPath, CLAIM_FILE, type AgentClaim } from './claim.js';
 export { herdrCall, herdrSubscribe, herdrSessions, herdrPanes, resolveAgentPane, underSharedDaemon, type HerdrPane, type ResolvedPane } from './herdr.js';
 export { AdocServer, PROTOCOL, publicMessage, type BrowserSession, type ServerExtension, type ServerOptions } from './server.js';
-export { readServerRecord, type ServerRecord } from './registry.js';
+export { listServers, readServerRecord, workspaceId, type ListedServer, type ServerRecord } from './registry.js';
 export { ServerClient } from './client.js';
 export { formatCheck } from './report.js';
 export { isGitRepository } from './git.js';
