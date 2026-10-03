@@ -21,8 +21,9 @@ export function source(file: string, line: number): HtmlFragment {
  * - `toggle`: put on an `<input type="checkbox">`; the handler receives `checked`.
  * - `drag`: put on the dragged element; pair it with `dropTarget(name, value)` on each drop zone.
  */
-export function action(spec: { kind: 'click' | 'toggle' | 'drag'; name: string; value?: string | number }): HtmlFragment {
+export function action(spec: { kind: 'click' | 'toggle' | 'drag'; name: string; value?: string | number; confirm?: string }): HtmlFragment {
   const parts = [attr('data-adoc-action', spec.name), attr('data-adoc-kind', spec.kind), attr('data-adoc-value', String(spec.value ?? ''))];
+  if (spec.confirm) parts.push(attr('data-adoc-confirm', spec.confirm));
   if (spec.kind === 'drag') parts.push('draggable="true"');
   return raw(parts.join(' '));
 }
