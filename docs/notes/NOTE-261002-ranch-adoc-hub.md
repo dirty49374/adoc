@@ -61,10 +61,8 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 
 **3. 한 컴퓨터에 세션이 여럿일 때: 누가 adoc을 맡나**
 
-- 모든 client가 자기 컴퓨터의 adoc 목록 전체를 보고하고, **중앙이 workspace마다 담당 client를 정합니다.** client는 서로를 알 필요가 없습니다.
-  - 담당 agent가 있는 workspace는 claim의 herdr 세션과 같은 세션의 client가 맡습니다.
-  - 담당 agent가 없거나 그 세션의 client가 없으면, 그 컴퓨터의 client 중 정해진 하나(예: 세션 이름이 가장 앞선 것)가 맡습니다.
-  - 그 client가 사라지면 중앙이 다음 client로 바꿉니다(Directory의 client 목록 변화로 앎).
+- plugin client가 plugin server에 연결되면, **server가 그 컴퓨터의 라우팅 담당 client를 하나 지정합니다.** 그 client가 그 컴퓨터의 모든 adoc을 보고하고 중계합니다. client는 서로를 알 필요가 없습니다.
+- 담당 client가 끊어지면, 그 컴퓨터에 다른 세션의 client가 있을 때 server가 그쪽으로 라우팅을 다시 지정합니다. 없으면 그 컴퓨터의 adoc은 목록에서 "연결 끊김"으로 보입니다.
 
 **4. 입구와 인증**
 
@@ -73,7 +71,7 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 
 ## Open questions
 
-- 한 컴퓨터에 세션이 여럿일 때 "중앙이 workspace마다 담당 client를 정한다"(아래 Decisions의 agent 결정)로 갈까요?
+- (없음)
 
 ## Decisions
 
@@ -85,4 +83,4 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 - **`<host>`는 이름을 정하기 전에는 `<machine>_<port>`, 정한 뒤에는 이름이고, 둘 다 쓸 수 있습니다.** 이름은 status 화면에서, 또는 담당 agent가 plugin 명령으로 정합니다.
 - **plugin은 우선 adoc 저장소 안(`ranch-plugin/`)에 둡니다.**
 - **ranch 판으로 바로 가고, ranch 없는 한 컴퓨터 안 전환([[NOTE-261002-workspace-switching]])은 버립니다.** ranch가 없으면 지금처럼 workspace마다 따로 접속합니다.
-- 한 컴퓨터에 세션이 여럿이면 중앙이 workspace마다 담당 client를 정합니다: claim의 세션, 없으면 그 컴퓨터의 정해진 client. (agent의 결정, 확인 필요)
+- **plugin client가 연결되면 server가 컴퓨터마다 라우팅 담당 client를 하나 지정합니다.** 담당이 끊어지면 그 컴퓨터의 다른 세션 client로 다시 지정합니다.
