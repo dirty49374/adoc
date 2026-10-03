@@ -3,6 +3,7 @@ import { Terminal } from '@xterm/xterm';
 import { useEffect, useRef } from 'react';
 import { onTerminal, sendTerminal, useLive, type AgentInfo } from '../live.js';
 import { resolveTokens, themeStore } from '../theme.js';
+import { TerminalInputLine, TOUCH } from './TerminalInputLine.js';
 
 export type TerminalPhase = 'connecting' | 'observe' | 'control' | 'closed';
 
@@ -75,6 +76,9 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
   const { connection } = useLive();
   const host = useRef<HTMLDivElement>(null);
   const mode = useRef<'observe' | 'control'>('observe');
+  const input = useRef<HTMLInputElement>(null);
+  /** Takes control of the stream, as a key press in the terminal does; set while the terminal is open. */
+  const control = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     const element = host.current;
@@ -119,6 +123,10 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
       const takeControl = () => {
         if (mode.current !== 'control') open('control');
       };
+      control.current = takeControl;
+      // on a touch device typed text comes only through the _Terminal_Input_Line_
+      const toInputLine = () => input.current?.focus();
+      if (TOUCH) textarea?.addEventListener('focus', toInputLine);
       textarea?.addEventListener('focus', takeControl);
       window.addEventListener('pointerdown', takeControl, true);
       window.addEventListener('keydown', takeControl, true);
@@ -200,6 +208,8 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
         data.dispose();
         observer.disconnect();
         textarea?.removeEventListener('focus', takeControl);
+        textarea?.removeEventListener('focus', toInputLine);
+        control.current = () => undefined;
         window.removeEventListener('pointerdown', takeControl, true);
         window.removeEventListener('keydown', takeControl, true);
         window.removeEventListener('focus', takeControl);
@@ -229,6 +239,15 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
   return (
     <div className="terminal-panel" data-testid="terminal-panel">
       <div className="terminal-host" ref={host} />
+      {TOUCH && (
+        <TerminalInputLine
+          ref={input}
+          send={(data) => {
+            control.current();
+            sendTerminal({ type: 'terminal.input', data });
+          }}
+        />
+      )}
     </div>
   );
 }

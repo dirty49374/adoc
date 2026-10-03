@@ -343,6 +343,7 @@ body.resizing { user-select: none; cursor: col-resize; }
 .message-dock.collapsed .dock-header { writing-mode: vertical-rl; padding: 10px 0; min-height: 0; }
 .terminal-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--adoc-surface); }
 .terminal-host { flex: 1; min-height: 0; padding: 4px 0 0 6px; overflow: hidden; } /* a frame wider than the panel never reaches the page */
+.terminal-input-line { flex: none; margin: 4px 6px 6px; padding: 6px 8px calc(6px) calc(8px + var(--adoc-bar)); border: none; background: var(--adoc-surface-element); color: var(--adoc-text); font: var(--adoc-size-base) var(--adoc-font-mono); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-primary); }
 .dock-note { margin: 0; font-size: var(--adoc-size-small); }
 .pending-message-list { flex: 1; overflow: auto; list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: var(--adoc-size-small); }
 .pending-empty { flex: 1; padding: 12px; margin: 0; font-size: var(--adoc-size-small); }
