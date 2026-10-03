@@ -17,7 +17,8 @@ afterEach(async () => {
 async function run(argv: string[], cwd: string, env: NodeJS.ProcessEnv = {}) {
   let stdout = '';
   let stderr = '';
-  const code = await runCommand(argv, { cwd, env, mcp: false, streams: { stdout: (t) => (stdout += t), stderr: (t) => (stderr += t) }, stdin: async () => '' });
+  // The user config directory of vitest.config.ts, so that the developer's own one is never read.
+  const code = await runCommand(argv, { cwd, env: { XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME, ...env }, mcp: false, streams: { stdout: (t) => (stdout += t), stderr: (t) => (stderr += t) }, stdin: async () => '' });
   return { code, stdout, stderr };
 }
 
@@ -25,7 +26,7 @@ describe('adoc CLI', () => {
   it('lists plugins, checks with a nonzero exit on errors, and shows guides', async () => {
     current = await fixture({ 'docs/TODO-a.md': '- [ ] x [[TASK-none]]\n' });
     const list = await run(['plugin', 'list'], current.root);
-    expect(list.stdout).toMatch(/TODO\s+1\s+file TODO-<local id>\.md/);
+    expect(list.stdout).toMatch(/TODO\s+1\s+\S*plugins\/todo\s/);
     const json = await run(['plugin', 'list', '--output', 'json'], current.root);
     expect(JSON.parse(json.stdout)[0].key).toBe('TODO');
     expect((await run(['check'], current.root)).code).toBe(0);
@@ -41,6 +42,17 @@ describe('adoc CLI', () => {
     expect((await run(['document', 'list', '--archived', '--plugin', 'TODO'], current.root)).stdout).toMatch(/TODO-old/);
     expect((await run(['document', 'search', 'X'], current.root)).stdout).toMatch(/docs\/TODO-a\.md:1  TODO-a  - \[ \] x/);
     expect((await run(['document', 'search', 'archived', '--archived'], current.root)).stdout).toMatch(/TODO-old/);
+  });
+
+  it('initializes a workspace with the five plugins of adoc, loaded from its installation', async () => {
+    current = await fixture();
+    const root = join(current.root, 'fresh');
+    await mkdir(root);
+    expect((await run(['init'], root)).code).toBe(0);
+    const plugins = JSON.parse((await run(['plugin', 'list', '--output', 'json'], root)).stdout) as { key: string; error?: string; source: string }[];
+    expect(plugins.map((p) => p.key)).toEqual(['NOTE', 'TODO', 'SKETCH', 'TASK', 'KANBAN']);
+    expect(plugins.filter((p) => p.error)).toEqual([]);
+    expect(plugins[1]?.source).toBe('npm:@agent-workshop/adoc-plugin-todo');
   });
 
   it('installs skills through the skills CLI and warns about missing or outdated skills on every command', async () => {

@@ -26,7 +26,7 @@ export async function fixture(files: Record<string, string> = {}, extraConfig = 
   };
   await write(
     '.adoc/adoc.yaml',
-    `plugins:\n  - key: TODO\n    from: ${PLUGINS}/todo\n  - key: TASK\n    from: ${PLUGINS}/task\n  - key: KANBAN\n    from: ${PLUGINS}/kanban\n  - key: CHECK\n    from: ${TEST_PLUGINS}/check\nwatch: [docs]\n${extraConfig}`,
+    `plugins:\n  TODO: ${PLUGINS}/todo\n  TASK: ${PLUGINS}/task\n  KANBAN: ${PLUGINS}/kanban\n  CHECK: ${TEST_PLUGINS}/check\nwatch: [../docs]\n${extraConfig}`,
   );
   await mkdir(join(root, 'docs'), { recursive: true });
   for (const [path, text] of Object.entries(files)) await write(path, text);

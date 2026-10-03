@@ -81,7 +81,7 @@ describe('AdocServer', () => {
 
   it('keeps companion files with their document, writes binary contents, and serves a plugin client module', async () => {
     const f = await fixture({ 'docs/SKETCH-a.excalidraw': '{ "type": "excalidraw", "elements": [] }', 'docs/SKETCH-a.png': 'old', 'docs/SKETCH-lost.png': 'x' });
-    await f.write('.adoc/adoc.yaml', `plugins:\n  - key: SKETCH\n    from: ${PLUGINS}/sketch\nwatch: [docs]\n`);
+    await f.write('.adoc/adoc.yaml', `plugins:\n  SKETCH: ${PLUGINS}/sketch\nwatch: [../docs]\n`);
     current = { fixture: f };
     const ws = await Workspace.open(await discoverHome(f.root));
     expect(ws.record('SKETCH-a')?.companions).toEqual(['docs/SKETCH-a.png']);
