@@ -43,6 +43,24 @@ adoc skill view adoc       # the agent's workflow skill
 adoc skill view adoc-plugin-authoring   # how to write a plugin
 ```
 
+## Branches and worktrees
+
+```
+~/work/adoc/
+  .bare/          the repository (bare); .git points to it
+  master/         worktree of master: what is released
+  dev/            worktree of dev: daily work
+  <feature>/      worktree of a feature branch, when a piece of work needs one
+```
+
+- Work happens on `dev`. A larger piece of work gets a feature branch in its own worktree:
+  `git worktree add ../<feature> -b <feature> dev`, merged back into `dev` when done, then
+  `git worktree remove ../<feature>`.
+- A release merges `dev` into `master` and is packed and published from the `master` worktree.
+- Each worktree has its own `node_modules` and builds: run `pnpm install && pnpm build` in a new one.
+- `.adoc/claim.yaml` is per worktree and per machine: claim again with `adoc agent claim` in the
+  worktree whose server runs.
+
 ## Workflow for this repository
 
 Work on adoc itself goes through adoc:
