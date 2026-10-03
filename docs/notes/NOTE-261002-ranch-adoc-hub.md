@@ -67,12 +67,15 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 **4. local discovery: client가 자기 컴퓨터의 adoc을 찾는 과정**
 
 - **재료는 이미 있습니다.** adoc server는 시작할 때 server 기록(`_Server_Record_`)을 `$XDG_RUNTIME_DIR/adoc/<workspace 경로의 hash>.json`(없으면 시스템 temp 폴더, macOS는 `/var/folders/…`)에 `{pid, url, workspace}`로 쓰고, 멈출 때 지웁니다.
-- **기록을 그대로 믿으면 안 됩니다.** 강제로 종료된 server는 기록을 남깁니다(지금 이 컴퓨터에도 멈춘 옛 server의 기록이 남아 있음). 그래서 client는:
-  1. 기록 폴더를 감시하고(바뀔 때와 몇 초마다) 기록을 모두 읽습니다.
-  2. pid가 살아 있는지 보고, `url`의 `GET /api/workspace`가 같은 workspace를 답하는지 확인합니다. 둘 다 맞는 것만 목록에 넣습니다.
-  3. 목록이 바뀌면 plugin server에 보고합니다. `/api/workspace`의 담당 agent(claim), 이름, 버전도 함께 보냅니다.
-- **기록 폴더의 위치는 adoc과 plugin 사이의 규약입니다.** Rust인 client가 같은 규칙으로 찾아야 하므로, 이 규칙을 spec(`_Server_Record_`)에 contract로 적습니다. ranch가 session 파일의 위치를 규약으로 적은 것과 같은 방식입니다.
-- **기록에 더 넣을 것:** 지금 기록은 `{pid, url, workspace}`뿐입니다. 이름이나 버전은 `/api/workspace`에서 얻으므로 기록은 그대로 두는 것이 단순합니다.
+- **기록은 pid와 port를 담습니다.** 지금 기록 `{pid, url, workspace}`의 `url`(`http://127.0.0.1:7700`)에 port가 들어 있고, 그 port는 workspace 설정(`server.port`)에 적힌 값이라 다시 띄워도 같습니다.
+- **client가 보는 상태:**
+  - 기록이 생기거나 바뀌면(폴더 감시: Linux inotify, macOS FSEvents, Rust `notify`) 읽어서 목록에 넣습니다.
+  - 몇 초마다 pid가 살아 있는지, `url`의 `GET /api/workspace`가 같은 workspace를 답하는지 확인합니다. 둘 다 맞으면 **online**, 아니면 **offline**입니다. 비정상 종료로 남은 기록도 이렇게 offline으로 보입니다.
+  - 같은 workspace의 server를 다시 띄우면 기록이 덮어써지고(파일 이름이 workspace 경로의 hash) 다시 online이 됩니다.
+  - 정상 종료로 기록이 지워지면 목록에서 뺍니다. offline 기록도 그 workspace의 `.adoc/adoc.yaml`이 없어지면 뺍니다.
+  - 목록이 바뀔 때마다 plugin server에 보고합니다. online인 것은 `/api/workspace`의 담당 agent(claim), 이름, 버전도 함께 보냅니다.
+- **adoc 쪽 수정:** 기록을 임시 파일에 쓴 뒤 rename하는 원자적 쓰기로 바꿉니다. 그래야 감시 이벤트를 받은 순간 반쯤 쓰인 파일을 읽지 않습니다.
+- **기록 폴더의 위치는 adoc과 plugin 사이의 규약입니다:** `$XDG_RUNTIME_DIR/adoc/`, 없으면 `$TMPDIR/adoc/`(macOS는 `/var/folders/…/T`), 없으면 `/tmp/adoc/`. Rust인 client가 같은 규칙으로 찾아야 하므로, 이 규칙과 기록의 모양을 spec(`_Server_Record_`)에 contract로 적습니다. ranch가 session 파일의 위치를 규약으로 적은 것과 같은 방식입니다.
 
 **5. 입구와 인증**
 
@@ -93,4 +96,5 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 - **`<host>`는 이름을 정하기 전에는 `<machine>_<port>`, 정한 뒤에는 이름이고, 둘 다 쓸 수 있습니다.** 이름은 status 화면에서, 또는 담당 agent가 plugin 명령으로 정합니다.
 - **plugin은 우선 adoc 저장소 안(`ranch-plugin/`)에 둡니다.**
 - **ranch 판으로 바로 가고, ranch 없는 한 컴퓨터 안 전환([[NOTE-261002-workspace-switching]])은 버립니다.** ranch가 없으면 지금처럼 workspace마다 따로 접속합니다.
+- **local discovery는 server 기록(pid, port를 담은 url)을 감시하고, pid와 port로 online/offline을 판단합니다.** 비정상 종료로 남은 기록은 offline으로 보입니다.
 - **plugin client가 연결되면 server가 컴퓨터마다 라우팅 담당 client를 하나 지정합니다.** 담당이 끊어지면 그 컴퓨터의 다른 세션 client로 다시 지정합니다.
