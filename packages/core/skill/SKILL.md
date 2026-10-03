@@ -182,11 +182,11 @@ comments:
     text: Use page numbers instead of infinite scroll.
 
 [adoc message 18] action · TODO-gui#3
-TODO-gui#3 checked: Refactor PaymentRepo
+user request: do item TODO-gui#3: Refactor PaymentRepo
 --
 action: toggle
 value: "3"
-applied: true
+applied: false
 ```
 
 - The header names the main target, and the text after it is what the user typed (for an action, what the plugin reports). After `--` come the attached `comments`: the draft comments the user collected and sent with the message, each with its own target; handle all of them, in order. A message of attached comments only has no target and no text.

@@ -67,7 +67,7 @@ The main file is written by hand, too: the agent edits it directly, and the user
 | `parseYaml`, `stringifyYaml` | YAML for `.yaml` documents |
 | `anchor(value)` | put inside a start tag: the element can be commented on as `KEY#value` |
 | `source(doc.file, line)` | put inside a start tag: comments on it carry `file:line` |
-| `action({ kind, name, value })` | put inside a start tag: `click` on a `<button>`, `toggle` on an `<input type="checkbox">`, `drag` on a draggable element |
+| `action({ kind, name, value, confirm? })` | put inside a start tag: `click` on a `<button>`, `toggle` on an `<input type="checkbox">`, `drag` on a draggable element. With `confirm`, the web UI first asks the user that question (each user can turn it off per action), for example when the action asks the agent to start work |
 | `dropTarget(name, value)` | put inside a start tag: a drop zone for the drag action `name` |
 | `ref(key, label?)` | a reference link to another document |
 | `slug(text)` | `'Done when'` → `'done-when'`, handy for section anchors |
@@ -155,7 +155,9 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 - `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@agent-workshop/adoc-plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
 - Action names are lowercase kebab-case: `toggle`, `move`, `add-card`. Never name one `archive` or `unarchive`: the document header sends those, and the agent archives or restores the document.
 
-## Complete example: the TODO plugin
+## Complete example: a checklist plugin
+
+A checklist whose boxes the user ticks; the handler writes the tick itself. (The TODO plugin of adoc instead sends a request, so that the agent does the item.)
 
 ```ts
 import { action, anchor, definePlugin, html, markdown, raw, source } from '@agent-workshop/adoc-plugin-kit';
@@ -174,7 +176,7 @@ function parse(doc: PluginDocument) {
 }
 
 export default definePlugin({
-  description: 'A list of one-line things to do, as a Markdown task list.',
+  description: 'A checklist whose boxes the user ticks, as a Markdown task list.',
   layout: { kind: 'file', extension: '.md' },
 
   summarize(doc) {

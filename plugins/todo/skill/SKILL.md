@@ -13,7 +13,8 @@ A TODO list keeps small things to do, each one line, so that nothing small gets 
 
 ## States and workflow
 
-- An item is open (`- [ ]`) or done (`- [x]`). The user checks items in the web UI, or you check them when you finish them.
+- An item is open (`- [ ]`) or done (`- [x]`). Only you check and uncheck items: when you finish one, or when the user asks.
+- In the web UI, checking an open item asks you to do it, and unchecking a done one asks you to reopen it (see Actions); the box stays as it is until you change the file.
 - Group related items under `## Heading` lines when the list has more than about ten items; keep done items in their group so that the group shows its progress.
 
 ## Instructions
@@ -52,4 +53,5 @@ The anchor of an item, and of a group heading, is its 1-based line number: `TODO
 
 | action | what adoc already did | what you do |
 |---|---|---|
-| `toggle` | wrote `[x]` or `[ ]` into the file (`applied: true`) | nothing more than committing it: the user marked the item done, or open again; it is not a request to do the work |
+| `toggle`, message `user request: do item TODO-gui#3: …` | nothing (`applied: false`) | do the item, then check it and append `; done: …` |
+| `toggle`, message `user request: reopen item TODO-gui#3: …` | nothing (`applied: false`) | uncheck the item, remove its `done:` clause, and do what the user asks with it |
