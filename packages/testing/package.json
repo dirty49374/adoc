@@ -1,6 +1,7 @@
 {
   "name": "@agent-workshop/adoc-testing",
   "version": "0.1.0",
+  "license": "0BSD",
   "private": true,
   "type": "module",
   "description": "Test helpers shared by the adoc packages: temporary git workspaces with the repository's plugins, free ports.",

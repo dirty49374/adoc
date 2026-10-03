@@ -1,6 +1,7 @@
 {
   "name": "@agent-workshop/adoc",
   "version": "0.1.0",
+  "license": "0BSD",
   "type": "module",
   "bin": {
     "adoc": "./dist/entry.js"

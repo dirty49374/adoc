@@ -1,6 +1,7 @@
 {
   "name": "@agent-workshop/adoc-plugin-kit",
   "version": "0.1.0",
+  "license": "0BSD",
   "type": "module",
   "description": "Everything an adoc plugin imports: definePlugin, html, markdown and markup helpers.",
   "exports": {
