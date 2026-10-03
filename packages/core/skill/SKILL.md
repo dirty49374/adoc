@@ -161,6 +161,7 @@ Every command takes `--output text|markdown|json|yaml` and answers `--help`; the
 #### Start: claim
 
 - **In herdr (recommended):** run `adoc agent claim` once at the start of your session. Your pane becomes the assigned agent: the user's messages are pushed into it as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over.
+- **Codex:** ask the user to start Codex with `codex --no-daemon`. Codex otherwise runs its commands through one app-server shared by every Codex in the herdr session, whose environment belongs to another pane: `adoc agent claim` then finds no pane, or another Codex's pane. Check the pane with `adoc agent show`; if it is not yours, claim with `adoc agent claim --pane <your pane id>`.
 - **Outside herdr:** set `agent.transport.kind: wait` in `.adoc/adoc.yaml`, and take the held messages with `adoc message wait`.
 
 The server holds every message until it is delivered or the server stops: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them: take them with `adoc message wait` before you restart it.

@@ -1152,6 +1152,7 @@ procedure _Agent_Claim_Command_ in surface = {
   - _Agent_Claim_Command_ must fail with a clear error naming `--pane` when none of these finds a pane.
   - `adoc server run --agent-pane <pane>` must write the same _Agent_Claim_ before the _Adoc_Server_ starts.
 .remarks
+  - Chosen: a Codex agent runs with `codex --no-daemon`, because the app-server that Codex shares by default gives every command the environment of the pane that started it, so neither `HERDR_PANE_ID` nor the session herdr records tells the caller's pane.
   - Chosen: the order follows herdr-connect, whose tools may run in another process than the agent's pane.
   - Example: the agent runs `adoc agent claim` once at the start of a session; claiming again from another pane takes the role over.
 }
