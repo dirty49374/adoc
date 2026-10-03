@@ -1,6 +1,6 @@
 {
   "name": "@agent-workshop/adoc-plugin-kanban",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "0BSD",
   "type": "module",
   "description": "The KANBAN plugin of adoc: one board of about ten cards in columns.",

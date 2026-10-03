@@ -1,6 +1,6 @@
 {
   "name": "@agent-workshop/adoc-webapp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "0BSD",
   "type": "module",
   "description": "The adoc web UI: React 19 + react-router, bundled into dist/ for @agent-workshop/adoc-core to serve.",

@@ -1,6 +1,6 @@
 {
   "name": "@agent-workshop/adoc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "0BSD",
   "type": "module",
   "description": "adoc: the command line and MCP tool for a user and an agent working on plugin-defined documents.",
