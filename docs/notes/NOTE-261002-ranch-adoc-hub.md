@@ -64,14 +64,24 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 - plugin client가 plugin server에 연결되면, **server가 그 컴퓨터의 라우팅 담당 client를 하나 지정합니다.** 그 client가 그 컴퓨터의 모든 adoc을 보고하고 중계합니다. client는 서로를 알 필요가 없습니다.
 - 담당 client가 끊어지면, 그 컴퓨터에 다른 세션의 client가 있을 때 server가 그쪽으로 라우팅을 다시 지정합니다. 없으면 그 컴퓨터의 adoc은 목록에서 "연결 끊김"으로 보입니다.
 
-**4. 입구와 인증**
+**4. local discovery: client가 자기 컴퓨터의 adoc을 찾는 과정**
+
+- **재료는 이미 있습니다.** adoc server는 시작할 때 server 기록(`_Server_Record_`)을 `$XDG_RUNTIME_DIR/adoc/<workspace 경로의 hash>.json`(없으면 시스템 temp 폴더, macOS는 `/var/folders/…`)에 `{pid, url, workspace}`로 쓰고, 멈출 때 지웁니다.
+- **기록을 그대로 믿으면 안 됩니다.** 강제로 종료된 server는 기록을 남깁니다(지금 이 컴퓨터에도 멈춘 옛 server의 기록이 남아 있음). 그래서 client는:
+  1. 기록 폴더를 감시하고(바뀔 때와 몇 초마다) 기록을 모두 읽습니다.
+  2. pid가 살아 있는지 보고, `url`의 `GET /api/workspace`가 같은 workspace를 답하는지 확인합니다. 둘 다 맞는 것만 목록에 넣습니다.
+  3. 목록이 바뀌면 plugin server에 보고합니다. `/api/workspace`의 담당 agent(claim), 이름, 버전도 함께 보냅니다.
+- **기록 폴더의 위치는 adoc과 plugin 사이의 규약입니다.** Rust인 client가 같은 규칙으로 찾아야 하므로, 이 규칙을 spec(`_Server_Record_`)에 contract로 적습니다. ranch가 session 파일의 위치를 규약으로 적은 것과 같은 방식입니다.
+- **기록에 더 넣을 것:** 지금 기록은 `{pid, url, workspace}`뿐입니다. 이름이나 버전은 `/api/workspace`에서 얻으므로 기록은 그대로 두는 것이 단순합니다.
+
+**5. 입구와 인증**
 
 - 중앙의 web port를 `exposed_ports`로 LAN에 공개합니다(휴대폰에서도 접속).
 - **code 승인:** 처음 접속한 브라우저에는 짧은 code가 보입니다. 같은 code가 모든 plugin client의 status 화면(herdr pane)에 "이 브라우저가 접속하려 합니다"와 함께 뜹니다. 사람이 아무 세션에서든 승인하면 그 브라우저는 오래가는 cookie를 받고, 다른 화면의 요청은 사라집니다. herdr pane에 손이 닿는 사람만 승인할 수 있다는 것이 인증의 근거입니다.
 
 ## Open questions
 
-- (없음)
+- **local discovery는 기록 파일을 직접 읽을까요, `adoc server list --output json` 같은 명령을 부를까요?** 기록을 직접 읽으면 adoc이 PATH에 없어도 되고(herdr는 plugin을 로그인 셸 없이 실행), 명령을 부르면 위치 규칙을 adoc 한 곳에만 둡니다. 저는 기록을 직접 읽고, 위치 규칙을 spec에 contract로 적기를 추천합니다.
 
 ## Decisions
 
