@@ -278,6 +278,11 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .anchor-comment-button { position: absolute; padding: 3px; z-index: 5; color: var(--adoc-text-muted); }
 .anchor-comment-button:hover:not(:disabled) { color: var(--adoc-primary); }
 .comment-popover { width: 380px; z-index: 10; box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); }
+.action-confirm-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--adoc-surface), transparent 40%); }
+.action-confirm-dialog { width: min(420px, calc(100vw - 32px)); padding: 16px 18px 16px calc(18px + var(--adoc-bar)); background: var(--adoc-surface-panel); box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-primary); display: flex; flex-direction: column; gap: 12px; }
+.action-confirm-dialog p { margin: 0; }
+.action-confirm-dialog label { display: flex; align-items: center; gap: 6px; }
+.action-confirm-buttons { display: flex; justify-content: flex-end; gap: 8px; }
 .reference-tooltip { min-width: 220px; max-width: 360px; padding: 8px 12px; z-index: 20; pointer-events: none; font-size: var(--adoc-size-small); }
 .tooltip-key { font-family: var(--adoc-font-mono); font-size: var(--adoc-size-tiny); color: var(--adoc-text-muted); }
 .tooltip-title { font-weight: 700; margin: 2px 0 4px; }

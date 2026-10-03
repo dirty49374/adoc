@@ -2,15 +2,19 @@ import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type Mous
 import { useLocation, useNavigate } from 'react-router';
 import { openComments } from '../openComments.js';
 import { api, formatTarget, pluginOf, type ActionRequest, type ActionResponse, type ReferenceInfo, type Subject } from '../api.js';
+import { ActionConfirmDialog } from './ActionConfirmDialog.js';
 import { AnchorCommentButton } from './AnchorCommentButton.js';
 import { CommentPopover, type PopoverRequest } from './CommentPopover.js';
 import { DraftMarkerColumn } from './DraftMarkerColumn.js';
 import { drawDiagrams } from '../diagrams.js';
 import { draftStore, type DraftComment } from '../drafts.js';
 import { ReferenceTooltip } from './ReferenceTooltip.js';
+import { readStored, writeStored } from '../storage.js';
 
 type ActionEvent = ActionRequest['event'];
 const DRAG_TYPE = 'application/x-adoc-drag';
+/** The actions, as `<plugin key> <action name>`, whose confirmation the user turned off in this browser. */
+const CONFIRM_OFF = 'adoc.confirm-off';
 
 interface Props {
   /** The document (or skill) the body shows. */
@@ -35,6 +39,7 @@ export function DocumentBody({ subject, html, onAction }: Props) {
   const [popover, setPopover] = useState<PopoverRequest>();
   const [hover, setHover] = useState<{ anchor: string; source?: string; top: number; left: number }>();
   const [tooltip, setTooltip] = useState<{ target: string; top: number; left: number }>();
+  const [confirming, setConfirming] = useState<{ question: string; event: ActionEvent }>();
   const [, setTick] = useState(0);
   const where = useLocation();
 
@@ -94,6 +99,21 @@ export function DocumentBody({ subject, html, onAction }: Props) {
     }
   };
 
+  const confirmKey = (event: ActionEvent) => `${subject.level === 'document' ? pluginOf(subject.key) : 'skill'} ${event.name}`;
+
+  /** Sends the action, after the _Action_Confirm_Dialog_ when its control asks a question the user did not turn off. */
+  const send = (question: string | null | undefined, event: ActionEvent) => {
+    if (question && !readStored<string[]>(CONFIRM_OFF, []).includes(confirmKey(event))) setConfirming({ question, event });
+    else void act(event);
+  };
+
+  const confirmed = (dontAskAgain: boolean) => {
+    if (!confirming) return;
+    if (dontAskAgain) writeStored(CONFIRM_OFF, [...new Set([...readStored<string[]>(CONFIRM_OFF, []), confirmKey(confirming.event)])]);
+    setConfirming(undefined);
+    void act(confirming.event);
+  };
+
   const anchorOf = (element: Element) => element.closest('[data-adoc-anchor]')?.getAttribute('data-adoc-anchor') ?? undefined;
 
   const onClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -111,7 +131,7 @@ export function DocumentBody({ subject, html, onAction }: Props) {
       const event: ActionEvent = { kind: 'click', name: control.getAttribute('data-adoc-action')!, value: control.getAttribute('data-adoc-value') ?? '' };
       const anchor = anchorOf(control);
       if (anchor) event.anchor = anchor;
-      void act(event);
+      send(control.getAttribute('data-adoc-confirm'), event);
     }
   };
 
@@ -119,9 +139,11 @@ export function DocumentBody({ subject, html, onAction }: Props) {
   const toggle = useRef<(input: HTMLInputElement) => void>(() => undefined);
   toggle.current = (input) => {
     const event: ActionEvent = { kind: 'toggle', name: input.getAttribute('data-adoc-action')!, value: input.getAttribute('data-adoc-value') ?? '', checked: input.checked };
+    // The checkbox shows the file: undo the browser's change; the new state appears when the document changes.
+    input.checked = !input.checked;
     const anchor = anchorOf(input);
     if (anchor) event.anchor = anchor;
-    void act(event);
+    send(input.getAttribute('data-adoc-confirm'), event);
   };
   useEffect(() => {
     const element = content.current;
@@ -226,7 +248,7 @@ export function DocumentBody({ subject, html, onAction }: Props) {
   const onDragStart = (e: DragEvent<HTMLDivElement>) => {
     const control = (e.target as Element).closest('[data-adoc-kind="drag"]');
     if (!control) return;
-    e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ name: control.getAttribute('data-adoc-action'), value: control.getAttribute('data-adoc-value') ?? '', anchor: anchorOf(control) }));
+    e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ name: control.getAttribute('data-adoc-action'), value: control.getAttribute('data-adoc-value') ?? '', anchor: anchorOf(control), confirm: control.getAttribute('data-adoc-confirm') }));
     e.dataTransfer.effectAllowed = 'move';
   };
   const onDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -244,11 +266,11 @@ export function DocumentBody({ subject, html, onAction }: Props) {
     if (!zone) return;
     e.preventDefault();
     zone.classList.remove('adoc-drop-over');
-    const data = JSON.parse(e.dataTransfer.getData(DRAG_TYPE) || '{}') as { name?: string; value?: string; anchor?: string };
+    const data = JSON.parse(e.dataTransfer.getData(DRAG_TYPE) || '{}') as { name?: string; value?: string; anchor?: string; confirm?: string | null };
     if (!data.name || data.name !== zone.getAttribute('data-adoc-drop')) return;
     const event: ActionEvent = { kind: 'drag', name: data.name, value: data.value ?? '', to: zone.getAttribute('data-adoc-drop-value') ?? '' };
     if (data.anchor) event.anchor = data.anchor;
-    void act(event);
+    send(data.confirm, event);
   };
 
   return (
@@ -275,6 +297,7 @@ export function DocumentBody({ subject, html, onAction }: Props) {
       <DraftMarkerColumn subject={subject} content={content.current} container={container.current} html={shown} onEdit={editDraft} />
       {hover && !popover && <AnchorCommentButton top={hover.top} left={hover.left} anchor={hover.anchor} onOpen={openAnchorComment} />}
       {tooltip && <ReferenceTooltip top={tooltip.top} left={tooltip.left} target={tooltip.target} info={references.current.get(tooltip.target)} />}
+      {confirming && <ActionConfirmDialog question={confirming.question} onConfirm={confirmed} onCancel={() => setConfirming(undefined)} />}
       {popover && (
         <CommentPopover
           subject={subject}
