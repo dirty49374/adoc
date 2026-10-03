@@ -28,6 +28,7 @@ describe('Workspace', () => {
       ['TODO', 1, undefined],
       ['TASK', 1, undefined],
       ['KANBAN', 0, undefined],
+      ['CHECK', 0, undefined],
     ]);
     expect(ws.summaryList('TODO')).toEqual([{ key: 'TODO-gui', path: 'docs/TODO-gui.md', updatedAt: expect.any(String), archived: false, summary: { title: 'GUI', status: '1/3 done', fields: { open: 2, done: 1 } } }]);
     const view = ws.view('TASK-a')!;
@@ -51,7 +52,7 @@ describe('Workspace', () => {
 
   it('archives documents in _archive folders: kept keys, counts without them, the not archived one wins a duplicate', async () => {
     const ws = await open({ 'docs/TODO-gui.md': TODO, 'docs/tasks/_archive/TASK-a.md': TASK, 'docs/_archive/old/TODO-gui.md': '- [ ] old\n', 'docs/TODO-b.md': '- [ ] cursor paging\n' });
-    expect(ws.pluginInfos().map((p) => [p.key, p.documents])).toEqual([['TODO', 2], ['TASK', 0], ['KANBAN', 0]]);
+    expect(ws.pluginInfos().map((p) => [p.key, p.documents])).toEqual([['TODO', 2], ['TASK', 0], ['KANBAN', 0], ['CHECK', 0]]);
     expect(ws.record('TODO-gui')).toMatchObject({ path: 'docs/TODO-gui.md', archived: false });
     expect(ws.check().filter((e) => e.kind === 'duplicate-key').map((e) => e.message)).toEqual([expect.stringContaining('docs/TODO-gui.md is used')]);
     expect(ws.resolve('TASK-a')).toMatchObject({ found: true, archived: true });
@@ -80,13 +81,16 @@ describe('Workspace', () => {
   });
 
   it('applies a plugin action, refuses a stale version and falls back to the default handler', async () => {
-    const ws = await open({ 'docs/TODO-gui.md': TODO, 'docs/tasks/TASK-a.md': TASK });
-    const version = ws.view('TODO-gui')!.version;
-    const applied = await ws.applyAction('TODO-gui', { kind: 'toggle', name: 'toggle', value: '3', checked: true, anchor: '3' }, version);
-    expect(applied).toMatchObject({ status: 'applied', message: { applied: true, text: 'TODO-gui#3 checked: One [[TASK-a]]', target: { level: 'anchor', key: 'TODO-gui', anchor: '3' } } });
-    expect(await readFile(join(current!.root, 'docs/TODO-gui.md'), 'utf8')).toContain('- [x] One');
-    const stale = await ws.applyAction('TODO-gui', { kind: 'toggle', name: 'toggle', value: '3', checked: false }, version);
+    const ws = await open({ 'docs/TODO-gui.md': TODO, 'docs/CHECK-a.md': '- [ ] One\n', 'docs/tasks/TASK-a.md': TASK });
+    const version = ws.view('CHECK-a')!.version;
+    const applied = await ws.applyAction('CHECK-a', { kind: 'toggle', name: 'tick', value: '1', checked: true, anchor: '1' }, version);
+    expect(applied).toMatchObject({ status: 'applied', message: { applied: true, text: 'CHECK-a#1 ticked: One', target: { level: 'anchor', key: 'CHECK-a', anchor: '1' } } });
+    expect(await readFile(join(current!.root, 'docs/CHECK-a.md'), 'utf8')).toContain('- [x] One');
+    const stale = await ws.applyAction('CHECK-a', { kind: 'toggle', name: 'tick', value: '1', checked: false }, version);
     expect(stale.status).toBe('refused');
+    const todo = await ws.applyAction('TODO-gui', { kind: 'toggle', name: 'toggle', value: '3', checked: true }, ws.view('TODO-gui')!.version);
+    expect(todo).toMatchObject({ status: 'sent', message: { applied: false, text: 'user request: do item TODO-gui#3: One [[TASK-a]]' } });
+    expect(await readFile(join(current!.root, 'docs/TODO-gui.md'), 'utf8')).toContain('- [ ] One');
     const request = await ws.applyAction('TASK-a', { kind: 'click', name: 'set-status', value: 'DONE' }, ws.view('TASK-a')!.version);
     expect(request).toMatchObject({ status: 'sent', message: { applied: false, text: 'user request: set-status DONE' } });
   });

@@ -50,7 +50,7 @@ describe('adoc CLI', () => {
     const env = { HOME: home, ADOC_SKILLS_CLI: `node ${resolve(import.meta.dirname, 'fake-skills.mjs')}` };
     expect((await run(['plugin', 'list'], current.root, env)).stderr).toContain('adoc: warning: The agent skill adoc is not installed; run adoc skill install.');
     // The repository's plugins lie outside the test workspace, so every skill goes to user scope.
-    expect((await run(['skill', 'install'], current.root, env)).stdout).toContain('Installed 5 skills: adoc (user), adoc-plugin-authoring (user), adoc-todo (user)');
+    expect((await run(['skill', 'install'], current.root, env)).stdout).toContain('Installed 6 skills: adoc (user), adoc-plugin-authoring (user), adoc-todo (user)');
     expect(await readdir(join(home, '.claude/skills/adoc-task'))).toEqual(['SKILL.md']);
     expect((await run(['plugin', 'list'], current.root, env)).stderr).toBe('');
     await writeFile(join(home, '.claude/skills/adoc-todo/SKILL.md'), 'old');

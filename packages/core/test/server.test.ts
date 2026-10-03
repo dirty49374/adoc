@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 async function start() {
-  const f = await fixture({ 'docs/TODO-gui.md': '# GUI\n\n- [ ] One\n' });
+  const f = await fixture({ 'docs/TODO-gui.md': '# GUI\n\n- [ ] One\n', 'docs/CHECK-a.md': '- [ ] One\n' });
   current = { fixture: f };
   const server = new AdocServer(await Workspace.open(await discoverHome(f.root)), { port: await freePort(), host: '127.0.0.1', log: () => undefined, debounceMs: 30 });
   current.server = server;
@@ -42,10 +42,10 @@ describe('AdocServer', () => {
 
   it('applies an action, notices external edits, and refuses a stale version', async () => {
     const { server, f } = await start();
-    const { version } = await json(`${server.url}/api/documents/TODO-gui`);
-    const applied = await json(`${server.url}/api/actions`, post({ key: 'TODO-gui', version, event: { kind: 'toggle', name: 'toggle', value: '3', checked: true } }));
+    const { version } = await json(`${server.url}/api/documents/CHECK-a`);
+    const applied = await json(`${server.url}/api/actions`, post({ key: 'CHECK-a', version, event: { kind: 'toggle', name: 'tick', value: '1', checked: true } }));
     expect(applied.status).toBe('applied');
-    const refused = await fetch(`${server.url}/api/actions`, post({ key: 'TODO-gui', version, event: { kind: 'toggle', name: 'toggle', value: '3', checked: false } }));
+    const refused = await fetch(`${server.url}/api/actions`, post({ key: 'CHECK-a', version, event: { kind: 'toggle', name: 'tick', value: '1', checked: false } }));
     expect(refused.status).toBe(409);
     await f.write('docs/TODO-new.md', '# New\n');
     await expect.poll(async () => (await json(`${server.url}/api/plugins/TODO/documents`)).documents.length, { timeout: 3000 }).toBe(2);

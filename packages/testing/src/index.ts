@@ -6,6 +6,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const PLUGINS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../plugins');
+/** Plugins that exist only for the tests, such as CHECK, whose action writes the file itself. */
+export const TEST_PLUGINS = resolve(dirname(fileURLToPath(import.meta.url)), '../plugins');
 
 export interface Fixture {
   root: string;
@@ -14,7 +16,7 @@ export interface Fixture {
   cleanup(): Promise<void>;
 }
 
-/** A temporary git workspace with the repository's TODO, TASK and KANBAN plugins. */
+/** A temporary git workspace with the repository's TODO, TASK and KANBAN plugins and the test plugin CHECK. */
 export async function fixture(files: Record<string, string> = {}, extraConfig = ''): Promise<Fixture> {
   const root = await mkdtemp(join(tmpdir(), 'adoc-test-'));
   execFileSync('git', ['init', '-q'], { cwd: root });
@@ -24,7 +26,7 @@ export async function fixture(files: Record<string, string> = {}, extraConfig = 
   };
   await write(
     '.adoc/adoc.yaml',
-    `plugins:\n  - key: TODO\n    from: ${PLUGINS}/todo\n  - key: TASK\n    from: ${PLUGINS}/task\n  - key: KANBAN\n    from: ${PLUGINS}/kanban\nwatch: [docs]\n${extraConfig}`,
+    `plugins:\n  - key: TODO\n    from: ${PLUGINS}/todo\n  - key: TASK\n    from: ${PLUGINS}/task\n  - key: KANBAN\n    from: ${PLUGINS}/kanban\n  - key: CHECK\n    from: ${TEST_PLUGINS}/check\nwatch: [docs]\n${extraConfig}`,
   );
   await mkdir(join(root, 'docs'), { recursive: true });
   for (const [path, text] of Object.entries(files)) await write(path, text);
