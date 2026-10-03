@@ -8,14 +8,34 @@
   Exclude colours, typography and exact wording, which belong in remarks.
 }
 
+input _Host_Switcher_ in shell = {
+  The menu at the start of the top bar, shown only when a hub serves the _adoc:Adoc_Web_UI_, that lists every adoc host the hub knows with its state and moves the browser to another host.
+.relations
+  references _adoc:Adoc_Web_UI_
+  references _adoc:Web_UI_Base_
+  references _adoc:Adoc_Workspace_
+  references _adoc:Browser_Session_
+  references _adoc:Browser_Open_Command_
+  part of _App_Shell_
+.contract
+  - _Host_Switcher_ must appear only when the _adoc:Web_UI_Base_ names a hub, and must list the hosts that the hub's discovery path returns, each with its name, its machine, whether it is online and the status of its assigned agent.
+  - Choosing a host must move the browser to that host's path under the hub, at the location this browser last showed for that host, or at its home.
+  - While a hub serves it, the _adoc:Adoc_Web_UI_ must stay connected as a _adoc:Browser_Session_ to every online host whose protocol it speaks, so that the _adoc:Browser_Open_Command_ of any of them moves this browser to that host and location.
+  - An offline host must be listed but not chosen, and the current host must be marked.
+.remarks
+  - Chosen: each host serves its own pages through the hub, so hosts on other adoc versions keep working; only the hub's discovery list and the presence connection cross hosts.
+}
+
 panel _App_Shell_ in shell = {
   The whole page of _adoc:Adoc_Web_UI_, found at every route, with a top bar, the _Plugin_Tab_Bar_, the main area with the _Comment_Composer_ floating over its bottom, and the _Message_Dock_.
 .relations
+  references _adoc:Web_UI_Base_
   references _adoc_ui:Terminal_Panel_
   references _adoc:Adoc_Web_UI_
   references _adoc:Document_
   shows _adoc:Adoc_Workspace_
   contains _Plugin_Tab_Bar_
+  contains _Host_Switcher_
   contains _Connection_Status_Label_
   contains _Git_Status_Label_
   contains _Agent_Pane_Label_
@@ -29,7 +49,8 @@ panel _App_Shell_ in shell = {
   contains _Document_List_Pane_
   contains _Document_Detail_Pane_
 .contract
-  - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar.
+  - _App_Shell_ must show the name of the _adoc:Adoc_Workspace_ in the top bar, and under a hub the _Host_Switcher_ in its place.
+  - _App_Shell_ must resolve every route under the _adoc:Web_UI_Base_, so that `/p/:plugin` is `/mldev_7700/p/:plugin` under a hub.
   - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`, the _Document_List_Pane_ beside the _Skill_View_ of the plugin's skill at `/p/:plugin/skill`, and the _Skill_View_ of a skill of no plugin at `/skills/:name`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
   - _App_Shell_ must show the _Comment_Composer_ floating over the bottom of the main area at every route, as wide as the reading column of the _Document_Detail_Pane_ and centred on it also while a pinned _Document_List_Pane_ takes width, and apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_.

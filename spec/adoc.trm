@@ -150,7 +150,7 @@ concept _Adoc_CLI_ in surface = {
   starts _Adoc_Server_
   shows _Plugin_Skill_
 .contract
-  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc plugin install`, `adoc plugin update`, `adoc document list`, `adoc document search`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
+  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc server list`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc plugin install`, `adoc plugin update`, `adoc document list`, `adoc document search`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
   - `adoc init` must write an _Adoc_Config_ that declares the five plugins of adoc as npm _Plugin_Source_ entries, `watch: [../docs]` and `ui.tabs`, and must create `.adoc/.gitignore` and the `docs` folder.
   - `adoc plugin install` and `adoc plugin update` must be refused through the _Adoc_MCP_Tool_, like `adoc skill install`.
   - Every command of the _Adoc_CLI_, also through the _Adoc_MCP_Tool_, must run the _Skill_Check_ and show what it finds as warnings.
@@ -884,6 +884,8 @@ concept _Adoc_Server_ in runtime = {
 concept _Adoc_Web_UI_ in runtime = {
   The browser interface served by the _Adoc_Server_ where the user reads rendered documents, composes a _User_Comment_Message_ and triggers each _Document_Action_.
 .relations
+  references _adoc:Adoc_Workspace_
+  references _adoc:Web_UI_Base_
   served by _Adoc_Server_
   has_part _Plugin_Tab_
   composes _User_Comment_Message_
@@ -892,6 +894,23 @@ concept _Adoc_Web_UI_ in runtime = {
 .contract
   - An _Adoc_Web_UI_ must offer one composer, outside every _Plugin_Tab_, that sends the collected draft _User_Comment_ entries and an optional comment on the current target as one _User_Comment_Message_.
   - An _Adoc_Web_UI_ must keep draft _User_Comment_ entries across navigation until they are sent or removed.
+  - An _Adoc_Web_UI_ must keep every value it stores in the browser under a key that names its _Adoc_Workspace_, so that several workspaces served under one origin never mix their drafts, choices or seen versions.
+  - An _Adoc_Web_UI_ must address every API, WebSocket, asset and route of its _Adoc_Server_ under the _Web_UI_Base_.
+}
+
+concept _Web_UI_Base_ in runtime = {
+  The path under which an _Adoc_Server_ serves its _Adoc_Web_UI_: `/` when the browser connects directly, or the prefix that a reverse proxy such as a hub names in the header `X-Forwarded-Prefix`.
+.relations
+  references _adoc:Browser_Open_Command_
+  set by _Adoc_Server_
+  used by _Adoc_Web_UI_
+.contract
+  - An _Adoc_Server_ must put the _Web_UI_Base_ of each request into the `index.html` it serves, and whether a hub serves it, from the header `X-Adoc-Hub` that names the hub's discovery path.
+  - A request without `X-Forwarded-Prefix` must get `/` as its _Web_UI_Base_ and no hub, so that a direct connection works as before.
+  - Every location an _Adoc_Server_ hands to a browser, such as the target of the _Browser_Open_Command_, must be relative to the _Web_UI_Base_.
+.remarks
+  - Chosen: the server learns the prefix from the proxy rather than from configuration, so that one server works directly and through a hub at the same time.
+  - Example: through a hub, `http://hub/mldev_7700/p/NOTE/NOTE-x` reaches the server as `/p/NOTE/NOTE-x` with `X-Forwarded-Prefix: /mldev_7700` and `X-Adoc-Hub: /adoc-discovery`.
 }
 
 concept _Web_UI_Theme_ in runtime = {
@@ -1017,12 +1036,15 @@ procedure _Broken_Document_Reference_Warning_ in runtime = {
 concept _Server_Record_ in runtime = {
   The small file outside the _Adoc_Workspace_, in the runtime directory of the computer, in which a running _Adoc_Server_ records its process id, URL and workspace.
 .relations
+  references _adoc:Server_List_Command_
   written by _Adoc_Server_
   read by _Adoc_CLI_
   names _Adoc_Workspace_
 .contract
   - A _Server_Record_ must be keyed by the absolute path of its _Adoc_Workspace_, so that one computer runs at most one _Adoc_Server_ per workspace.
   - A _Server_Record_ whose process no longer runs must be treated as absent.
+  - A _Server_Record_ must be written atomically, as a temporary file renamed into place, so that a reader never sees part of one.
+  - Programs other than adoc must learn the records through the _Server_List_Command_, never by reading the files, so that their place and shape may change.
 .remarks
   - Chosen: the record lives in `$XDG_RUNTIME_DIR/adoc/`, or the system temporary directory, never in the repository.
 }
@@ -1083,6 +1105,25 @@ procedure _Document_Find_Command_ in surface = {
 .remarks
   - Chosen: `--archived` means "only archived", the same as the archive button of the web UI; run both forms to see everything.
   - Chosen: the agent guide tells the agent to find documents with these commands rather than `ls` or `grep`, so that archived documents do not fill its context.
+}
+
+procedure _Server_List_Command_ in surface = {
+  The `adoc server list` command that lists every _Adoc_Server_ recorded on this computer, running or left behind, for people and for programs such as a hub.
+.relations
+  references _adoc:Adoc_Config_
+  references _adoc:Adoc_Home_
+  part of _Adoc_CLI_
+  reads _Server_Record_
+  lists _Adoc_Server_
+  references _Adoc_Workspace_
+.contract
+  - `adoc server list` must show, for each _Server_Record_ on this computer, the _Adoc_Workspace_, the URL, the process id and a status: online when the process runs and the URL answers `/api/health` with the same _Adoc_Workspace_, offline otherwise.
+  - `adoc server list` must leave out, and delete, a _Server_Record_ whose _Adoc_Workspace_ no longer has an _Adoc_Config_.
+  - With `--output json`, `adoc server list` must print a list of objects with the fields `workspace`, `url`, `pid` and `status`; programs rely on these names.
+  - `adoc server list` must need no _Adoc_Home_ and must work from any directory.
+.remarks
+  - Chosen: a server stopped abnormally leaves its record, shown as offline, so that a hub can show the workspace as offline instead of losing it; the record turns online again when the server of that workspace starts, since the record is keyed by the workspace.
+  - Example: `adoc server list --output json` prints `[{"workspace": "/home/swshin/work/adoc/dev", "url": "http://127.0.0.1:7700", "pid": 2479729, "status": "online"}]`.
 }
 
 procedure _Browser_Open_Command_ in surface = {

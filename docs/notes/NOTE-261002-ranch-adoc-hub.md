@@ -75,7 +75,7 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
   - 정상 종료로 기록이 지워지면 목록에서 뺍니다. offline 기록도 그 workspace의 `.adoc/adoc.yaml`이 없어지면 뺍니다.
   - 목록이 바뀔 때마다 plugin server에 보고합니다. online인 것은 `/api/workspace`의 담당 agent(claim), 이름, 버전도 함께 보냅니다.
 - **adoc 쪽 수정:** 기록을 임시 파일에 쓴 뒤 rename하는 원자적 쓰기로 바꿉니다. 그래야 감시 이벤트를 받은 순간 반쯤 쓰인 파일을 읽지 않습니다.
-- **기록 폴더의 위치는 adoc과 plugin 사이의 규약입니다:** `$XDG_RUNTIME_DIR/adoc/`, 없으면 `$TMPDIR/adoc/`(macOS는 `/var/folders/…/T`), 없으면 `/tmp/adoc/`. Rust인 client가 같은 규칙으로 찾아야 하므로, 이 규칙과 기록의 모양을 spec(`_Server_Record_`)에 contract로 적습니다. ranch가 session 파일의 위치를 규약으로 적은 것과 같은 방식입니다.
+- **기록 폴더의 위치(adoc 안의 규칙, plugin은 모름):** `$XDG_RUNTIME_DIR/adoc/`, 없으면 `$TMPDIR/adoc/`(macOS는 `/var/folders/…/T`), 없으면 `/tmp/adoc/`. client는 이 규칙을 알 필요 없이 `adoc server list --output json`을 부릅니다.
 
 **5. 입구와 인증**
 
@@ -84,7 +84,7 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 
 ## Open questions
 
-- **local discovery는 기록 파일을 직접 읽을까요, `adoc server list --output json` 같은 명령을 부를까요?** 기록을 직접 읽으면 adoc이 PATH에 없어도 되고(herdr는 plugin을 로그인 셸 없이 실행), 명령을 부르면 위치 규칙을 adoc 한 곳에만 둡니다. 저는 기록을 직접 읽고, 위치 규칙을 spec에 contract로 적기를 추천합니다.
+- (없음)
 
 ## Decisions
 
@@ -96,5 +96,5 @@ http://hub/adoc-discovery          떠 있는 adoc 목록과 각 담당 agent의
 - **`<host>`는 이름을 정하기 전에는 `<machine>_<port>`, 정한 뒤에는 이름이고, 둘 다 쓸 수 있습니다.** 이름은 status 화면에서, 또는 담당 agent가 plugin 명령으로 정합니다.
 - **plugin은 우선 adoc 저장소 안(`ranch-plugin/`)에 둡니다.**
 - **ranch 판으로 바로 가고, ranch 없는 한 컴퓨터 안 전환([[NOTE-261002-workspace-switching]])은 버립니다.** ranch가 없으면 지금처럼 workspace마다 따로 접속합니다.
-- **local discovery는 server 기록(pid, port를 담은 url)을 감시하고, pid와 port로 online/offline을 판단합니다.** 비정상 종료로 남은 기록은 offline으로 보입니다.
+- **local discovery는 `adoc server list --output json`을 부릅니다.** 기록 파일의 위치와 모양은 나중에 바뀔 수 있으므로 adoc만 압니다. adoc이 server 기록을 읽고 pid와 port로 online/offline을 판단해 목록으로 내놓습니다. 비정상 종료로 남은 기록은 offline으로 보입니다.
 - **plugin client가 연결되면 server가 컴퓨터마다 라우팅 담당 client를 하나 지정합니다.** 담당이 끊어지면 그 컴퓨터의 다른 세션 client로 다시 지정합니다.
