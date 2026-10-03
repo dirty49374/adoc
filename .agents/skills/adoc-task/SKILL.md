@@ -20,7 +20,7 @@ A TASK is the work order for one piece of work that needs a design and a plan: w
 - When you finish, set `REVIEW`. **Only the user decides that a task is DONE:** when they approve it, you set `status: DONE`.
 - **Keep the user told.** While any TASK has `status: REVIEW`, end every report to the user in the conversation (after finishing a piece of work, when you go idle) with one line listing those TASKs in the order of `adoc document list --plugin TASK` (the most recently changed first; pick the REVIEW ones yourself): at most three keys, then the number of the others, if any: `Tasks to review: TASK-a, TASK-b, TASK-c and 4 more`.
 - **When the user says they will review:** open the first one of that order with `adoc ui open <KEY>`, say in one or two sentences what it delivered and what to look at, and wait. When they approve it, set `status: DONE`, commit, and open the next one. When they ask for changes, make them and keep the task in REVIEW. Stop when none is left or the user stops.
-- **When the number of DONE TASKs (not archived) reaches 10, 20, 30, …**, ask the user whether to archive them. If they agree, archive each, and the NOTEs listed in their `notes:` unless a task that stays lists them too; run `adoc check` and commit.
+- **When ten or more TASKs are DONE** (not archived), ask the user whether to archive them, at most once per session. If they agree, archive each, and the NOTEs listed in their `notes:` unless a task that stays lists them too; run `adoc check` and commit.
 
 ## Instructions
 
