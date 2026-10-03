@@ -219,6 +219,9 @@ export class AdocServer {
     this.log(report.length ? formatCheck(report) : 'adoc check: no problems');
     const git = this.workspace.git ? 'git' : 'no git';
     this.log(`adoc server for ${this.workspace.root} at ${this.url} (transport: ${this.transport.kind}, ${git})`);
+    if (!isLoopback(this.host)) {
+      this.log(`adoc: warning: listening on ${this.host} without authentication: anyone who reaches this port can read and edit the documents and control the agent's terminal.`);
+    }
   }
 
   async stop(): Promise<void> {
@@ -559,4 +562,9 @@ export class AdocServer {
       response.end('The adoc web UI is not built; run pnpm build in the adoc repository.');
     }
   }
+}
+
+/** Whether a listen address accepts connections from this computer only. */
+function isLoopback(host: string): boolean {
+  return host === 'localhost' || host === '::1' || host.startsWith('127.');
 }

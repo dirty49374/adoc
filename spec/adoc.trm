@@ -812,6 +812,7 @@ concept _Adoc_Server_ in runtime = {
 .contract
   - An _Adoc_Server_ must run locally, one per _Adoc_Workspace_, in the foreground of `adoc server run` or inside `adoc mcp run --with-server`.
   - An _Adoc_Server_ must accept remote connections within an internal network without authentication.
+  - An _Adoc_Server_ that listens on an address other than loopback must warn when it starts that anyone who reaches it can read and edit the documents and control the agent's terminal.
   - An _Adoc_Server_ must refuse to start on a port that is already in use.
   - An _Adoc_Server_ must write its _Server_Record_ when it starts and remove it when it stops, and must refuse to start while the _Server_Record_ of the same _Adoc_Workspace_ names a running process.
   - An _Adoc_Server_ must reload a _Plugin_ loaded from a local path whenever a file at the top of its folder, such as `index.ts`, changes, and refresh the _Adoc_Web_UI_.
