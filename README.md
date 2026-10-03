@@ -10,6 +10,31 @@ repository, such as notes, TODO lists, task work orders, boards and drawings, an
 
 adoc does not depend on one agent: any agent that can run a command or use MCP can work with it.
 
+## How it looks
+
+Select text in a document and comment on it; the comment carries the quote and its `file:line`.
+
+![Commenting on selected text](samples/screenshots/comment.png)
+
+Send it, and it reaches the agent's herdr pane as a prompt. The web UI shows that terminal beside the documents.
+
+![The agent receives the comment and works](samples/screenshots/agent-working.png)
+
+When the agent has edited the documents, the web UI marks what changed since you last looked.
+
+![Changed sections marked after the agent's edit](samples/screenshots/changes.png)
+
+Plugins bring their own views and actions: a click on a TODO item asks the agent to do it, a board shows where work
+stands, and a sketch shows the agent what you mean.
+
+![Asking the agent to do a TODO item](samples/screenshots/todo-request.png)
+
+| KANBAN | SKETCH |
+|---|---|
+| ![A KANBAN board](samples/screenshots/kanban.png) | ![A SKETCH wireframe](samples/screenshots/sketch.png) |
+
+The screenshots come from [`samples/`](samples/), a todo app team's workspace with Claude Code as its agent.
+
 ## Requirements
 
 - Node.js 24 or later
