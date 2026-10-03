@@ -1,6 +1,7 @@
 ---
 title: 한 브라우저로 이 계정의 모든 adoc 오가기
-status: OPEN
+status: MOVED
+moved_to: NOTE-261002-ranch-adoc-hub
 ---
 
 ## Background
