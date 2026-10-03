@@ -1,5 +1,6 @@
 import { cp, mkdir, rm } from 'node:fs/promises';
 import { build } from 'esbuild';
+import { metafileInputs, writeLicenses } from '../../tooling/licenses.mjs';
 
 // Builds the plugin itself into dist/index.js, for the npm package (Node does not strip types under node_modules).
 await build({
@@ -15,7 +16,7 @@ await build({
 const out = new URL('./client/', import.meta.url).pathname;
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
-await build({
+const result = await build({
   entryPoints: [new URL('./web/index.tsx', import.meta.url).pathname],
   entryNames: 'index',
   chunkNames: 'chunks/[name]-[hash]',
@@ -30,6 +31,9 @@ await build({
   conditions: ['production'],
   define: { 'process.env.NODE_ENV': '"production"', 'process.env.IS_PREACT': '"false"' },
   loader: { '.woff2': 'file', '.ttf': 'file', '.png': 'file', '.svg': 'file' },
+  metafile: true,
   logLevel: 'warning',
 });
 await cp(new URL('./node_modules/@excalidraw/excalidraw/dist/prod/fonts/', import.meta.url).pathname, `${out}fonts/`, { recursive: true });
+// The licenses of every package in the bundle, Excalidraw (and the fonts copied from it) included.
+await writeLicenses(metafileInputs(result.metafile), `${out}licenses`);
