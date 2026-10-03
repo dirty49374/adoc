@@ -1,8 +1,9 @@
 export { AdocError, errorMessage } from './errors.js';
 export { discoverHome, HOME_DIRECTORY, HOME_VARIABLE, CONFIG_FILE, type AdocHome } from './home.js';
-export { readConfig, configSchema, CONFIG_TEMPLATE, type AdocConfig, type TransportConfig } from './config.js';
+export { readConfig, userConfigPath, CONFIG_TEMPLATE, type AdocConfig, type DeclaredPlugin, type TransportConfig } from './config.js';
 export { PLUGIN_KEY_PATTERN, LOCAL_ID_PATTERN, parseDocumentTarget } from './names.js';
-export { loadPlugins, pluginDirectories, readSkillSource, scopeOf, type LoadedPlugin, type Scope, type SkillSource } from './plugins.js';
+export { loadPlugins, pluginDirectory, parseGithubSource, fetchedFolder, readSkillSource, scopeOf, type GithubSource, type LoadedPlugin, type Scope, type SkillSource } from './plugins.js';
+export { fetchGithubPlugins, folderHash, type FetchOutcome } from './fetch.js';
 export { scanDocuments, readDocument, type DocumentRecord, type ScanProblem } from './scan.js';
 export { Workspace, type SummaryEntry, type DocumentView, type CheckEntry, type PluginInfo, type ActionOutcome, type DocumentChanges, type StoredVersion } from './workspace.js';
 export { MessageQueue, formatMessage, formatMessages, formatTarget, messageFields, type UserMessage, type UserComment, type MessageTarget } from './messages.js';

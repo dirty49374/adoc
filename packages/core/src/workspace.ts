@@ -74,10 +74,11 @@ export interface CheckEntry {
 
 export interface PluginInfo {
   key: string;
-  from: string;
+  /** The _Plugin_Source_ as declared. */
+  source: string;
   description?: string;
   layout?: string;
-  /** The plugin folder and the scope of the place it was loaded from (_Plugin_Directory_). */
+  /** The plugin folder and the scope of the place it was loaded from. */
   directory?: string;
   scope?: Scope;
   /** The name of the _Plugin_Skill_, such as `adoc-kanban`. */
@@ -130,8 +131,8 @@ export class Workspace {
     readonly config: AdocConfig,
   ) {}
 
-  static async open(home: AdocHome): Promise<Workspace> {
-    const workspace = new Workspace(home, await readConfig(home));
+  static async open(home: AdocHome, env: NodeJS.ProcessEnv = process.env): Promise<Workspace> {
+    const workspace = new Workspace(home, await readConfig(home, env));
     workspace.plugins = await loadPlugins(home, workspace.config);
     await workspace.refresh();
     return workspace;
@@ -218,7 +219,7 @@ export class Workspace {
 
   pluginInfos(): PluginInfo[] {
     return [...this.plugins.values()].map((p) => {
-      const info: PluginInfo = { key: p.key, from: p.from, documents: [...this.documents.values()].filter((d) => d.pluginKey === p.key && !d.archived).length };
+      const info: PluginInfo = { key: p.key, source: p.source, documents: [...this.documents.values()].filter((d) => d.pluginKey === p.key && !d.archived).length };
       if (p.definition) {
         info.description = p.definition.description;
         info.layout = p.definition.layout.kind === 'file' ? `file ${p.key}-<local id>${p.definition.layout.extension}` : `folder ${p.key}-<local id>/${p.definition.layout.entry}`;
@@ -381,7 +382,7 @@ export class Workspace {
     const entries: CheckEntry[] = [];
     if (!this.git) entries.push({ level: 'warning', kind: 'no-git', message: `${this.root} is not in a git repository; the agent cannot commit document changes.` });
     for (const plugin of this.plugins.values()) {
-      if (plugin.error) entries.push({ level: 'error', kind: 'plugin-load', message: `plugin ${plugin.key} (${plugin.from}) failed to load: ${plugin.error}` });
+      if (plugin.error) entries.push({ level: 'error', kind: 'plugin-load', message: `plugin ${plugin.key} (${plugin.source}) failed to load: ${plugin.error}` });
     }
     for (const problem of this.problems) {
       const entry: CheckEntry = { level: problem.kind === 'duplicate-key' || problem.kind === 'invalid-local-id' ? 'error' : 'warning', kind: problem.kind, message: problem.message, path: problem.path };

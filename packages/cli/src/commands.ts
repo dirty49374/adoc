@@ -6,6 +6,7 @@ import {
   CONFIG_TEMPLATE,
   checkSkills,
   discoverHome,
+  fetchGithubPlugins,
   formatCheck,
   installSkills,
   listSkills,
@@ -32,7 +33,7 @@ const opened = new WeakMap<CommandContext, Promise<Workspace>>();
 function openWorkspace(options: Options, context: CommandContext): Promise<Workspace> {
   let workspace = opened.get(context);
   if (!workspace) {
-    workspace = discoverHome(context.cwd, options.home, context.env).then((home) => Workspace.open(home));
+    workspace = discoverHome(context.cwd, options.home, context.env).then((home) => Workspace.open(home, context.env));
     opened.set(context, workspace);
   }
   return workspace;
@@ -51,7 +52,7 @@ export async function skillWarnings(options: Options, context: CommandContext): 
 
 async function client(options: Options, context: CommandContext): Promise<ServerClient> {
   const home = await discoverHome(context.cwd, options.home, context.env);
-  const server = await ServerClient.find(await readConfig(home), home.workspace);
+  const server = await ServerClient.find(await readConfig(home, context.env), home.workspace);
   await server.ensure();
   return server;
 }
@@ -100,12 +101,24 @@ function messagesResult(body: MessagesBody, empty: string): CommandResult {
   return { data, text: body.messages.length ? body.messages.map((m) => m.formatted).join('\n') : empty };
 }
 
+/** `adoc plugin install` and `adoc plugin update`: one line per GitHub source; fails when one could not be fetched. */
+async function fetchCommand(options: Options, context: CommandContext, choice: { update: boolean; keys?: string[] }): Promise<CommandResult> {
+  const home = await discoverHome(context.cwd, options.home, context.env);
+  const outcomes = await fetchGithubPlugins(await readConfig(home, context.env), choice, context.env);
+  const text = outcomes.length
+    ? outcomes.map((o) => `${o.key} ${o.status}${o.commit ? ` ${o.commit.slice(0, 12)}` : ''}${o.reason ? `: ${o.reason}` : ''}`).join('\n')
+    : 'No GitHub plugin sources are declared.';
+  const failed = outcomes.filter((o) => o.status === 'refused' || o.status === 'failed');
+  if (failed.length) throw new AdocError('plugin.fetch', text);
+  return { data: outcomes, text };
+}
+
 export const commands: readonly CommandDefinition[] = [
   {
     name: 'init',
     argument: '[directory]',
     options: [],
-    summary: 'Create .adoc/adoc.yaml and a docs folder in a directory.',
+    summary: 'Create .adoc/adoc.yaml, declaring the five plugins of adoc, and a docs folder in a directory.',
     behavior: 'Refuses when the directory already has an .adoc folder with adoc.yaml. Does not run git init; keep the workspace in a git repository so that the agent can commit.',
     example: 'adoc init .',
     localOnly: true,
@@ -122,7 +135,7 @@ export const commands: readonly CommandDefinition[] = [
       await mkdir(join(root, 'docs'), { recursive: true });
       await writeFile(configPath, CONFIG_TEMPLATE);
       await writeFile(join(root, '.adoc', '.gitignore'), `${CLAIM_FILE}\n`);
-      return { data: { configPath }, text: `Initialized ${configPath}\nNext: declare plugins in it, then run adoc server run.` };
+      return { data: { configPath }, text: `Initialized ${configPath} with the five plugins of adoc.\nNext: adoc skill install, then adoc server run.` };
     },
   },
   {
@@ -207,12 +220,36 @@ export const commands: readonly CommandDefinition[] = [
     name: 'plugin list',
     options: [],
     summary: 'List the plugins declared in adoc.yaml.',
-    behavior: 'Shows each plugin key, its number of documents (archived ones left out), its document layout and its description, or its load error.',
+    behavior: 'Shows each plugin key in tab order, its number of documents (archived ones left out), its source and its description, or its load error.',
     example: 'adoc plugin list',
     async run(_args, options, context) {
       const plugins = (await openWorkspace(options, context)).pluginInfos();
-      const rows = [['KEY', 'DOCUMENTS', 'LAYOUT', 'DESCRIPTION'], ...plugins.map((p) => [p.key, String(p.documents), p.layout ?? '-', p.error ? `ERROR: ${p.error}` : p.description ?? ''])];
+      const rows = [['KEY', 'DOCUMENTS', 'SOURCE', 'DESCRIPTION'], ...plugins.map((p) => [p.key, String(p.documents), p.source, p.error ? `ERROR: ${p.error}` : p.description ?? ''])];
       return { data: plugins, text: plugins.length ? table(rows) : 'No plugins are declared in adoc.yaml.' };
+    },
+  },
+  {
+    name: 'plugin install',
+    options: [],
+    summary: 'Fetch the GitHub plugin sources that are declared but not fetched yet.',
+    behavior:
+      'Fetches each github:<owner>/<repo>/<folder>#<ref> source into plugins/<key in lowercase>/ next to the config file that declares it, and records the commit in plugins-lock.json there. npm sources are installed with npm. Then run adoc skill install, and restart a running server.',
+    example: 'adoc plugin install',
+    localOnly: true,
+    async run(_args, options, context) {
+      return fetchCommand(options, context, { update: false });
+    },
+  },
+  {
+    name: 'plugin update',
+    argument: '[keys...]',
+    options: [],
+    summary: 'Fetch GitHub plugin sources again, all or the given plugin keys.',
+    behavior: 'Refuses a fetched folder whose files were changed; copy it to another folder to change a plugin. npm sources are updated with npm. Then run adoc skill update, and restart a running server.',
+    example: 'adoc plugin update SKETCH',
+    localOnly: true,
+    async run(args, options, context) {
+      return fetchCommand(options, context, { update: true, keys: args });
     },
   },
   {
