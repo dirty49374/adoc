@@ -44,9 +44,9 @@ adoc skill view adoc       # the agent's workflow skill
 adoc skill view adoc-plugin-authoring   # how to write a plugin
 ```
 
-A new workspace is a git repository with `adoc init`, plugins declared in `.adoc/adoc.yaml`, and documents under `docs/`.
+A new workspace is a git repository with `adoc init`, which declares the five plugins of adoc in `.adoc/adoc.yaml`, and documents under `docs/`.
 
-Install the agent skills with `adoc skill install` (it runs the Vercel `skills` CLI, `npx skills add`, for every skill folder: adoc's own in user scope, each plugin's in its scope). Every adoc command warns while a skill is missing or older than the running adoc. Plugins can also live in `.adoc/plugins/<name>/` or `~/.config/adoc/plugins/<name>/` and be declared with `from: <name>`.
+Install the agent skills with `adoc skill install` (it runs the Vercel `skills` CLI, `npx skills add`, for every skill folder: adoc's own in user scope, each plugin's in its scope). Every adoc command warns while a skill is missing or its installed copy differs. Plugins are declared as `KEY: <source>`: `npm:<package>`, `github:<owner>/<repo>/<folder>` (fetched by `adoc plugin install`), or a path from the config file such as `./plugins/<name>`; `~/.config/adoc/adoc.yaml` declares plugins for every workspace.
 
 ## Workflow for this repository
 

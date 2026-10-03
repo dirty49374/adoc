@@ -32,32 +32,31 @@ A plugin is a folder:
   index.ts          # export default definePlugin({ … }): description, layout, summarize, render, actions
   skill/
     SKILL.md        # the plugin's agent skill; `adoc skill install` copies only this folder
-  package.json      # optional: npm packages the plugin imports, installed in this folder
+  package.json      # optional: npm packages it imports, and the plugin-kit range it needs
   client/           # optional: browser code, index.js (+ index.css), for custom elements
 ```
 
-Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes from:
+Installing a plugin and using it are two steps. **Use** it by declaring it in `.adoc/adoc.yaml` under `plugins`, as `KEY: <source>`:
 
-- a bare name, looked up in `.adoc/plugins/<name>/` (project) and then `~/.config/adoc/plugins/<name>/` (user);
-- a path from the workspace root, starting with `./` (or `/` for an absolute path), such as `./plugins/todo`;
-- an npm package name.
+- `npm:<package>`, such as `npm:@agent-workshop/adoc-plugin-todo`: found from the folder of the config file upwards (`.adoc/node_modules`, `<project>/node_modules`), then in adoc's own installation. **Install** it with npm; a version installed in the project comes before the one that came with adoc.
+- `github:<owner>/<repo>/<folder>#<ref>`: **install** it with `adoc plugin install`, which fetches it into `.adoc/plugins/<key in lowercase>/` and records the commit in `.adoc/plugins/plugins-lock.json`; `adoc plugin update` fetches it again. Never edit a fetched folder: copy it to another folder and declare that path.
+- a path starting with `./`, `../` or `/`, taken from the folder of the config file: `./plugins/x` is `.adoc/plugins/x`, the place for a plugin of this project.
+- `off` leaves out a plugin that the user config declares.
 
-`adoc plugin list` shows each plugin with its document count or its load error. A running server reloads a plugin when a file at the top of its folder changes (details in `adoc-plugin-authoring`); a change to `.adoc/adoc.yaml` takes effect when the server restarts (a restart loses held messages, see "Start: claim"). Then install its skill with `adoc skill install` (below). Writing a plugin is explained by the skill `adoc-plugin-authoring`.
+`adoc plugin list` shows each plugin with its source and document count, or its load error. A running server reloads a plugin from a folder outside `node_modules` when a file at the top of its folder changes (details in `adoc-plugin-authoring`); after an npm update, `adoc plugin update` or a change to the config, restart the server (a restart loses held messages, see "Start: claim"). Then install or update its skill with `adoc skill install` or `adoc skill update` (below). Writing a plugin is explained by the skill `adoc-plugin-authoring`.
 
 ## Configuration
 
-`.adoc/adoc.yaml`, created by `adoc init`. A complete example:
+`.adoc/adoc.yaml`, created by `adoc init`, is laid over the user config `~/.config/adoc/adoc.yaml` (same format): each plugin key and each other setting of the project replaces the user's. **Every relative path is taken from the folder of the file that holds it.** A complete example:
 
 ```yaml
-plugins:                    # the plugins of this workspace; the web UI shows their tabs in this order
-  - key: NOTE               # plugin key: uppercase letters; documents are named NOTE-<local id>
-    from: note              # .adoc/plugins/note/, then ~/.config/adoc/plugins/note/
-  - key: TASK
-    from: ./plugins/task    # a path from the workspace root
-  - key: BUG
-    from: adoc-plugin-bug   # an npm package
+plugins:                    # plugin key (uppercase letters; documents are named NOTE-<local id>): source
+  NOTE: npm:@agent-workshop/adoc-plugin-note
+  TASK: ./plugins/task      # .adoc/plugins/task
+  MIND: github:someone/adoc-plugins/mindmap#v1.0
+  BUG: off                  # declared in the user config, not wanted here
 watch:                      # folders that hold documents
-  - docs
+  - ../docs
 agent:
   name: dev                 # shown in the web UI
   transport:
@@ -66,6 +65,7 @@ server:
   host: 127.0.0.1
   port: 7700
 ui:
+  tabs: [NOTE, TASK, MIND]  # tab order; plugins not listed follow in declaration order
   theme: dark               # default colours of the web UI: dark | light | system; each browser may choose another
 ```
 
@@ -73,12 +73,15 @@ Only `plugins` is needed in practice, and `agent.transport` outside herdr; the t
 
 | key | meaning |
 |---|---|
-| `plugins` | list of `{ key, from }`; the web UI shows the tabs in this order |
-| `watch` | folders that hold documents, default `[docs]` |
+| `plugins` | map from plugin key to source, or `off` |
+| `watch` | folders that hold documents, default the workspace's `docs` (`../docs` from `.adoc/`) |
 | `agent.name` | the agent's name, shown in the web UI, default `agent` |
 | `agent.transport.kind` | `herdr` (default: push messages into the claimed pane) or `wait` (the agent runs `adoc message wait`) |
 | `server.host`, `server.port` | where the server listens, default `127.0.0.1:7700`; `0.0.0.0` for the internal network, no authentication |
+| `ui.tabs` | the order of the plugin tabs, default the declaration order |
 | `ui.theme` | default colours of the web UI: `dark` (default), `light` or `system` |
+
+A plugin the team shares belongs in the project config; a plugin only in your user config shows its documents to you alone (others see an unknown plugin key).
 
 ## Project scope and user scope
 
@@ -90,7 +93,8 @@ A workspace (project scope):
     adoc.yaml           # the configuration (above)
     .gitignore          # keeps claim.yaml out of git
     claim.yaml          # the assigned agent's herdr pane, written by `adoc agent claim`; this machine only
-    plugins/<name>/     # project-scope plugins, declared as `from: <name>`
+    plugins/<name>/     # plugins of this project, declared as `./plugins/<name>`; fetched GitHub sources
+    plugins/plugins-lock.json  # the commits of the fetched GitHub sources
   .agents/skills/       # project-scope skills, the copies written by `adoc skill install`
   .claude/skills/       # links to them for Claude Code (one folder per detected agent)
   skills-lock.json      # written by the skills CLI; the user decides whether it is committed
@@ -101,14 +105,16 @@ A workspace (project scope):
 The user (user scope):
 
 ```
-~/.config/adoc/plugins/<name>/   # user-scope plugins ($XDG_CONFIG_HOME/adoc/plugins), `from: <name>`
-~/.agents/skills/<name>/         # user-scope skills: adoc, adoc-plugin-authoring, user-scope plugins
+~/.config/adoc/adoc.yaml         # the user config, laid under every workspace's ($XDG_CONFIG_HOME/adoc)
+~/.config/adoc/plugins/<name>/   # the user's plugins, declared there as `./plugins/<name>`
+~/.config/adoc/node_modules/     # npm plugins for every workspace: `npm i --prefix ~/.config/adoc <package>`
+~/.agents/skills/<name>/         # user-scope skills: adoc, adoc-plugin-authoring, plugins outside any workspace
 ~/.claude/skills/<name>          # links to them for Claude Code (one folder per detected agent)
 $XDG_RUNTIME_DIR/adoc/<hash>.json  # a record of each running adoc server (pid, url, workspace), named by a hash of the workspace path; the temp folder without $XDG_RUNTIME_DIR
 ```
 
-- **Project scope:** inside the workspace. Plugins in `.adoc/plugins/` or at a path inside the workspace; their skills install into the workspace (`.agents/skills/`, `.claude/skills/`, …).
-- **User scope:** for every workspace of this user. Plugins in `~/.config/adoc/plugins/`; their skills, and adoc's own skills `adoc` and `adoc-plugin-authoring`, install into the home (`~/.agents/skills/`, …).
+- **Project scope:** a plugin whose folder is inside the workspace (`.adoc/plugins/`, the project's `node_modules`); its skill installs into the workspace (`.agents/skills/`, `.claude/skills/`, …).
+- **User scope:** a plugin whose folder is outside the workspace (`~/.config/adoc/`, adoc's own installation); its skill, and adoc's own skills `adoc` and `adoc-plugin-authoring`, install into the home (`~/.agents/skills/`, …).
 - `adoc skill install` installs every skill in its scope through the Vercel `skills` CLI (`npx skills add`), for the agents it detects; `adoc skill update` refreshes them after an update. Every adoc command warns while a skill is missing or its installed copy differs from the one of the running adoc.
 
 ## Using a plugin
@@ -119,7 +125,7 @@ How a plugin is meant to be used, what its files look like, what an anchor means
 
 ### Setting up a new project
 
-adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings). They are the folders under `plugins/` of the adoc repository; declare each with a path to its folder.
+adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings). `adoc init` declares them as `npm:@agent-workshop/adoc-plugin-<name>`.
 
 1. **Talk first.** Before any work, take time with the user to decide how this project will use them: which documents to keep, what goes where, how detailed.
 2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether the project commits, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:
@@ -144,7 +150,8 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 | `adoc ui open <KEY>[#anchor]` / `adoc ui list` | show a document in the user's browser tab / list the tabs |
 | `adoc skill list` / `adoc skill view <name>` | the agent skills / one of them |
 | `adoc skill install` / `update` / `uninstall` | manage the installed skills (command line only; through MCP, ask the user to run them) |
-| `adoc plugin list` | the declared plugins |
+| `adoc plugin list` | the declared plugins, in tab order |
+| `adoc plugin install` / `adoc plugin update [KEY…]` | fetch the GitHub plugin sources not fetched yet / again (command line only) |
 | `adoc server run` / `adoc mcp run` / `adoc init` | run the server / serve the MCP tool / create a workspace (command line only) |
 
 Every command takes `--output text|markdown|json|yaml` and answers `--help`; the workspace is the parent of the nearest `.adoc` folder upwards, or of the `.adoc` folder named by `--home <path>` (command line only) or `ADOC_HOME`. `adoc message` and `adoc ui` need the running server of the workspace; the user usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.

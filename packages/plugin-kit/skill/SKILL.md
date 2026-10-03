@@ -11,16 +11,16 @@ A plugin defines one kind of document. It is **one folder with `index.ts` and `s
 plugins/note/
   index.ts         ← export default definePlugin({ … })
   skill/SKILL.md   ← the plugin's agent skill: tells the agent how to edit these documents
-  package.json     ← optional: only when the plugin needs npm packages
+  package.json     ← optional: npm packages it imports, and the plugin-kit range it needs
   client/          ← optional: browser code (index.js, index.css), see "Browser code"
 ```
 
-Register it in the workspace's `.adoc/adoc.yaml` (restart a running `adoc server run` to load it; a restart loses held messages, see "Start: claim" in the adoc skill), then check:
+Put a plugin for one project in `.adoc/plugins/<name>/`, and declare it in the workspace's `.adoc/adoc.yaml` (restart a running `adoc server run` to load it; a restart loses held messages, see "Start: claim" in the adoc skill), then check:
 
 ```yaml
 plugins:
-  - key: NOTE                 # uppercase letters only; documents are named NOTE-<local id>.<ext>
-    from: note                # where it comes from: see "Installing plugins" in the adoc skill
+  NOTE: ./plugins/note        # key: uppercase letters only, documents are named NOTE-<local id>.<ext>;
+                              # source: a path from this file, npm:<package> or github:<owner>/<repo>/<folder>
 ```
 
 Its scope, and so where `adoc skill install` installs its skill, follows from where the folder is (see "Project scope and user scope" in the adoc skill).
@@ -30,9 +30,11 @@ adoc plugin list      # shows the plugin, or its load error
 adoc check            # runs summarize and render on every document; exits 1 on errors (warnings do not fail it)
 ```
 
+**Publishing.** To share a plugin, publish its folder as an npm package or put it in a GitHub repository (see "Installing plugins" in the adoc skill). Ship it ready to run, since adoc never builds or installs what it fetches: JavaScript `index.js` for npm (Node does not strip types inside `node_modules`; build `index.ts` with esbuild or tsc), the built `client/`, and `skill/`. Declare the plugin-kit range it needs as `"peerDependencies": { "@agent-workshop/adoc-plugin-kit": "^0.1.0" }`: adoc refuses to load it with a plugin-kit outside that range.
+
 Actions run only from the web UI: start `adoc server run`, open a sample document and click, toggle or drag (or use the elements of your client module).
 
-A running `adoc server run` reloads the plugin whenever a file at the top of its folder changes. A reload imports `index.ts` again, but the other files it imports keep their old code: restart the server after changing them.
+A running `adoc server run` reloads a plugin from a folder outside `node_modules` whenever a file at the top of its folder changes. A reload imports `index.ts` again, but the other files it imports keep their old code: restart the server after changing them.
 
 ## What a plugin provides
 
