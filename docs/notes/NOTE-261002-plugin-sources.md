@@ -1,67 +1,76 @@
 ---
-title: plugin 출처 등록, 업데이트, hot reload — 안
+title: plugin 출처, 설치와 사용, 설정 겹쳐 쓰기
 status: OPEN
 ---
 
 ## Background
 
-plugin은 지금 손으로 폴더를 만들거나 복사해서 `.adoc/plugins/`, `~/.config/adoc/plugins/`, 또는 경로로 둡니다. 다른 사람이 만든 plugin을 받거나 새 버전으로 바꿀 방법이 없습니다. 또 서버의 hot reload는 plugin 폴더 최상위의 `index.ts`만 다시 불러오므로, 여러 파일로 나눈 plugin은 일부만 새로 읽힙니다. 이 셋을 한 번에 정리하는 안입니다.
+plugin은 지금 손으로 폴더를 만들거나 복사해서 `.adoc/plugins/`, `~/.config/adoc/plugins/`, 또는 경로로 둡니다. 다른 사람이 만든 plugin을 받거나 새 버전으로 바꿀 방법이 없고, 기본 plugin 다섯 개는 이 저장소에만 있습니다. 첫 release 전에 plugin을 어떻게 배포하고, 설치하고, 설정에서 쓰는지를 한 번에 정합니다.
 
 ## What is wrong today
 
-- plugin을 어디서 받았는지 기록이 없어서 업데이트할 수 없습니다.
-- `index.ts`가 `./lib.ts`를 import하면, hot reload 때 `index.ts`만 새로 읽고 `lib.ts`는 Node의 module cache에 남은 옛 코드를 씁니다.
-- plugin 폴더를 재귀로 감시하면 `node_modules`, `client/`까지 감시하게 되어 지금은 최상위만 감시합니다.
+- `from:`의 이름만 쓴 값은 폴더 두 곳을 찾고 없으면 npm으로 넘어가서, `plugins/todo`처럼 `./`를 빠뜨리면 npm에서 찾다가 실패합니다.
+- 설정의 경로는 workspace 루트 기준인데, 설정 파일은 `.adoc/` 안에 있습니다.
+- 기본 plugin은 배포되지 않고, `adoc init`은 `plugins: []`를 씁니다.
+- 탭 순서가 `plugins` 목록 순서에 묶여 있습니다.
+- 내 컴퓨터에서 늘 쓰고 싶은 plugin을 workspace마다 선언해야 합니다.
+- plugin을 어디서 받았는지 기록이 없어서 업데이트할 수 없고, plugin이 필요한 plugin-kit 버전을 알 수 없습니다.
 
 ## Findings
 
-| 도구 | 받는 곳 | 기록 | 업데이트 |
-|---|---|---|---|
-| VS Code 확장 | marketplace, `.vsix` | 설치 폴더의 manifest | marketplace가 새 버전 확인 |
-| Obsidian community plugin | GitHub release(빌드된 `main.js`, `manifest.json`) | `.obsidian/plugins/<id>/` | release의 새 버전 확인 |
-| Claude Code plugin | git 저장소 marketplace | plugin cache + 버전 | `/plugin update` |
-| Vercel `skills` | GitHub, URL, 로컬 경로 | `skills-lock.json` | `skills update` |
-| npm 패키지 | registry | `package-lock.json` | `npm update` |
+| 제품 | 참고할 점 |
+|---|---|
+| herdr plugin | `owner/repo/하위폴더` 표기, GitHub 설치는 herdr가 관리하는 폴더에 두고 다시 설치하면 덮어씀, 로컬 `link` 위에는 설치 거부, manifest의 `min_herdr_version` |
+| Obsidian | vault마다 `.obsidian/plugins/<id>/`, 설치 목록과 사용 목록이 따로, manifest의 `minAppVersion` |
+| Claude Code plugins | 출처(GitHub, git, 경로) 등록, 사용 여부는 user/project/local 설정을 겹쳐서 정함 |
+| ESLint flat config, tsconfig | 경로는 설정 파일 기준, plugin은 설정 파일 위치에서 npm으로 찾음 |
+| git config, `.npmrc` | 사용자 설정 위에 project 설정을 겹쳐 씀 |
+| npm, Deno | `npm:` 표기, `github:owner/repo#ref` |
+| Vercel `skills`, lazy.nvim | 출처와 고정한 버전을 lock 파일에 적음 |
 
-공통점은 셋입니다. 첫째, **출처와 고정한 버전을 lock 파일 하나에 적습니다.** 둘째, **설치하는 곳은 정해진 폴더 하나입니다.** 셋째, **배포물은 빌드된 상태입니다.** 받는 쪽에서 빌드하지 않습니다.
+공통점은 셋입니다. 출처와 버전을 lock 파일에 적고, 설치하는 곳이 정해져 있고, 배포물은 빌드된 상태입니다.
 
 ## Ideas
 
-**1. 설치와 출처 기록**
+**설정 (`adoc.yaml`)**
 
-- `adoc plugin install <source> [--user]`
-  - source 형식:
-    - `github:owner/repo[/path][@ref]`
-    - git URL
-    - npm 패키지 이름
-    - 로컬 경로
-  - 받은 plugin을 plugin 디렉터리에 둡니다. 기본은 project(`.adoc/plugins/<이름>/`)이고, `--user`면 user(`~/.config/adoc/plugins/<이름>/`)입니다.
-  - plugin에 `package.json`이 있으면 그 폴더에서 `npm install --omit=dev`를 실행합니다.
-  - 마지막으로 그 plugin의 skill을 같은 scope에 설치합니다(`adoc skill install`과 같은 함수).
-- **출처는 plugin 디렉터리마다 lock 파일 하나에 적습니다:** `.adoc/plugins/plugins-lock.json`, `~/.config/adoc/plugins/plugins-lock.json`. 이름마다 `{ source, ref, resolved }`를 적고, `resolved`는 git commit 또는 npm 버전입니다. `skills-lock.json`과 같은 방식입니다.
-  - user plugin은 여러 workspace가 함께 쓰므로, 출처를 workspace 설정(`adoc.yaml`)이 아니라 plugin 디렉터리 쪽에 둡니다.
-- `adoc.yaml`의 선언은 지금처럼 `- key: TODO, from: todo`입니다. `install`은 설정을 고치지 않고 붙여 넣을 줄만 보여 줍니다(`--key TODO`를 주면 직접 추가).
-- `adoc plugin uninstall <이름> [--user]`는 폴더, lock 항목, skill을 함께 지웁니다.
+```yaml
+plugins:                                   # 무엇을 어떤 key로 쓰는가
+  TODO: npm:@agent-workshop/adoc-plugin-todo
+  NOTE: ../../plugins/note                 # 디렉터리
+  TASK: ./plugins/task                     # 권장 위치 .adoc/plugins/task
+  SKETCH: github:user/project/some/folder/sketch#v1.2
+  MINDMAP: off                             # 사용자 설정의 plugin을 이 workspace에서 끔
+watch:
+  - ../docs
+ui:
+  tabs: [NOTE, TODO, SKETCH, TASK, KANBAN] # 빠진 key는 선언 순서대로 뒤에
+```
 
-**2. 업데이트**
-
-- `adoc plugin update [이름…] [--user]`: lock의 출처에서 다시 받습니다. ref가 branch면 최신 commit, tag나 버전이면 그대로 둡니다(`--ref`로 바꿈). 그다음 `npm install`과 skill 갱신을 하고, `resolved`를 새로 적습니다.
-- `adoc plugin list`에 출처와 `resolved`를 보여 줍니다. `--outdated`는 새 버전이 있는지 확인합니다.
-- **배포 규칙:** 브라우저 코드(`client/`)가 있는 plugin은 빌드된 `client/`를 배포물에 포함해야 합니다. adoc은 받는 쪽에서 빌드하지 않습니다. npm 패키지는 이 규칙이 자연스럽고(`npm pack`이 `client/`를 넣음), GitHub 저장소라면 빌드 결과를 commit하거나 release 파일로 냅니다.
-
-**3. hot reload (여러 파일 plugin)**
-
-- **plugin 전체를 다시 읽기:** 이미 쓰는 Node resolve hook(`module.registerHooks`)에서, plugin을 다시 불러올 때 붙이는 `?adoc-load=N`을 plugin 폴더 안의 상대 import에도 그대로 붙입니다. 그러면 `index.ts`가 import하는 `./lib.ts`도 새 사본으로 읽혀 module graph 전체가 새로 고쳐집니다. 옛 module은 메모리에 남지만 개발 중 reload 횟수 정도라 문제되지 않습니다. 서버 구조는 바뀌지 않습니다.
-- **감시 범위:** plugin 폴더를 재귀로 감시하되 `node_modules/`, `client/`, `skill/` 아래는 뺍니다. 하위 폴더마다 감시를 걸고, 제외 폴더에는 걸지 않습니다.
-- **plugin 하나 = 폴더 하나** 규칙은 그대로입니다. 가이드의 "`index.ts` 하나에 담으라"는 말은 "`index.ts`가 진입점이고, 폴더 안 다른 파일을 import해도 된다"로 바꿉니다.
+```mermaid
+flowchart LR
+  U["~/.config/adoc/adoc.yaml<br/>(사용자 설정)"] --> M[겹쳐 쓴 설정]
+  P[".adoc/adoc.yaml<br/>(project 설정)"] --> M
+  M --> L[plugin load]
+```
 
 ## Open questions
 
-- source 형식을 위 네 가지로 할까요? 처음에는 `github:`와 npm만 지원하는 것도 방법입니다.
-- 받는 쪽 버전 호환성: plugin이 필요한 adoc(plugin-kit) 버전을 `package.json`의 `peerDependencies` 또는 `"adoc": { "pluginKit": "^0.1" }`로 적고, 설치나 업데이트 때 맞지 않으면 거부할까요?
-- `adoc plugin install`이 `adoc.yaml`에 선언까지 넣을지(`--key`가 있을 때만), 아니면 항상 사람이 넣게 할지.
-- MCP에서 install/update를 거부할지. skill install처럼 거부하는 것이 일관됩니다(추천).
+- plugin hot reload가 `index.ts`만 다시 읽는 문제(여러 파일 plugin)는 이번 범위에서 빼고 TODO로 둘까요? (지금 동작은 skill에 정확히 적혀 있습니다.)
+- `.adoc/plugins-lock.json`을 commit할지는 `skills-lock.json`처럼 사용자가 정하게 할까요?
 
 ## Decisions
 
-- (아직 없음)
+- 기본 plugin 다섯 개는 각각 npm package `@agent-workshop/adoc-plugin-<name>`로 배포합니다. adoc(CLI)을 설치하면 함께 설치되고, plugin마다 따로 업데이트할 수 있습니다.
+- webapp은 `@agent-workshop/adoc-webapp`으로 따로 publish합니다.
+- **설치와 사용을 나눕니다.** `plugins`는 `KEY: <출처>`의 map으로 "무엇을 어떤 key로 쓰는가"만 적고, 탭 순서는 `ui.tabs`에 따로 둡니다.
+- **출처 표기:** `npm:<package>[@<범위>]`, `github:<owner>/<repo>[/<폴더>][#<ref>]`, 그리고 `./`, `../`, `/`로 시작하는 디렉터리. `off`는 그 key를 끕니다.
+- **설정의 모든 상대경로는 그 설정 파일이 있는 폴더 기준입니다.** `watch`도 같아서 project 설정에서는 `../docs`입니다.
+- **사용자 설정 `~/.config/adoc/adoc.yaml`을 먼저 읽고, project 설정 `.adoc/adoc.yaml`을 위에 겹칩니다.** key 단위로 project가 이기고, `off`로 끌 수 있습니다. 팀이 함께 쓰는 plugin은 project 설정에 적습니다.
+- **`npm:` 출처는 그것을 선언한 설정 파일의 폴더에서 Node 방식으로(위로 올라가며) 찾고, 없으면 adoc 설치본에서 찾습니다.** project는 `.adoc/node_modules`와 `<project>/node_modules`, 사용자는 `~/.config/adoc/node_modules`(`npm i --prefix ~/.config/adoc …`)입니다. project에 설치한 버전이 내장 버전보다 먼저 잡히므로 plugin 하나만 올릴 수 있습니다.
+- **`github:` 출처는 그 설정 파일 옆 `plugins/<key 소문자>/`로 받습니다**(project는 `.adoc/plugins/`, 사용자는 `~/.config/adoc/plugins/`). 받은 commit은 그 옆 `plugins-lock.json`에 적습니다. 받으면 바로 동작해야 하고(빌드 결과와 의존성 포함), adoc은 받는 쪽에서 빌드하지 않습니다.
+- **받은 폴더는 고치지 않습니다.** 고치려면 다른 폴더로 복사해서 경로로 선언합니다. 업데이트할 때 받은 폴더가 바뀌어 있으면 거부합니다.
+- `adoc plugin install`은 선언되었지만 아직 받지 않은 `github:` 출처를 받고, `adoc plugin update [KEY…]`는 다시 받습니다. `npm:` 출처의 설치와 업데이트는 npm으로 합니다. 둘 다 MCP에서는 거부합니다(skill 명령과 같음). (agent의 결정)
+- **호환성:** plugin은 `package.json`의 `peerDependencies`에 `@agent-workshop/adoc-plugin-kit` 범위를 적고, adoc은 load할 때 범위를 검사해 맞지 않으면 알기 쉬운 load 오류를 냅니다.
+- 이름만 쓰는 출처와 `~/.config/adoc/plugins/`를 찾는 규칙은 없앱니다. 출시 전이라 옛 형식은 지원하지 않고, 옛 형식을 만나면 새 형식을 알려 주는 오류를 냅니다.
+- `adoc init`은 기본 plugin 다섯 개를 `npm:`으로 선언하고 `ui.tabs`를 씁니다.
