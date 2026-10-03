@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { access, readdir, readFile } from 'node:fs/promises';
 import { createConnection } from 'node:net';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -63,15 +63,25 @@ export function herdrSubscribe(socketPath: string, subscriptions: unknown[], onE
   return () => socket.destroy();
 }
 
-/** The socket of every herdr session on this computer, by session name. */
+/**
+ * The socket of every herdr session on this computer, by session name: the `default` session at
+ * `~/.config/herdr/herdr.sock`, then each named one at `~/.config/herdr/sessions/<name>/herdr.sock`, as `herdr session list` shows them.
+ */
 export async function herdrSessions(home = homedir()): Promise<Array<{ name: string; socket: string }>> {
-  const root = join(home, '.config', 'herdr', 'sessions');
+  const base = join(home, '.config', 'herdr');
+  const sessions: Array<{ name: string; socket: string }> = [];
   try {
-    const names = await readdir(root);
-    return names.map((name) => ({ name, socket: join(root, name, 'herdr.sock') }));
+    await access(join(base, 'herdr.sock'));
+    sessions.push({ name: 'default', socket: join(base, 'herdr.sock') });
   } catch {
-    return [];
+    // no default session
   }
+  try {
+    for (const name of await readdir(join(base, 'sessions'))) sessions.push({ name, socket: join(base, 'sessions', name, 'herdr.sock') });
+  } catch {
+    // no named sessions
+  }
+  return sessions;
 }
 
 export async function herdrPanes(socketPath: string): Promise<HerdrPane[]> {

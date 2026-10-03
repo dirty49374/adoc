@@ -22,12 +22,12 @@ afterEach(async () => {
   for (const cleanup of cleanups.splice(0)) await cleanup();
 });
 
-/** A fake herdr home with one NDJSON socket per session. */
+/** A fake herdr home with one NDJSON socket per session, laid out as herdr does: `default` at the top, the others under sessions/. */
 async function fakeHerdr(sessions: FakeSession[]): Promise<string> {
   const home = await mkdtemp(join(tmpdir(), 'adoc-herdr-'));
   const servers: Server[] = [];
   for (const session of sessions) {
-    const dir = join(home, '.config', 'herdr', 'sessions', session.name);
+    const dir = session.name === 'default' ? join(home, '.config', 'herdr') : join(home, '.config', 'herdr', 'sessions', session.name);
     await mkdir(dir, { recursive: true });
     const server = createServer((socket) => {
       socket.on('data', (chunk) => {
@@ -65,7 +65,7 @@ describe('resolveAgentPane', () => {
   it('prefers --pane, then falls back to HERDR_PANE_ID, and fails clearly otherwise', async () => {
     const home = await fakeHerdr(sessions());
     expect((await resolveAgentPane({ HOME: home }, { pane: 'w2:p3' })).via).toBe('option');
-    const sock = join(home, '.config/herdr/sessions/default/herdr.sock');
+    const sock = join(home, '.config/herdr/herdr.sock');
     expect(await resolveAgentPane({ HOME: home, HERDR_PANE_ID: 'w1:p1', HERDR_SOCKET_PATH: sock })).toMatchObject({ via: 'environment', herdrSession: 'default' });
     await expect(resolveAgentPane({ HOME: home })).rejects.toThrow(/--pane/);
   });
