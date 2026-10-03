@@ -19,6 +19,8 @@ import { TerminalRelay } from './terminal.js';
 import type { Workspace } from './workspace.js';
 
 export const PROTOCOL = 'adoc/1';
+/** The version of this adoc, from the core package. */
+export const VERSION: string = (createRequire(import.meta.url)('../package.json') as { version: string }).version;
 
 /** A _Browser_Session_ as the server tracks it. */
 export interface BrowserSession {
@@ -409,6 +411,7 @@ export class AdocServer {
       return sendJson(response, 200, {
         name: ws.name,
         root: ws.root,
+        version: VERSION,
         revision: ws.revision,
         agent: this.agentInfo(),
         git: ws.git,
