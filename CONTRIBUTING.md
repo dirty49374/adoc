@@ -69,6 +69,6 @@ pnpm build                                   # also collects the licenses of the
 pnpm -r --filter './packages/*' --filter './plugins/*' --filter '!@agent-workshop/adoc-testing' pack --pack-destination dist
 ```
 
-- `pnpm pack` replaces `workspace:*` with the version and runs each package's `prepack`, which copies `LICENSE` and `THIRD_PARTY_NOTICES.md` into it (`tooling/package-files.mjs`).
+- `pnpm pack` replaces `workspace:*` with the version and runs each package's `prepack`, which copies `LICENSE` and `THIRD_PARTY_NOTICES.md` into it, and for the CLI also `README.md` with its relative links made absolute for npm (`tooling/package-files.mjs`).
 - The builds of the web UI and the SKETCH client write the inventory and license files of every bundled package into `dist/licenses/` and `client/licenses/` (`tooling/licenses.mjs`); a package published without a license file needs its upstream text in `tooling/licenses/<name>/`.
 - Before publishing, install the tarballs into an empty folder (with a temporary `HOME`) and try `adoc init`, `adoc plugin list`, `adoc skill install`, `adoc server run` and `adoc mcp run`.

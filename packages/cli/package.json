@@ -24,7 +24,7 @@
     "build": "tsc -b && node build.mjs",
     "check": "tsc -b && tsc -p test",
     "test": "vitest run --testTimeout 20000",
-    "prepack": "node ../../tooling/package-files.mjs"
+    "prepack": "node ../../tooling/package-files.mjs --readme"
   },
   "devDependencies": {
     "@types/shell-quote": "1.7.5",
@@ -33,6 +33,7 @@
   "files": [
     "dist",
     "LICENSE",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "README.md"
   ]
 }

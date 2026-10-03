@@ -21,7 +21,6 @@ const result = await build({
   platform: 'browser',
   format: 'esm',
   minify: true,
-  sourcemap: true,
   jsx: 'automatic',
   define: { 'process.env.NODE_ENV': '"production"' },
   metafile: true,

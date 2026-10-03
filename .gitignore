@@ -9,3 +9,4 @@ packages/*/LICENSE
 packages/*/THIRD_PARTY_NOTICES.md
 plugins/*/LICENSE
 plugins/*/THIRD_PARTY_NOTICES.md
+packages/cli/README.md
