@@ -103,7 +103,7 @@ list _Plugin_Tab_Bar_ in shell = {
   shows _adoc:Plugin_Key_
   part of _App_Shell_
 .contract
-  - _Plugin_Tab_Bar_ must show one row per _adoc:Plugin_ in the order of _adoc:Adoc_Config_, labelled with its _adoc:Plugin_Key_.
+  - _Plugin_Tab_Bar_ must show one row per _adoc:Plugin_ in the order of `ui.tabs` of the _adoc:Adoc_Config_, then the other plugins in the order they are declared, labelled with its _adoc:Plugin_Key_.
   - _Plugin_Tab_Bar_ must lead to `/p/:plugin` when a tab is chosen, and must mark the tab of the current route.
   - Choosing a tab must keep the _Document_List_Pane_ unfolded until the pointer leaves both the _Plugin_Tab_Bar_ and the _Document_List_Pane_.
   - _Plugin_Tab_Bar_ must mark a tab whose _adoc:Plugin_ failed to load.

@@ -41,9 +41,12 @@ concept _Adoc_Home_ in workspace = {
 }
 
 concept _Adoc_Config_ in workspace = {
-  The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, the server address and the default colour scheme of the web UI of one _Adoc_Workspace_.
+  The file `.adoc/adoc.yaml` that declares the plugins, the watch paths, the assigned agent with its message transport, the server address, the order of the plugin tabs and the default colour scheme of the web UI of one _Adoc_Workspace_, laid over the _User_Config_.
 .relations
-  references _adoc:Plugin_Directory_
+  references _adoc:Adoc_CLI_
+  references _adoc:Plugin_Tab_
+  references _adoc:Plugin_Source_
+  references _adoc:User_Config_
   references _adoc:Agent_Claim_
   configures _Adoc_Workspace_
   inside _Adoc_Home_
@@ -55,14 +58,39 @@ concept _Adoc_Config_ in workspace = {
   configures _Adoc_Server_
   configures _Web_UI_Theme_
 .contract
-  - Each _Plugin_ declared in an _Adoc_Config_ must name its source as a bare name looked up in the _Plugin_Directory_ entries, a local path or an npm package, and the _Plugin_Key_ under which it is used.
+  - An _Adoc_Config_ must declare its plugins under `plugins` as a map from each _Plugin_Key_ to its _Plugin_Source_, or to `off`, which leaves out a _Plugin_ that the _User_Config_ declares.
+  - Every relative path in an _Adoc_Config_, in a _Plugin_Source_ and in `watch` alike, must be taken from the folder of the file itself, so `../docs` is the `docs` folder of the _Adoc_Workspace_.
+  - An _Adoc_Config_ may declare the order of the _Plugin_Tab_ entries as `ui.tabs`, a list of _Plugin_Key_ values; plugins it does not list follow in the order they are declared.
+  - The _Adoc_CLI_ must refuse an _Adoc_Config_ in an earlier format with an error that shows the current one.
   - An _Adoc_Config_ must declare exactly one _Assigned_Agent_ with a name and one _User_Message_Transport_ with the settings of its kind.
   - An _Adoc_Config_ must declare the host and port of the _Adoc_Server_.
   - An _Adoc_Config_ may declare the default colour scheme of the _Web_UI_Theme_ as `ui.theme`: dark, light or system; dark when it is not declared.
 .remarks
   - Chosen: the _Adoc_Config_ assigns the _Plugin_Key_, so one plugin package may serve two keys in one workspace.
-  - Example: `plugins: [{key: TODO, from: ./.adoc/plugins/todo}]`, `watch: [docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`, `ui: {theme: dark}`.
+  - Example: `plugins: {TODO: npm:@agent-workshop/adoc-plugin-todo, TASK: ./plugins/task}`, `watch: [../docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`, `ui: {tabs: [TODO, TASK], theme: dark}`.
+  - Chosen: the plugins are a map and the tab order a separate list, so that what a workspace uses and how it shows it are declared apart.
+  - Chosen: paths are taken from the file, as in tsconfig and ESLint, because a _User_Config_ has no workspace to start from.
   - Chosen: the herdr kind needs no target in the _Adoc_Config_; the target comes from the _Agent_Claim_.
+}
+
+concept _User_Config_ in workspace = {
+  The file `adoc/adoc.yaml` in the XDG config directory of the user, usually `~/.config/adoc/adoc.yaml`, in the format of the _Adoc_Config_, which declares what the user wants in every _Adoc_Workspace_ on this computer.
+.relations
+  references _adoc:Adoc_CLI_
+  references _adoc:Adoc_Server_
+  references _adoc:Adoc_Workspace_
+  references _adoc:Plugin_
+  references _adoc:Adoc_Config_
+  references _adoc:Plugin_Source_
+  references _adoc:Plugin_Key_
+  underlies _Adoc_Config_
+.contract
+  - The _Adoc_CLI_ and the _Adoc_Server_ must read the _User_Config_ first and lay the _Adoc_Config_ over it: each _Plugin_Key_ and each other setting of the _Adoc_Config_ replaces the one of the _User_Config_.
+  - A missing _User_Config_ must count as an empty one.
+.remarks
+  - Example: a user who installed a mindmap plugin declares `MINDMAP: npm:adoc-plugin-mindmap` in the _User_Config_ and finds it in every workspace; a workspace that does not want it declares `MINDMAP: off`.
+  - Chosen: layering as in git config and `.npmrc`, rather than copying the _User_Config_ at `adoc init`, so that a plugin installed later reaches the existing workspaces.
+  - Chosen: a plugin the team shares belongs in the _Adoc_Config_; a document of a _Plugin_ that only one user's _User_Config_ declares shows as an unknown plugin key to the others.
 }
 
 concept _Watch_Path_ in workspace = {
@@ -104,6 +132,8 @@ concept _Assigned_Agent_ in workspace = {
 concept _Adoc_CLI_ in surface = {
   The `adoc` command line, whose commands take the form `adoc <noun> <verb>` in the manner of aterm and serve both people and the _Assigned_Agent_.
 .relations
+  references _adoc:Adoc_Config_
+  references _adoc:Plugin_Source_
   references _adoc:Plugin_
   serves _Assigned_Agent_
   references _Document_
@@ -120,7 +150,9 @@ concept _Adoc_CLI_ in surface = {
   starts _Adoc_Server_
   shows _Plugin_Skill_
 .contract
-  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc document list`, `adoc document search`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
+  - The _Adoc_CLI_ must provide `adoc init`, `adoc server run`, `adoc mcp run`, `adoc message wait`, `adoc message list`, `adoc plugin list`, `adoc plugin install`, `adoc plugin update`, `adoc document list`, `adoc document search`, `adoc skill list`, `adoc skill view`, `adoc skill install`, `adoc skill update`, `adoc skill uninstall`, `adoc ui list`, `adoc ui open`, `adoc agent claim`, `adoc agent show` and `adoc check`.
+  - `adoc init` must write an _Adoc_Config_ that declares the five plugins of adoc as npm _Plugin_Source_ entries, `watch: [../docs]` and `ui.tabs`, and must create `.adoc/.gitignore` and the `docs` folder.
+  - `adoc plugin install` and `adoc plugin update` must be refused through the _Adoc_MCP_Tool_, like `adoc skill install`.
   - Every command of the _Adoc_CLI_, also through the _Adoc_MCP_Tool_, must run the _Skill_Check_ and show what it finds as warnings.
   - Every finite result of the _Adoc_CLI_ must support `--output text`, `--output markdown`, `--output json` and `--output yaml`, with text as the default.
   - A command of the _Adoc_CLI_ that needs the running _Adoc_Server_ must find it through the _Server_Record_ and must fail with a clear error when no _Adoc_Server_ is running.
@@ -223,18 +255,42 @@ concept _Plugin_Kit_ in plugin = {
   - Chosen: the authoring guide is shown by `adoc skill view adoc-plugin-authoring`.
 }
 
-concept _Plugin_Directory_ in plugin = {
-  A folder that holds _Plugin_ folders by name: `.adoc/plugins/` of the _Adoc_Workspace_ (project scope) and `adoc/plugins/` in the XDG config directory of the user, usually `~/.config/adoc/plugins/` (user scope).
+concept _Plugin_Source_ in plugin = {
+  Where a _Plugin_ declared in an _Adoc_Config_ or a _User_Config_ comes from: an npm package written `npm:<package>[@<range>]`, a folder of a GitHub repository written `github:<owner>/<repo>[/<folder>][#<ref>]`, or a directory written as a path starting with `./`, `../` or `/`.
 .relations
   references _adoc:Adoc_Workspace_
+  references _adoc:Agent_Skill_
+  references _adoc:Adoc_Config_
+  references _adoc:User_Config_
+  references _adoc:Plugin_Directory_
+  references _adoc:Plugin_Kit_
+  locates _Plugin_
+.contract
+  - An npm _Plugin_Source_ must be resolved as Node resolves a package from the folder of the config file that declares it, walking upwards, and then from the installation of the running adoc.
+  - A GitHub _Plugin_Source_ must be loaded from the folder `<plugin key in lowercase>/` of the _Plugin_Directory_ next to the config file that declares it; `adoc plugin install` fetches the ones not fetched yet, and `adoc plugin update` fetches them again.
+  - A directory _Plugin_Source_ must be loaded from that directory, taken from the folder of the config file that declares it.
+  - A _Plugin_ has the scope of the place it is loaded from: project when it is inside the _Adoc_Workspace_, user otherwise; its _Agent_Skill_ is installed in the same scope.
+  - A _Plugin_ imports `@agent-workshop/adoc-plugin-kit` of the running adoc wherever its folder is; when its `package.json` declares a range of `@agent-workshop/adoc-plugin-kit` in `peerDependencies` that the running one does not satisfy, it must fail to load with an error that names both versions.
+.remarks
+  - Chosen: the notation of npm and Deno for `npm:`, of npm for `github:`, and the `owner/repo/folder` shorthand of herdr plugins and the `skills` CLI.
+  - Chosen: the five plugins of adoc are npm packages `@agent-workshop/adoc-plugin-<name>` that adoc depends on, so they come with adoc and a workspace may install a newer one of them for itself.
+  - Example: a project installs `npm i -D @agent-workshop/adoc-plugin-todo@latest`; `npm:@agent-workshop/adoc-plugin-todo` then resolves to that one before the one that came with adoc.
+  - Example: the user installs a plugin for every workspace with `npm i --prefix ~/.config/adoc <package>` and declares it in the _User_Config_.
+}
+
+concept _Plugin_Directory_ in plugin = {
+  The folder `plugins/` next to an _Adoc_Config_ or a _User_Config_, usually `.adoc/plugins/` or `~/.config/adoc/plugins/`: the recommended place for a plugin written for that scope, and where GitHub _Plugin_Source_ entries are fetched to.
+.relations
+  references _adoc:Adoc_Config_
+  references _adoc:User_Config_
+  references _adoc:Adoc_Workspace_
+  references _adoc:Plugin_Source_
   holds _Plugin_
   inside _Adoc_Home_
-  read by _Adoc_Config_
-  references _Agent_Skill_
 .contract
-  - A plugin source in the _Adoc_Config_ that is a bare name must be looked up as a folder of that name in the project _Plugin_Directory_ first, then in the user _Plugin_Directory_; a path and an npm package name keep working.
-  - A _Plugin_ has the scope of the place it is loaded from: project when it is inside the _Adoc_Workspace_, user otherwise; its _Agent_Skill_ is installed in the same scope.
-  - A _Plugin_ may have its own `package.json` with dependencies installed in its folder; it imports `@agent-workshop/adoc-plugin-kit` of the running adoc wherever its folder is.
+  - A _Plugin_Directory_ must record each fetched GitHub _Plugin_Source_ with the commit it fetched in `plugins-lock.json` beside its plugin folders.
+  - A fetched folder must work as fetched: adoc must not build it or install its dependencies.
+  - `adoc plugin update` must refuse to replace a fetched folder whose files differ from the commit it recorded; to change a fetched _Plugin_, the user copies it to another folder and declares that directory.
 .remarks
   - Chosen: the XDG base directory convention (`$XDG_CONFIG_HOME`, default `~/.config`).
 }
@@ -375,7 +431,7 @@ procedure _Skill_Install_Command_ in surface = {
   references _adoc:Plugin_Skill_
   part of _Adoc_CLI_
   installs _Agent_Skill_
-  references _Plugin_Directory_
+  references _Plugin_Source_
   references _Adoc_MCP_Tool_
 .contract
   - `adoc skill install` must install the skills of the core package and the _Plugin_Kit_ in user scope, and the _Plugin_Skill_ of each _Plugin_ in the scope of that _Plugin_, by running `skills add <folder>`; `--agent` passes the agents on.
