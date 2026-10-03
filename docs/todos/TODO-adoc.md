@@ -17,7 +17,7 @@
 - [x] A README for users (install, requirements: Node 24, herdr 0.9.3 or later recommended, git; quick start); move the developer part elsewhere; done: README.md for users, CONTRIBUTING.md for developers with the release steps
 - [x] Warn when the server listens beyond loopback without authentication; done: a warning line at server start
 - [x] Versioning: start at 0.1.0, move all packages together; how a plugin states the plugin-kit version it needs (see [[NOTE-261002-plugin-sources]]); done: all packages share one version, 0.1.0 first (CONTRIBUTING.md); plugins state the kit range in `peerDependencies`
-- [ ] Publish adoc as public npm packages, see [[NOTE-261002-installation]]
+- [x] Publish adoc as public npm packages, see [[NOTE-261002-installation]]; done: the nine packages 0.1.0 on npm (`npm install -g @agent-workshop/adoc`), source at https://github.com/dirty49374/adoc
 - [ ] After publishing: CI (build, test, check, `aterm corpus check`) and publish on tags
 - [x] Rename the packages into the npm org `@agent-workshop` (aterm's org), each as `adoc-…` so no name clashes there: `@agent-workshop/adoc` (the CLI, command `adoc`), `@agent-workshop/adoc-core`, `@agent-workshop/adoc-plugin-kit`, `@agent-workshop/adoc-webapp`, `@agent-workshop/adoc-plugin-sketch`, `@agent-workshop/adoc-testing` (private); plugins and the skills import `@adoc/plugin-kit` today, so the resolve hook, the plugins and both skills change too; done: every package, import, the resolve hook, both skills, the spec and the README use the new names
 
