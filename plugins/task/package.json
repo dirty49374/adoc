@@ -1,6 +1,6 @@
 {
   "name": "@agent-workshop/adoc-plugin-task",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "0BSD",
   "type": "module",
   "description": "The TASK plugin of adoc: work orders that go from TODO through RUNNING and REVIEW to DONE.",
