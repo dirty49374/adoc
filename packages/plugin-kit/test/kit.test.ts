@@ -25,6 +25,13 @@ describe('markdown', () => {
     expect(out).toContain('data-adoc-ref="TODO-x#3"');
   });
 
+  it('shows task list items with read-only checkboxes', () => {
+    const out = markdown('- [x] done\n- [ ] open\n- plain [ ] item\n').html;
+    expect(out).toContain('<li class="adoc-task-item"><input type="checkbox" disabled checked> done</li>');
+    expect(out).toContain('<li class="adoc-task-item"><input type="checkbox" disabled> open</li>');
+    expect(out).toContain('<li>plain [ ] item</li>');
+  });
+
   it('escapes raw HTML in the text', () => {
     expect(markdown('<script>x</script>').html).not.toContain('<script>');
   });

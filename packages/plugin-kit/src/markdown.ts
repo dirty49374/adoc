@@ -1,5 +1,5 @@
 import hljs from 'highlight.js/lib/common';
-import markdownIt, { type MarkdownIt, type StateInline } from 'markdown-it';
+import markdownIt, { type MarkdownIt, type StateCore, type StateInline, type Token } from 'markdown-it';
 import { parse as parseYaml } from 'yaml';
 import { raw } from './html.js';
 import { ref } from './markup.js';
@@ -21,11 +21,29 @@ function referenceRule(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
+/** A list item starting with `[ ] ` or `[x] ` shows a read-only checkbox, as in GitHub's task lists. */
+function taskListRule(state: StateCore): void {
+  const tokens = state.tokens;
+  for (let i = 2; i < tokens.length; i++) {
+    const inline = tokens[i]!;
+    if (inline.type !== 'inline' || tokens[i - 1]!.type !== 'paragraph_open' || tokens[i - 2]!.type !== 'list_item_open') continue;
+    const first = inline.children?.[0];
+    const match = first?.type === 'text' ? /^\[([ xX])\] /.exec(first.content) : null;
+    if (!first || !match) continue;
+    first.content = first.content.slice(match[0].length);
+    const box = new state.Token('html_inline', '', 0);
+    box.content = `<input type="checkbox" disabled${match[1] === ' ' ? '' : ' checked'}> `;
+    inline.children!.unshift(box);
+    tokens[i - 2]!.attrJoin('class', 'adoc-task-item');
+  }
+}
+
 function createParser(): MarkdownIt {
   // A fence that names a known language gets highlight.js `hljs-*` classes, which the web UI theme colours.
   const highlight = (code: string, language: string) => (language && hljs.getLanguage(language) ? hljs.highlight(code, { language, ignoreIllegals: true }).value : '');
   const md = markdownIt({ html: false, linkify: true, highlight });
   md.inline.ruler.before('link', 'adoc_ref', referenceRule);
+  md.core.ruler.after('inline', 'adoc_task_list', taskListRule);
   md.renderer.rules.adoc_ref = (tokens, idx) => ref(tokens[idx]!.content).html;
   // A ```mermaid fence stays its escaped source, marked for the web UI, which draws it as a diagram.
   const fence = md.renderer.rules.fence!;
@@ -53,6 +71,7 @@ export interface MarkdownOptions {
  * Renders Markdown to trusted HTML.
  * - `[[KEY]]` and `[[KEY#anchor]]` become reference links.
  * - With `file`, every block element gets its source position, so comments carry `file:line`.
+ * - A list item starting with `[ ] ` or `[x] ` gets a read-only checkbox.
  * - A fenced block of a known language is syntax-highlighted; a ```mermaid block is drawn as a diagram by the web UI.
  * - Raw HTML in the text is escaped.
  */
