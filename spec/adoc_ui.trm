@@ -53,6 +53,7 @@ panel _App_Shell_ in shell = {
   - _App_Shell_ must resolve every route under the _adoc:Web_UI_Base_, so that `/p/:plugin` is `/mldev_7700/p/:plugin` under a hub.
   - _App_Shell_ must show the _Workspace_Home_Panel_ at the route `/`, the _Document_List_Pane_ at `/p/:plugin`, and the _Document_List_Pane_ beside the _Document_Detail_Pane_ at `/p/:plugin/:document`, the _Document_List_Pane_ beside the _Skill_View_ of the plugin's skill at `/p/:plugin/skill`, and the _Skill_View_ of a skill of no plugin at `/skills/:name`.
   - _App_Shell_ must show the _Message_Dock_ at every route.
+  - _App_Shell_ must fill the visible window like an app: the page itself never scrolls, no region bounces when scrolled past its end (rubber-banding), and a double tap does not zoom; only the regions inside it scroll.
   - _App_Shell_ must show the _Comment_Composer_ at every route, apart from the _Message_Dock_, so that typing a message is never confused with typing in the _Terminal_Panel_: on a pointer device floating over the bottom of the main area, as wide as the reading column of the _Document_Detail_Pane_ and centred on it also while a pinned _Document_List_Pane_ takes width; on a touch device as a band across the whole width at the bottom of the page, opposite the top bar, below the main area and the _Message_Dock_, covering neither.
 .states
   - _App_Shell_ is one of connecting, connected, disconnected; in disconnected the user sees the last loaded content and the _Connection_Status_Label_ says the server is unreachable.
@@ -184,6 +185,7 @@ list _Document_List_Pane_ in document = {
   - _Document_List_Pane_ must link, in small text after the plugin key and a separator (`KANBAN | SKILL.md`) in its title row, to the _Skill_View_ of the _adoc:Plugin_Skill_ of its plugin.
   - _Document_List_Pane_ must leave out archived documents, and must show only the archived ones while the user turns on its archive button in the title row.
   - _Document_List_Pane_ must fold into a narrow rail while a _adoc:Document_ is shown, unfold over the _Document_Detail_Pane_ while the pointer is on it or while a chosen plugin tab holds it open, and stay unfolded when the user pins it, with the same pin and fold behaviour as the _Comment_Composer_.
+  - On a touch device, such as an iPad, choosing a _adoc:Document_ in the unfolded, unpinned _Document_List_Pane_ must fold it into its rail at once, and it must stay folded until the user taps the rail or chooses a plugin tab: a touch keeps the pointer on the pane after the tap.
   - At `/p/:plugin` without a document, _Document_List_Pane_ must open its top _adoc:Document_ in the chosen order.
 .states
   - _Document_List_Pane_ is one of loading, empty, showing, plugin-error; in empty the user sees that the plugin has no documents; in plugin-error the user sees the load error of the _adoc:Plugin_.

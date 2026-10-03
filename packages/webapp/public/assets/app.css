@@ -78,6 +78,12 @@
 /* ---- base ---- */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
+/* like an app (_App_Shell_): the page never scrolls, nothing bounces past its end (iPad, phones), a double tap never zooms,
+   and the height follows the visible window when the browser's bars come and go */
+html, body { overflow: hidden; }
+* { overscroll-behavior: none; }
+body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+#root { height: 100dvh; }
 body { font: var(--adoc-size-base) / 1.6 var(--adoc-font-text); background: var(--adoc-surface); color: var(--adoc-text); -webkit-font-smoothing: antialiased; }
 h1, h2, h3, h4, h5, h6 { font-size: 1em; }
 a { color: var(--adoc-md-link); }
@@ -169,10 +175,11 @@ button.workspace-name { background: transparent; padding: 0; font-size: inherit;
 .shell-column { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
 
 /* pin and fold (fold.tsx): an unpinned foldable shows its fold-closed part, and its fold-open part while the pointer
-   is on it, a text input in it has focus, or something holds it open (`held`, such as a chosen plugin tab) */
+   is on it, a text input in it has focus, or something holds it open (`held`, such as a chosen plugin tab); `dismissed`
+   folds it whatever the pointer does (a touch device, after a choice in it) */
 .foldable:not(.unpinned) .fold-closed,
-.foldable.unpinned:is(:hover, :has(textarea:focus), .held) .fold-closed,
-.foldable.unpinned:not(:hover):not(:has(textarea:focus)):not(.held) .fold-open { display: none; }
+.foldable.unpinned:not(.dismissed):is(:hover, :has(textarea:focus), .held) .fold-closed,
+.foldable.unpinned:is(.dismissed, :not(:hover):not(:has(textarea:focus)):not(.held)) .fold-open { display: none; }
 /* measuring: a folded region laid out open but invisible for one synchronous measurement (CommentComposer) */
 .foldable.measuring .fold-open { display: block !important; visibility: hidden; }
 .foldable.measuring .fold-closed { display: none !important; }
@@ -197,7 +204,7 @@ button.workspace-name { background: transparent; padding: 0; font-size: inherit;
 .plugin-route.list-unpinned .document-list-slot { width: 0; } /* the rail overlays the detail pane's left padding, so the reading column lines up with the composer */
 .document-list-pane { position: absolute; inset: 0; background: var(--adoc-surface-panel); display: flex; flex-direction: column; z-index: 6; }
 .document-list-pane.unpinned { width: 32px; }
-.document-list-pane.unpinned:is(:hover, :has(textarea:focus), .held) { width: 280px; box-shadow: var(--adoc-shadow); }
+.document-list-pane.unpinned:not(.dismissed):is(:hover, :has(textarea:focus), .held) { width: 280px; box-shadow: var(--adoc-shadow); }
 .pane-rail { writing-mode: vertical-rl; padding: 10px 7px; font-size: var(--adoc-size-tiny); font-weight: 700; color: var(--adoc-text-muted); letter-spacing: 0.06em; }
 .pane-title-name { display: inline-flex; align-items: baseline; gap: 6px; }
 .title-separator { color: var(--adoc-border); font-weight: 400; }

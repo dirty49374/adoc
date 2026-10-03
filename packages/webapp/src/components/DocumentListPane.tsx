@@ -18,9 +18,9 @@ type ListState = { phase: 'loading' } | { phase: 'plugin-error'; error: string }
 /**
  * _Document_List_Pane_: one row per document of the plugin, in the order this browser chose (last update first by default),
  * without archived documents unless the archive button shows only them; `onPin` offers pinning while a document is shown,
- * `held` keeps it unfolded, and `openTop` opens the top document when none is chosen.
+ * `held` keeps it unfolded, `dismissed` folded (`onChoose` reports a chosen document, `onRailTap` a tap on the rail), and `openTop` opens the top document when none is chosen.
  */
-export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned, held, openTop }: { pluginKey: string; selected?: string; pinned: boolean; onPin?: (pinned: boolean) => void; unpinned: boolean; held: boolean; openTop: boolean }) {
+export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned, held, dismissed, onChoose, onRailTap, openTop }: { pluginKey: string; selected?: string; pinned: boolean; onPin?: (pinned: boolean) => void; unpinned: boolean; held: boolean; dismissed: boolean; onChoose: () => void; onRailTap: () => void; openTop: boolean }) {
   const navigate = useNavigate();
   const skill = useWorkspace()?.plugins.find((p) => p.key === pluginKey)?.skill;
   const { revision } = useLive();
@@ -56,8 +56,10 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned,
   }, [top, pluginKey, navigate]);
 
   return (
-    <aside className={`document-list-pane foldable${unpinned ? ' unpinned' : ''}${held ? ' held' : ''}`} data-testid="document-list-pane">
-      <div className="pane-rail fold-closed">{pluginKey}</div>
+    <aside className={`document-list-pane foldable${unpinned ? ' unpinned' : ''}${held ? ' held' : ''}${dismissed ? ' dismissed' : ''}`} data-testid="document-list-pane">
+      <div className="pane-rail fold-closed" onPointerDown={onRailTap}>
+        {pluginKey}
+      </div>
       <div className="pane-title fold-open">
         <span className="pane-title-name">
           {archive ? `${pluginKey} · ARCHIVE` : pluginKey}
@@ -76,7 +78,7 @@ export function DocumentListPane({ pluginKey, selected, pinned, onPin, unpinned,
           {onPin && <PinButton pinned={pinned} onPin={onPin} what="list" testId="list-pin" />}
         </span>
       </div>
-      <div className="document-rows main-scroll fold-open">
+      <div className="document-rows main-scroll fold-open" onClick={(e) => (e.target as Element).closest('.document-row') && onChoose()}>
         {state.phase === 'loading' && <p className="muted">Loading…</p>}
         {state.phase === 'plugin-error' && <p className="error">Plugin {pluginKey} failed to load: {state.error}</p>}
         {state.phase === 'showing' && shown.length === 0 && <p className="muted">{archive ? `No archived ${pluginKey} documents.` : `No ${pluginKey} documents yet.`}</p>}

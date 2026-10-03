@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
+import { TOUCH } from '../device.js';
 import { usePinned } from '../fold.js';
 import { useWorkspace } from '../workspace.js';
 import { DocumentDetailPane } from './DocumentDetailPane.js';
@@ -19,8 +20,14 @@ export function PluginRoute({ view }: { view?: 'skill' }) {
   const unpinned = shown && !pinned;
   // Held open after a plugin tab was chosen, until the pointer is over neither the tab bar nor the list pane.
   const [held, setHeld] = useState(false);
+  // On a touch device nothing hovers: a tap on the rail holds the list open, and choosing a document folds it, also against
+  // the hover that iOS leaves behind a tap, until the rail or a tab is tapped again.
+  const [dismissed, setDismissed] = useState(false);
   useEffect(() => {
-    const hold = () => setHeld(true);
+    const hold = () => {
+      setHeld(true);
+      setDismissed(false);
+    };
     window.addEventListener('adoc:hold-list', hold);
     return () => window.removeEventListener('adoc:hold-list', hold);
   }, []);
@@ -49,7 +56,19 @@ export function PluginRoute({ view }: { view?: 'skill' }) {
   return (
     <div className={`plugin-route${unpinned ? ' list-unpinned' : ''}`}>
       <div className="document-list-slot" ref={slot}>
-        <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={shown ? pin : undefined} unpinned={unpinned} held={held} openTop={!shown} />
+        <DocumentListPane pluginKey={pluginKey!} selected={documentKey} pinned={pinned} onPin={shown ? pin : undefined} unpinned={unpinned} held={held} openTop={!shown}
+          dismissed={dismissed}
+          onChoose={() => {
+            if (!TOUCH) return;
+            setHeld(false);
+            setDismissed(true);
+          }}
+          onRailTap={() => {
+            if (!TOUCH) return;
+            setDismissed(false);
+            setHeld(true);
+          }}
+        />
       </div>
       {view === 'skill' ? (
         skill ? <SkillView name={skill} /> : <div className="pane-placeholder">{pluginKey} has no agent skill.</div>
