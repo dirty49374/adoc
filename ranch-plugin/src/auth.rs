@@ -1,7 +1,9 @@
 //! _Browser_Approval_ (spec/adoc_hub.trm), after herdr-glasses' pairing: a browser asks for a
 //! short code, a person approves or rejects it on any status screen (the first answer wins), and an
 //! approved browser gets a cookie whose hash alone is kept. Fail closed: without a cookie a browser
-//! gets nothing but the code request.
+//! gets nothing but the code request. Every browser reaches the hub from the same address (the
+//! ingress sits behind k3s servicelb, which translates addresses), so no limit and no screen uses
+//! one: the person matches the code on the browser in front of them.
 use base64::Engine;
 use chrono::{DateTime, Duration, Utc};
 use rand::RngCore;
@@ -15,10 +17,8 @@ pub const COOKIE: &str = "adoc_hub";
 pub const CODE_TTL_SECS: i64 = 180;
 /// waiting requests on the whole hub
 pub const MAX_PENDING: usize = 10;
-/// waiting requests of one address
-pub const MAX_PENDING_PER_ADDRESS: usize = 2;
-/// code requests of one address within `RATE_WINDOW_SECS`
-pub const RATE_LIMIT: usize = 5;
+/// code requests on the whole hub within `RATE_WINDOW_SECS`
+pub const RATE_LIMIT: usize = 30;
 pub const RATE_WINDOW_SECS: i64 = 600;
 
 /// 32 random bytes, base64url without padding
@@ -53,7 +53,6 @@ pub struct Browser {
     pub id: String,
     /// hex SHA-256 of the cookie; never the cookie
     pub hash: String,
-    pub address: String,
     pub user_agent: String,
     pub approved_at: DateTime<Utc>,
     pub last_seen: DateTime<Utc>,
@@ -64,8 +63,8 @@ pub struct Pending {
     pub code: String,
     /// the secret the waiting page polls with; only that browser knows it
     pub secret: String,
-    pub address: String,
     pub user_agent: String,
+    pub asked_at: DateTime<Utc>,
     pub expires_at: DateTime<Utc>,
 }
 
@@ -86,8 +85,8 @@ pub struct Approvals {
     pub pending: Vec<Pending>,
     /// decided requests whose browser has not polled yet: secret → outcome
     decided: HashMap<String, (Outcome, DateTime<Utc>)>,
-    /// code requests per address, for the rate limit
-    asked: HashMap<String, Vec<DateTime<Utc>>>,
+    /// recent code requests, for the rate limit
+    asked: Vec<DateTime<Utc>>,
 }
 
 impl Approvals {
@@ -102,20 +101,16 @@ impl Approvals {
     }
 
     /// A new code for a browser, or why not.
-    pub fn ask(&mut self, address: &str, user_agent: &str, now: DateTime<Utc>) -> Result<Pending, String> {
+    pub fn ask(&mut self, user_agent: &str, now: DateTime<Utc>) -> Result<Pending, String> {
         self.expire(now);
-        let times = self.asked.entry(address.to_string()).or_default();
-        times.retain(|t| *t > now - Duration::seconds(RATE_WINDOW_SECS));
-        if times.len() >= RATE_LIMIT {
-            return Err("too many code requests from this address; try again in a few minutes".into());
-        }
-        if self.pending.iter().filter(|p| p.address == address).count() >= MAX_PENDING_PER_ADDRESS {
-            return Err("this address already waits for approval; approve or reject that code first".into());
+        self.asked.retain(|t| *t > now - Duration::seconds(RATE_WINDOW_SECS));
+        if self.asked.len() >= RATE_LIMIT {
+            return Err("too many code requests on the hub; try again in a few minutes".into());
         }
         if self.pending.len() >= MAX_PENDING {
             return Err("too many browsers are waiting for approval; try again in a few minutes".into());
         }
-        times.push(now);
+        self.asked.push(now);
         let code = loop {
             let c = format!("{:06}", rand::random::<u32>() % 1_000_000);
             if !self.pending.iter().any(|p| p.code == c) {
@@ -123,7 +118,7 @@ impl Approvals {
             }
         };
         let user_agent: String = user_agent.chars().take(200).collect();
-        let p = Pending { code, secret: new_token(), address: address.to_string(), user_agent, expires_at: now + Duration::seconds(CODE_TTL_SECS) };
+        let p = Pending { code, secret: new_token(), user_agent, asked_at: now, expires_at: now + Duration::seconds(CODE_TTL_SECS) };
         self.pending.push(p.clone());
         Ok(p)
     }
@@ -139,7 +134,7 @@ impl Approvals {
         }
         let cookie = new_token();
         let hash = hash_token(&cookie);
-        let b = Browser { id: hash[..12].to_string(), hash, address: p.address, user_agent: p.user_agent, approved_at: now, last_seen: now };
+        let b = Browser { id: hash[..12].to_string(), hash, user_agent: p.user_agent, approved_at: now, last_seen: now };
         self.browsers.push(b.clone());
         self.decided.insert(p.secret, (Outcome::Approved(cookie), now));
         Ok(Some(b))
@@ -177,7 +172,7 @@ mod tests {
     fn approve_hands_out_a_cookie_once_and_keeps_only_its_hash() {
         let now = Utc::now();
         let mut a = Approvals::default();
-        let p = a.ask("10.0.0.5", "Firefox", now).unwrap();
+        let p = a.ask("Firefox", now).unwrap();
         assert_eq!(p.code.len(), 6);
         assert_eq!(a.poll(&p.secret, now), Outcome::Waiting);
         let b = a.decide(&p.code, true, now).unwrap().unwrap();
@@ -194,10 +189,10 @@ mod tests {
     fn rejected_expired_and_unknown() {
         let now = Utc::now();
         let mut a = Approvals::default();
-        let p = a.ask("x", "ua", now).unwrap();
+        let p = a.ask("ua", now).unwrap();
         a.decide(&p.code, false, now).unwrap();
         assert_eq!(a.poll(&p.secret, now), Outcome::Rejected);
-        let q = a.ask("x", "ua", now).unwrap();
+        let q = a.ask("ua", now).unwrap();
         assert!(a.expire(now + Duration::seconds(CODE_TTL_SECS + 1)));
         assert_eq!(a.poll(&q.secret, now + Duration::seconds(CODE_TTL_SECS + 1)), Outcome::Gone);
         assert!(a.decide(&q.code, true, now + Duration::seconds(CODE_TTL_SECS + 1)).is_err());
@@ -205,25 +200,20 @@ mod tests {
     }
 
     #[test]
-    fn rate_limited_per_address_and_capped_overall() {
+    fn rate_limited_and_capped_on_the_whole_hub() {
         let now = Utc::now();
         let mut a = Approvals::default();
         for _ in 0..RATE_LIMIT {
-            let p = a.ask("1.1.1.1", "ua", now).unwrap();
+            let p = a.ask("ua", now).unwrap();
             a.decide(&p.code, false, now).unwrap();
         }
-        assert!(a.ask("1.1.1.1", "ua", now).is_err());
-        assert!(a.ask("1.1.1.1", "ua", now + Duration::seconds(RATE_WINDOW_SECS + 1)).is_ok(), "the window moves on");
-        let mut c = Approvals::default();
-        for _ in 0..MAX_PENDING_PER_ADDRESS {
-            c.ask("2.2.2.2", "ua", now).unwrap();
-        }
-        assert!(c.ask("2.2.2.2", "ua", now).is_err(), "waiting codes are capped per address");
+        assert!(a.ask("ua", now).is_err());
+        assert!(a.ask("ua", now + Duration::seconds(RATE_WINDOW_SECS + 1)).is_ok(), "the window moves on");
         let mut b = Approvals::default();
-        for i in 0..MAX_PENDING {
-            b.ask(&format!("10.0.0.{i}"), "ua", now).unwrap();
+        for _ in 0..MAX_PENDING {
+            b.ask("ua", now).unwrap();
         }
-        assert!(b.ask("10.0.0.99", "ua", now).is_err());
+        assert!(b.ask("ua", now).is_err());
     }
 
     #[test]

@@ -114,7 +114,7 @@ impl Hub {
         let now = Utc::now();
         Datagram::State {
             hosts: self.hosts(),
-            pending: self.approvals.pending.iter().map(|p| PendingView { code: p.code.clone(), address: p.address.clone(), user_agent: p.user_agent.clone(), expires_in: (p.expires_at - now).num_seconds().max(0) as u64 }).collect(),
+            pending: self.approvals.pending.iter().map(|p| PendingView { code: p.code.clone(), user_agent: p.user_agent.clone(), asked_at: p.asked_at.to_rfc3339(), expires_in: (p.expires_at - now).num_seconds().max(0) as u64 }).collect(),
             browsers: self.approvals.browsers.iter().map(browser_view).collect(),
         }
     }
@@ -215,7 +215,7 @@ impl Hub {
 fn session_of(client: &str) -> String { ranch::session_of_address(client).map(|(_, s)| s).unwrap_or_default() }
 
 pub fn browser_view(b: &Browser) -> BrowserView {
-    BrowserView { id: b.id.clone(), address: b.address.clone(), user_agent: b.user_agent.clone(), approved_at: b.approved_at.to_rfc3339(), last_seen: b.last_seen.to_rfc3339() }
+    BrowserView { id: b.id.clone(), user_agent: b.user_agent.clone(), approved_at: b.approved_at.to_rfc3339(), last_seen: b.last_seen.to_rfc3339() }
 }
 
 pub async fn run() -> Result<()> {

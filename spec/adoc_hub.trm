@@ -168,11 +168,10 @@ concept _Browser_Approval_ in hub = {
   granted by _Hub_Server_
   decided on _Hub_Status_Screen_
 .contract
-  - A browser without an approved cookie must get a page showing a short code and waiting; the _Hub_Server_ must send the request, with the code, the browser's address and its user agent, to every _Hub_Client_.
+  - A browser without an approved cookie must get a page showing a short code and waiting; the _Hub_Server_ must send the request, with the code, the time and the browser's user agent, to every _Hub_Client_, never with an address: every browser reaches the hub through the same translated address, so an address identifies nobody, and the person checks the code against the browser in front of them.
   - The _Hub_Server_ must decide each request by the first answer it receives from any _Hub_Status_Screen_: an approval gives the waiting browser a long-lived cookie and lets it continue, a rejection ends the request; it must then tell every _Hub_Client_ the outcome, so that the other screens clear it.
   - While a request waits, each _Hub_Client_ must show it in its herdr sidebar icon (`set_status_icon`).
-  - A code must be valid for one request and expire after a few minutes, and the _Hub_Server_ must limit how often one address may ask for a code and how many codes of one address may wait at a time.
-  - The browser's address, shown to the person who approves, must be the TCP peer, or the entry that the ingress appended to `X-Forwarded-For` when the peer is the ingress; a header from anyone else must be ignored.
+  - A code must be valid for one request and expire after a few minutes, and the _Hub_Server_ must limit, for the whole hub, how many codes are asked within a few minutes and how many wait at a time.
   - Every WebSocket upgrade and every request other than GET and HEAD must carry an `Origin` that names the `Host` it was sent to, else it is refused: `SameSite=Strict` lets the cookie travel with requests from every other service under the same registrable domain.
   - _Browser_Approval_ must fail closed: without an approved cookie the only answer is the code request and its page; every other path, `/adoc-discovery` and WebSocket upgrades included, must be refused.
   - The _Hub_Server_ must keep only a hash of each approved cookie, with when it was approved and when it was last seen; an approval never expires.
@@ -195,8 +194,8 @@ concept _Hub_Status_Screen_ in hub = {
   sets _Hub_Host_Name_
 .contract
   - The _Hub_Status_Screen_ must list every _Hub_Host_ of the hub with its address, name, online or offline and agent status, and mark the hosts of its own machine.
-  - The _Hub_Status_Screen_ must show each waiting _Browser_Approval_ with its code, and must let the person approve or reject it with single keys.
-  - The _Hub_Status_Screen_ must list every approved browser with its address, user agent, approval time and last-seen time, and must let the person revoke it with a single key.
+  - The _Hub_Status_Screen_ must show each waiting _Browser_Approval_ with its code in large type, the time it was asked and the browser's user agent, and must let the person approve or reject it with single keys.
+  - The _Hub_Status_Screen_ must list every approved browser with its user agent, approval time and last-seen time, and must let the person revoke it with a single key.
   - The _Hub_Status_Screen_ must let the person give, change or remove the _Hub_Host_Name_ of a host.
 .remarks
   - Chosen: no settings screen; the hub has nothing to configure.

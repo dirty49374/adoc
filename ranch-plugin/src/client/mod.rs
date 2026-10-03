@@ -155,7 +155,7 @@ async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::Unbound
                             let mut b = shared.board.lock().await;
                             for p in &pending {
                                 if !b.pending.iter().any(|q| q.code == p.code) {
-                                    b.ev(format!("browser {} asks for approval: code {}", p.address, p.code));
+                                    b.ev(format!("a browser asks for approval: code {} ({})", p.code, p.user_agent));
                                 }
                             }
                             b.hosts = hosts;

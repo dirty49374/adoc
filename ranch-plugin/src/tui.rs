@@ -50,6 +50,9 @@ fn status_style(s: &str) -> Style {
     }
 }
 
+/// `123456` → `123 456`, easier to compare with the browser at a glance
+fn spaced(code: &str) -> String { if code.len() == 6 { format!("{} {}", &code[..3], &code[3..]) } else { code.to_string() } }
+
 fn short_time(rfc3339: &str) -> String {
     chrono::DateTime::parse_from_rfc3339(rfc3339).map(|t| t.with_timezone(&chrono::Local).format("%m-%d %H:%M").to_string()).unwrap_or_default()
 }
@@ -79,8 +82,9 @@ pub fn draw(f: &mut ratatui::Frame, v: &View, ui: &Ui) {
     if v.pending.is_empty() {
         f.render_widget(Paragraph::new(Span::styled(" no browser is waiting", Style::default().fg(Color::DarkGray))).block(block(" waiting browsers ".into(), focused)), chunks[1]);
     } else {
-        let rows: Vec<Row> = v.pending.iter().enumerate().map(|(i, p)| Row::new(vec![Cell::from(Span::styled(p.code.clone(), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))), Cell::from(p.address.clone()), Cell::from(format!("{} s", p.expires_in)), Cell::from(p.user_agent.clone())]).style(row_style(focused, i == ui.selected[0]))).collect();
-        let t = Table::new(rows, [Constraint::Length(8), Constraint::Length(16), Constraint::Length(6), Constraint::Min(10)]).block(block(format!(" waiting browsers ({}) · a approve · r reject ", v.pending.len()), focused));
+        // the code is the check: the person matches it with the browser in front of them; an address would identify nobody
+        let rows: Vec<Row> = v.pending.iter().enumerate().map(|(i, p)| Row::new(vec![Cell::from(Span::styled(spaced(&p.code), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))), Cell::from(short_time(&p.asked_at)), Cell::from(format!("{} s left", p.expires_in)), Cell::from(p.user_agent.clone())]).style(row_style(focused, i == ui.selected[0]))).collect();
+        let t = Table::new(rows, [Constraint::Length(13), Constraint::Length(12), Constraint::Length(11), Constraint::Min(10)]).block(block(format!(" waiting browsers ({}) · a approve · r reject ", v.pending.len()), focused));
         f.render_widget(t, chunks[1]);
     }
 
@@ -107,9 +111,9 @@ pub fn draw(f: &mut ratatui::Frame, v: &View, ui: &Ui) {
     f.render_widget(t, chunks[2]);
 
     let focused = ui.focus == Focus::Browsers;
-    let head = Row::new(vec!["ADDRESS", "APPROVED", "LAST SEEN", "BROWSER"]).style(Style::default().add_modifier(Modifier::UNDERLINED));
-    let rows: Vec<Row> = v.browsers.iter().enumerate().map(|(i, b)| Row::new(vec![Cell::from(b.address.clone()), Cell::from(short_time(&b.approved_at)), Cell::from(short_time(&b.last_seen)), Cell::from(b.user_agent.clone()).style(Style::default().fg(Color::DarkGray))]).style(row_style(focused, i == ui.selected[2]))).collect();
-    let t = Table::new(rows, [Constraint::Length(16), Constraint::Length(12), Constraint::Length(12), Constraint::Min(10)]).header(head).block(block(format!(" approved browsers ({}) · x revoke ", v.browsers.len()), focused));
+    let head = Row::new(vec!["APPROVED", "LAST SEEN", "BROWSER"]).style(Style::default().add_modifier(Modifier::UNDERLINED));
+    let rows: Vec<Row> = v.browsers.iter().enumerate().map(|(i, b)| Row::new(vec![Cell::from(short_time(&b.approved_at)), Cell::from(short_time(&b.last_seen)), Cell::from(b.user_agent.clone()).style(Style::default().fg(Color::DarkGray))]).style(row_style(focused, i == ui.selected[2]))).collect();
+    let t = Table::new(rows, [Constraint::Length(12), Constraint::Length(12), Constraint::Min(10)]).header(head).block(block(format!(" approved browsers ({}) · x revoke ", v.browsers.len()), focused));
     f.render_widget(t, chunks[3]);
 
     let h = chunks[4].height.saturating_sub(1) as usize;
@@ -244,8 +248,8 @@ mod tests {
             adoc: "/usr/bin/adoc".into(),
             machine: "mldev".into(),
             hosts: (0..3).map(|i| HostView { address: format!("mldev_77{i:02}"), id: None, name: (i == 1).then(|| "demo".into()), title: None, machine: "mldev".into(), workspace: format!("/w/{i}"), status: "online".into(), version: None, agent: Some(AgentView { name: "a".into(), status: "idle".into() }) }).collect(),
-            pending: vec![PendingView { code: "123456".into(), address: "192.168.1.20".into(), user_agent: "Firefox".into(), expires_in: 170 }],
-            browsers: vec![BrowserView { id: "b1".into(), address: "192.168.1.21".into(), user_agent: "Chrome".into(), approved_at: "2026-10-03T01:00:00Z".into(), last_seen: "2026-10-03T02:00:00Z".into() }],
+            pending: vec![PendingView { code: "123456".into(), user_agent: "Firefox".into(), asked_at: "2026-10-03T01:00:00Z".into(), expires_in: 170 }],
+            browsers: vec![BrowserView { id: "b1".into(), user_agent: "Chrome".into(), approved_at: "2026-10-03T01:00:00Z".into(), last_seen: "2026-10-03T02:00:00Z".into() }],
             log: (0..30).map(|i| format!("12:00:{i:02}  line")).collect(),
         }
     }
@@ -280,7 +284,7 @@ mod tests {
             t.draw(|f| draw(f, &v, &ui)).unwrap();
             if h >= 24 {
                 let s = format!("{:?}", t.backend().buffer());
-                assert!(s.contains("123456") && s.contains("hosts (3)") && s.contains("approved browsers (1)"));
+                assert!(s.contains("123 456") && s.contains("hosts (3)") && s.contains("approved browsers (1)"));
             }
         }
     }

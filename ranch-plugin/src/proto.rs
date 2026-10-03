@@ -49,8 +49,8 @@ pub struct AgentView {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PendingView {
     pub code: String,
-    pub address: String,
     pub user_agent: String,
+    pub asked_at: String,
     pub expires_in: u64,
 }
 
@@ -58,7 +58,6 @@ pub struct PendingView {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BrowserView {
     pub id: String,
-    pub address: String,
     pub user_agent: String,
     pub approved_at: String,
     pub last_seen: String,

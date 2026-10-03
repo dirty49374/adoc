@@ -7,7 +7,7 @@ use crate::auth::{self, Outcome};
 use crate::proto::{self, Kind, Open};
 use axum::body::Body;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
-use axum::extract::{ConnectInfo, FromRequestParts, Request, State};
+use axum::extract::{FromRequestParts, Request, State};
 use axum::http::{HeaderMap, HeaderValue, Method, StatusCode, header};
 use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::response::{IntoResponse, Response};
@@ -15,7 +15,6 @@ use bytes::Bytes;
 use chrono::Utc;
 use futures_util::{SinkExt, Stream, StreamExt};
 use serde_json::json;
-use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
@@ -38,35 +37,9 @@ const OWN_CSP: &str = "frame-ancestors 'self'";
 
 pub async fn serve(listener: tokio::net::TcpListener, shared: Shared) {
     let app = axum::Router::new().fallback(handle).with_state(shared);
-    if let Err(e) = axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await {
+    if let Err(e) = axum::serve(listener, app).await {
         tracing::error!("web listener: {e}");
     }
-}
-
-/// The networks of the ingress, whose `X-Forwarded-For` is believed: `ADOC_HUB_TRUSTED_PROXIES`
-/// (IPv4 CIDRs, comma-separated), else k3s's pod network 10.42.0.0/16.
-fn trusted_proxy(peer: std::net::IpAddr) -> bool {
-    let list = std::env::var("ADOC_HUB_TRUSTED_PROXIES").unwrap_or_else(|_| "10.42.0.0/16".into());
-    let std::net::IpAddr::V4(ip) = peer else { return false };
-    list.split(',').filter_map(|c| {
-        let (net, bits) = c.trim().split_once('/')?;
-        Some((net.parse::<std::net::Ipv4Addr>().ok()?, bits.parse::<u32>().ok().filter(|b| *b <= 32)?))
-    }).any(|(net, bits)| {
-        let mask = if bits == 0 { 0 } else { u32::MAX << (32 - bits) };
-        u32::from(ip) & mask == u32::from(net) & mask
-    })
-}
-
-/// The browser's address: from the ingress, the last `X-Forwarded-For` entry (the one the ingress
-/// appended; earlier ones are whatever the client sent); from anywhere else, the peer.
-fn client_address(headers: &HeaderMap, peer: SocketAddr) -> String {
-    if trusted_proxy(peer.ip()) {
-        let last = headers.get_all("x-forwarded-for").iter().filter_map(|v| v.to_str().ok()).flat_map(|v| v.split(',')).map(str::trim).rfind(|v| !v.is_empty()).map(str::to_string);
-        if let Some(a) = last {
-            return a;
-        }
-    }
-    peer.ip().to_string()
 }
 
 /// Whether a request comes from a page of the hub itself: its `Origin` names the `Host` it was sent
@@ -95,18 +68,17 @@ fn escape(s: &str) -> String { s.replace('&', "&amp;").replace('<', "&lt;").repl
 
 fn unavailable(status: StatusCode, message: &str) -> Response { page(status, UNAVAILABLE_PAGE.replace("{{message}}", &escape(message))) }
 
-async fn handle(State(shared): State<Shared>, ConnectInfo(peer): ConnectInfo<SocketAddr>, req: Request) -> Response {
+async fn handle(State(shared): State<Shared>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let method = req.method().clone();
-    let address = client_address(req.headers(), peer);
 
     // the code request and its page are the only answers without a cookie
     if path == "/adoc-hub/pair" && method == Method::POST {
         let user_agent = req.headers().get(header::USER_AGENT).and_then(|v| v.to_str().ok()).unwrap_or("").to_string();
-        let asked = shared.hub.lock().await.approvals.ask(&address, &user_agent, Utc::now());
+        let asked = shared.hub.lock().await.approvals.ask(&user_agent, Utc::now());
         return match asked {
             Ok(p) => {
-                tracing::info!("browser {address} asks for approval: code {}", p.code);
+                tracing::info!("a browser asks for approval: code {} ({user_agent})", p.code);
                 shared.changed();
                 json_response(StatusCode::OK, json!({"code": p.code, "secret": p.secret, "expires_in": auth::CODE_TTL_SECS}))
             }
@@ -161,7 +133,7 @@ async fn handle(State(shared): State<Shared>, ConnectInfo(peer): ConnectInfo<Soc
         }
         "/adoc-discovery/events" => discovery_events(shared, browser).await,
         "/adoc-hub" | "/favicon.ico" => unavailable(StatusCode::NOT_FOUND, "Not found."),
-        _ => remap(shared, browser, address, req).await,
+        _ => remap(shared, browser, req).await,
     }
 }
 
@@ -200,7 +172,7 @@ async fn discovery_events(shared: Shared, browser: String) -> Response {
 }
 
 /// _Hub_Remap_: `/<host>/<path>` goes to that host's server as `/<path>`.
-async fn remap(shared: Shared, browser: String, address: String, req: Request) -> Response {
+async fn remap(shared: Shared, browser: String, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let query = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
     let rest = &path[1..];
@@ -240,7 +212,6 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
     }
     headers.push(("x-forwarded-prefix".into(), format!("/{segment}")));
     headers.push(("x-adoc-hub".into(), DISCOVERY.into()));
-    headers.push(("x-forwarded-for".into(), address));
     if req.headers().get(header::CONTENT_LENGTH).and_then(|v| v.to_str().ok()).and_then(|v| v.parse::<u64>().ok()).is_some_and(|n| n > MAX_BODY) {
         return (StatusCode::PAYLOAD_TOO_LARGE, "the request body is larger than the hub passes on").into_response();
     }
@@ -414,17 +385,6 @@ async fn pump(socket: WebSocket, tunnel: Arc<Tunnel>, id: u32, mut rx: mpsc::Unb
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn address_takes_the_ingress_entry_only_from_the_ingress() {
-        let ingress: SocketAddr = "10.42.0.7:5555".parse().unwrap();
-        let direct: SocketAddr = "192.168.1.50:5555".parse().unwrap();
-        let mut h = HeaderMap::new();
-        assert_eq!(client_address(&h, ingress), "10.42.0.7");
-        h.insert("x-forwarded-for", HeaderValue::from_static("1.2.3.4, 192.168.1.20"));
-        assert_eq!(client_address(&h, ingress), "192.168.1.20", "the entry the ingress appended, not the client's");
-        assert_eq!(client_address(&h, direct), "192.168.1.50", "a direct peer's header is ignored");
-    }
-
     #[test]
     fn origin_must_name_the_host() {
         let mut h = HeaderMap::new();
