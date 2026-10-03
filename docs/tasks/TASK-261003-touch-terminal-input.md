@@ -1,5 +1,5 @@
 ---
-title: The web UI on touch devices (iPad, phone): composer band, list pane, app-like page
+title: "The web UI on touch devices (iPad, phone): composer band, list pane, app-like page"
 status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261003-touch-terminal-input]
