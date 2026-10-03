@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>adoc hub</title>
+    <style>
+    :root { color-scheme: light dark; --bg: light-dark(#ffffff, #0a0a0a); --panel: light-dark(#fafafa, #141414); --text: light-dark(#1a1a1a, #eeeeee); --muted: light-dark(#8a8a8a, #808080); --primary: light-dark(#3b7dd8, #fab283); --ok: light-dark(#3d9a57, #7fd88f); --warn: light-dark(#d68c27, #f5a742); --err: light-dark(#d1383d, #e06c75); }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px system-ui, sans-serif; }
+    main { max-width: 760px; margin: 48px auto; padding: 0 16px; }
+    h1 { font-size: 18px; } h1 span { color: var(--primary); font-weight: 800; }
+    .muted { color: var(--muted); font-size: 12px; }
+    a { color: var(--primary); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><span>adoc</span> hub</h1>
+      <p>{{message}}</p>
+      <p><a href="/">All adoc hosts</a></p>
+    </main>
+  </body>
+</html>

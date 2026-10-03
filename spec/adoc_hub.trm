@@ -97,7 +97,7 @@ concept _Hub_Host_Name_ in hub = {
   set by _Hub_Status_Screen_
   set by _Hub_Name_Command_
 .contract
-  - A _Hub_Host_Name_ must be unique on the hub, made of lowercase letters, digits and `-`, and must not have the form `<machine>_<port>`.
+  - A _Hub_Host_Name_ must be unique on the hub, made of lowercase letters, digits and `-`, and must not have the form `<machine>_<port>` nor be a path of the hub itself (`adoc-hub`, `adoc-discovery`).
   - A named _Hub_Host_ must answer at both its name and its `<machine>_<port>` address.
 }
 
@@ -134,11 +134,13 @@ concept _Hub_Tunnel_ in hub = {
 concept _Hub_Discovery_ in hub = {
   The list of every _Hub_Host_ that the _Hub_Server_ serves at `/adoc-discovery`, read by the host switcher of the adoc web UI.
 .relations
+  references _adoc_hub:Hub_Tunnel_
+  references _adoc_hub:Routing_Client_
   served by _Hub_Server_
   lists _Hub_Host_
   read by _adoc_ui:Host_Switcher_
 .contract
-  - `GET /adoc-discovery` must return, for each _Hub_Host_, its address, name, machine, workspace path and workspace id, online or offline, adoc version, and the name and status of its assigned agent.
+  - `GET /adoc-discovery` must return, for each _Hub_Host_, its address, name, machine, workspace path and workspace id, its status (`online`, `offline`, or `unreachable` while its machine has no _Routing_Client_ or no _Hub_Tunnel_), adoc version, and the name and status of its assigned agent.
   - The _Hub_Discovery_ must offer the same list as a stream of changes, so that a browser follows hosts and agent status without polling.
   - The shape of the _Hub_Discovery_ is a contract between the hub and every adoc version; it may only grow.
 }

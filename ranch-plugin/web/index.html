@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>adoc hub</title>
+    <style>
+    :root { color-scheme: light dark; --bg: light-dark(#ffffff, #0a0a0a); --panel: light-dark(#fafafa, #141414); --text: light-dark(#1a1a1a, #eeeeee); --muted: light-dark(#8a8a8a, #808080); --primary: light-dark(#3b7dd8, #fab283); --ok: light-dark(#3d9a57, #7fd88f); --warn: light-dark(#d68c27, #f5a742); --err: light-dark(#d1383d, #e06c75); }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px system-ui, sans-serif; }
+    main { max-width: 760px; margin: 48px auto; padding: 0 16px; }
+    h1 { font-size: 18px; } h1 span { color: var(--primary); font-weight: 800; }
+    .muted { color: var(--muted); font-size: 12px; }
+    a { color: var(--primary); }
+      ul { list-style: none; padding: 0; }
+      li { padding: 10px 12px; margin: 6px 0; background: var(--panel); display: grid; grid-template-columns: 10px 1fr; column-gap: 10px; align-items: baseline; }
+      li .muted { grid-column: 2; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+      .online .dot { background: var(--ok); } .working .dot { background: var(--warn); }
+      li:not(.online) a { pointer-events: none; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><span>adoc</span> hub</h1>
+      <ul id="hosts"><li class="muted">Loading…</li></ul>
+    </main>
+    <script>
+      // The hosts of /adoc-discovery, again on every change of its event stream.
+      const list = document.getElementById('hosts');
+      const text = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      function show(hosts) {
+        if (!hosts.length) {
+          list.innerHTML = '<li class="muted">No adoc server is running on the ranch network.</li>';
+          return;
+        }
+        list.innerHTML = hosts
+          .map((h) => {
+            const cls = (h.status === 'online' ? 'online' : '') + (h.agent && h.agent.status === 'working' ? ' working' : '');
+            const agent = h.agent ? ' · ' + text(h.agent.name) + ' ' + text(h.agent.status) : '';
+            return '<li class="' + cls + '"><span class="dot"></span><a href="/' + encodeURIComponent(h.name || h.address) + '/">' + text(h.name || h.title || h.address) + '</a>' +
+              '<span class="muted">' + text(h.machine) + ' · ' + text(h.address) + ' · ' + text(h.status) + agent + ' · ' + text(h.workspace) + '</span></li>';
+          })
+          .join('');
+      }
+      fetch('/adoc-discovery').then((r) => r.json()).then((d) => show(d.hosts));
+      new EventSource('/adoc-discovery/events').onmessage = (e) => show(JSON.parse(e.data).hosts);
+    </script>
+  </body>
+</html>

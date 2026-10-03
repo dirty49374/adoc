@@ -1,0 +1,17 @@
+# adoc-hub as a ranch plugin (herdr-ranch docs/PLUGINS.md). Installed on the ranch server with
+#   herdr-ranch install dirty49374/adoc/ranch-plugin@adoc-hub-vX.Y.Z
+# The plugin server serves browsers on the exposed port `web`, whose address is in the Ranch
+# Server's server.toml ([exposed_ports.adoc-hub] web = "0.0.0.0:10954"); clients reach its tunnel
+# port through ranch's forward. Spec: spec/adoc_hub.trm in the adoc repository.
+min_client_version = "0.1.0"
+persistent_client = true
+status_command = ["adoc-hub", "status"]
+
+[pane]
+id = "status"
+
+[server]
+build = ["sh", "-c", "PATH=\"$PATH:$HOME/.cargo/bin\" cargo build --release"]
+asset = "adoc-hub-{os}-{arch}"
+command = ["./target/release/adoc-hub", "server"]
+exposed_ports = ["web"]

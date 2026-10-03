@@ -10,7 +10,7 @@ export interface HubHost {
   title?: string;
   machine: string;
   workspace: string;
-  status: 'online' | 'offline';
+  status: 'online' | 'offline' | 'unreachable';
   version: string | null;
   agent: { name: string; status: string } | null;
 }

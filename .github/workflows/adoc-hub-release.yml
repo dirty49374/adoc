@@ -1,0 +1,50 @@
+# The macOS assets of an adoc-hub release (ranch-plugin/), so that ranch-plugin/scripts/fetch-or-build.sh
+# finds adoc-hub-macos-<arch> on a Mac without Rust. Runs when an adoc-hub-v* release is published
+# (ranch-plugin/scripts/release.sh uploads the Linux asset first) and on demand for an existing tag.
+name: adoc-hub release assets
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: release tag (adoc-hub-vX.Y.Z)
+        required: true
+permissions:
+  contents: write
+jobs:
+  build:
+    if: startsWith(github.event.inputs.tag || github.event.release.tag_name, 'adoc-hub-v')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            asset: adoc-hub-macos-aarch64
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            asset: adoc-hub-macos-x86_64
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.target == 'x86_64-apple-darwin' }}
+    defaults:
+      run:
+        working-directory: ranch-plugin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: package
+        run: |
+          cp target/${{ matrix.target }}/release/adoc-hub ${{ matrix.asset }}
+          shasum -a 256 ${{ matrix.asset }} > ${{ matrix.asset }}.sha256
+          ./${{ matrix.asset }} --version
+      - name: upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.inputs.tag || github.event.release.tag_name }}" ${{ matrix.asset }} ${{ matrix.asset }}.sha256 --clobber

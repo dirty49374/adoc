@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>adoc hub</title>
+    <style>
+    :root { color-scheme: light dark; --bg: light-dark(#ffffff, #0a0a0a); --panel: light-dark(#fafafa, #141414); --text: light-dark(#1a1a1a, #eeeeee); --muted: light-dark(#8a8a8a, #808080); --primary: light-dark(#3b7dd8, #fab283); --ok: light-dark(#3d9a57, #7fd88f); --warn: light-dark(#d68c27, #f5a742); --err: light-dark(#d1383d, #e06c75); }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px system-ui, sans-serif; }
+    main { max-width: 760px; margin: 48px auto; padding: 0 16px; }
+    h1 { font-size: 18px; } h1 span { color: var(--primary); font-weight: 800; }
+    .muted { color: var(--muted); font-size: 12px; }
+    a { color: var(--primary); }
+      .code { font: 700 40px ui-monospace, monospace; letter-spacing: 6px; margin: 16px 0; color: var(--primary); }
+      button { font: inherit; padding: 6px 14px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><span>adoc</span> hub</h1>
+      <p id="what">This browser is not approved yet. Asking for a code…</p>
+      <div class="code" id="code"></div>
+      <p class="muted" id="hint"></p>
+      <button id="again" hidden>Ask again</button>
+    </main>
+    <script>
+      // Browser approval: ask for a code, then poll until a person decides in a herdr session.
+      const what = document.getElementById('what');
+      const code = document.getElementById('code');
+      const hint = document.getElementById('hint');
+      const again = document.getElementById('again');
+      let timer;
+      async function ask() {
+        again.hidden = true;
+        code.textContent = '';
+        const r = await fetch('/adoc-hub/pair', { method: 'POST' });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          what.textContent = body.error || 'The hub refused the request.';
+          again.hidden = false;
+          return;
+        }
+        what.textContent = 'Approve this code in the adoc-hub pane of any herdr session on the ranch network:';
+        code.textContent = body.code;
+        let left = body.expires_in;
+        hint.textContent = 'Valid for ' + left + ' s.';
+        clearInterval(timer);
+        timer = setInterval(async () => {
+          left -= 1.5;
+          hint.textContent = 'Valid for ' + Math.max(0, Math.round(left)) + ' s.';
+          const p = await fetch('/adoc-hub/pair/' + encodeURIComponent(body.secret)).then((x) => x.json()).catch(() => ({ state: 'waiting' }));
+          if (p.state === 'waiting') return;
+          clearInterval(timer);
+          if (p.state === 'approved') return location.reload();
+          code.textContent = '';
+          hint.textContent = '';
+          what.textContent = p.state === 'rejected' ? 'The request was rejected.' : 'The code expired.';
+          again.hidden = false;
+        }, 1500);
+      }
+      again.onclick = ask;
+      ask();
+    </script>
+  </body>
+</html>

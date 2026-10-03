@@ -6,6 +6,7 @@ The specification is an aterm corpus, and it is the authority:
 |---|---|
 | `spec/adoc.trm` | concepts and contracts |
 | `spec/adoc_ui.trm` | web UI regions; React components carry the same names |
+| `spec/adoc_hub.trm` | the adoc hub, the herdr-ranch plugin in `ranch-plugin/` |
 
 Run `aterm corpus check` to validate it.
 
@@ -22,6 +23,7 @@ packages/             every folder is a package: package.json, src/, test/, tsco
 plugins/              every folder is a plugin and a package @agent-workshop/adoc-plugin-<name>: index.ts + skill/SKILL.md,
                         built into dist/index.js for npm; SKETCH also has web/, built into client/ (its browser code)
 tooling/              release helpers: license collection of the bundles, files copied into each package at pack time
+ranch-plugin/         adoc-hub, the herdr-ranch plugin in Rust (spec/adoc_hub.trm); its own README, build and release
 examples/demo/        a demo workspace (port 7701)
 docs/                 this repository's own adoc documents (port 7700)
 bin/adoc              runs the CLI of this checkout

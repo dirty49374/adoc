@@ -1,6 +1,6 @@
 ---
 title: adoc-hub, the herdr-ranch plugin (Rust)
-status: TODO
+status: RUNNING
 assignee: adoc-dev
 notes: [NOTE-261002-ranch-adoc-hub]
 related: [TASK-261002-hub-embedding]
@@ -57,3 +57,4 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 - 2026-10-02: the Owner decided no basicAuth in front (#555): approval is the only gate (user LAN, other VLANs, other houses' VPN); fail closed for every path but the code request, rate-limited single-use short-lived codes, approvals in `RANCH_PLUGIN_DATA_DIR`; auth diff reviewed by the herdr-ranch agent before the first install.
 - 2026-10-02: approved cookies must be revocable (#559, from the k3s owner: plain HTTP lets a cookie be sniffed and replayed): approved-browser list with revoke in the pane, effective at once including open WebSockets; expiry (30 days unseen, chosen) and last-seen shown; `HttpOnly`, `SameSite=Strict`. Part of the auth review.
 - 2026-10-02: the Owner removed the expiry: approvals never expire (a home network); the last-seen time and revocation stay.
+- 2026-10-03: implemented Method 1–6 in `ranch-plugin/` (one crate `adoc-hub`: server with routing pick, tunnel, approval and remap; client with discovery, tunnel end, status pane, `name` and `status`; `fetch-or-build.sh`, `release.sh`, Dockerfile, macOS workflow; release tags `adoc-hub-vX.Y.Z`, never marked latest). 21 unit tests. Checked end to end against `scripts/fake-ranch.mjs` (sessions alpha, beta; hosts 7701, 7702): routing picked beta then moved to alpha (lowest name) and back to beta when alpha's client ended, tunnel reopened each time; without a cookie every path but the code request answers 401, `/adoc-discovery` included; a browser's code reached both clients (status icon `🔑1`), approval reloaded it into the demo web UI under `/mldev_7701/` with live updates through the tunnel; the cookie is `HttpOnly`; the host switcher and `adoc ui open` across hosts work through the hub; revoking closed the open WebSocket at once and further requests got 401; `adoc-hub name demo` named the host, invalid names and directories outside a workspace are refused. Discovery status `unreachable` and the reserved names added to the spec. Next: auth review (Method 7).
