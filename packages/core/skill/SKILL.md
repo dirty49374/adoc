@@ -42,7 +42,7 @@ Declare it in `.adoc/adoc.yaml` under `plugins` with its key and where it comes 
 - a path from the workspace root, starting with `./` (or `/` for an absolute path), such as `./plugins/todo`;
 - an npm package name.
 
-`adoc plugin list` shows each plugin with its document count or its load error. A running server reloads a plugin when a file at the top of its folder changes (details in `adoc-plugin-authoring`); a change to `.adoc/adoc.yaml` takes effect when the server restarts. Then install its skill with `adoc skill install` (below). Writing a plugin is explained by the skill `adoc-plugin-authoring`.
+`adoc plugin list` shows each plugin with its document count or its load error. A running server reloads a plugin when a file at the top of its folder changes (details in `adoc-plugin-authoring`); a change to `.adoc/adoc.yaml` takes effect when the server restarts (a restart loses held messages, see "Start: claim"). Then install its skill with `adoc skill install` (below). Writing a plugin is explained by the skill `adoc-plugin-authoring`.
 
 ## Configuration
 
@@ -156,7 +156,7 @@ Every command takes `--output text|markdown|json|yaml` and answers `--help`; the
 - **In herdr (recommended):** run `adoc agent claim` once at the start of your session. Your pane becomes the assigned agent: the user's messages are pushed into it as prompts, and the web UI shows your terminal. Claiming from another pane takes the role over.
 - **Outside herdr:** set `agent.transport.kind: wait` in `.adoc/adoc.yaml`, and take the held messages with `adoc message wait`.
 
-The server holds every message until it is delivered or the server stops: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them.
+The server holds every message until it is delivered or the server stops: a pushed message is no longer held, and messages that arrived before anyone claimed are pushed when you claim. Held messages live in the server's memory, so a server restart loses them: take them with `adoc message wait` before you restart it.
 
 Then read the skills of the plugins you will work with (see "Using a plugin").
 
@@ -208,5 +208,5 @@ applied: true
 
 #### Talking to the user
 
-- Answer the user in your conversation: in herdr, the web UI shows your terminal. Answer a comment that asks a question there, and say there why you decline what a message asks, leaving the document as it is.
+- Answer the user in your conversation: in herdr, the web UI shows your terminal; with the `wait` transport, the user reads your terminal where they started you. Answer a comment that asks a question there, and say there why you decline what a message asks, leaving the document as it is.
 - When you need an answer about a place in a Markdown document, write the question there, next to the place, as a blockquote starting with `> Question:`, and remove it once answered. A plugin's skill says when its view does not show such a line, or names a better place, such as a NOTE's **Open questions**; otherwise ask in your conversation.
