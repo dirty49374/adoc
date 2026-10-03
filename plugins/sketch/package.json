@@ -1,6 +1,6 @@
 {
   "name": "@agent-workshop/adoc-plugin-sketch",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "license": "0BSD",
   "type": "module",
   "description": "The SKETCH plugin of adoc: Excalidraw drawings that the user makes and the agent reads.",
