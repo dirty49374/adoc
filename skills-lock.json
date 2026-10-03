@@ -24,7 +24,7 @@
     "adoc-todo": {
       "source": "./plugins/todo/skill",
       "sourceType": "local",
-      "computedHash": "fce9ccf3bb643b689999bc571f2e54a923b73685a6b0308db5a3264737cee596"
+      "computedHash": "a794b3206b341be2bc0eafcfa4d9cae62c5a13b47515901f424aa5bbe81b3883"
     }
   }
 }
