@@ -8,15 +8,15 @@
 
 ## Release
 
-- [ ] Ship the web UI with the published packages: publish `@agent-workshop/adoc-webapp`, or put its build into the core package (to decide)
+- [x] Ship the web UI with the published packages: publish `@agent-workshop/adoc-webapp`, or put its build into the core package (to decide); done: published as `@agent-workshop/adoc-webapp` (decided), with its metadata
 - [x] Ship the five plugins (NOTE, TODO, TASK, KANBAN, SKETCH) with adoc, and let `adoc init` declare them; then change the `adoc` skill, which tells to declare them by a path into this repository; done: [[TASK-261002-plugin-sources]] (npm packages `@agent-workshop/adoc-plugin-<name>`, `adoc init` declares them)
-- [ ] Build the SKETCH client (`plugins/sketch/client/`, not in git) as part of the release build, with its libraries bundled
-- [ ] Package metadata for every published package: `files` (dist and `skill/`), `repository`, `engines.node >=24`, `publishConfig.access: public`; a notice file for the third-party code and fonts the bundles carry
+- [x] Build the SKETCH client (`plugins/sketch/client/`, not in git) as part of the release build, with its libraries bundled; done: `pnpm build` builds it, and the package carries `client/` with its licenses
+- [x] Package metadata for every published package: `files` (dist and `skill/`), `repository`, `engines.node >=24`, `publishConfig.access: public`; a notice file for the third-party code and fonts the bundles carry; done: `files`, `repository` (github.com/dirty49374/adoc), `engines`, `publishConfig`; LICENSE and THIRD_PARTY_NOTICES.md copied at pack time; license inventories of both bundles (`tooling/licenses.mjs`)
 - [x] License: 0BSD, as aterm; done: LICENSE and `license` in every package.json
-- [ ] Install check from `npm pack` tarballs in an empty folder: `adoc init`, `server run`, web UI, `skill install`, plugin load, MCP; the resolve hook of `@agent-workshop/adoc-plugin-kit` inside `node_modules`
-- [ ] A README for users (install, requirements: Node 24, herdr 0.9.3 or later recommended, git; quick start); move the developer part elsewhere
+- [x] Install check from `npm pack` tarballs in an empty folder: `adoc init`, `server run`, web UI, `skill install`, plugin load, MCP; the resolve hook of `@agent-workshop/adoc-plugin-kit` inside `node_modules`; done: nine tarballs in an empty folder with a temporary HOME: init, plugin list (all five from node_modules), skill install, server (UI, fonts, SKETCH client), MCP (plugin install refused)
+- [x] A README for users (install, requirements: Node 24, herdr 0.9.3 or later recommended, git; quick start); move the developer part elsewhere; done: README.md for users, CONTRIBUTING.md for developers with the release steps
 - [x] Warn when the server listens beyond loopback without authentication; done: a warning line at server start
-- [ ] Versioning: start at 0.1.0, move all packages together; how a plugin states the plugin-kit version it needs (see [[NOTE-261002-plugin-sources]])
+- [x] Versioning: start at 0.1.0, move all packages together; how a plugin states the plugin-kit version it needs (see [[NOTE-261002-plugin-sources]]); done: all packages share one version, 0.1.0 first (CONTRIBUTING.md); plugins state the kit range in `peerDependencies`
 - [ ] Publish adoc as public npm packages, see [[NOTE-261002-installation]]
 - [ ] After publishing: CI (build, test, check, `aterm corpus check`) and publish on tags
 - [x] Rename the packages into the npm org `@agent-workshop` (aterm's org), each as `adoc-…` so no name clashes there: `@agent-workshop/adoc` (the CLI, command `adoc`), `@agent-workshop/adoc-core`, `@agent-workshop/adoc-plugin-kit`, `@agent-workshop/adoc-webapp`, `@agent-workshop/adoc-plugin-sketch`, `@agent-workshop/adoc-testing` (private); plugins and the skills import `@adoc/plugin-kit` today, so the resolve hook, the plugins and both skills change too; done: every package, import, the resolve hook, both skills, the spec and the README use the new names
