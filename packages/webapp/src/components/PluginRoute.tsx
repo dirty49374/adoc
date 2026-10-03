@@ -14,7 +14,7 @@ import { SkillView } from './SkillView.js';
 export function PluginRoute({ view }: { view?: 'skill' }) {
   const { pluginKey, documentKey } = useParams();
   const skill = useWorkspace()?.plugins.find((p) => p.key === pluginKey)?.skill;
-  const [pinned, pin] = usePinned('adoc.list-pinned');
+  const [pinned, pin] = usePinned('list-pinned');
   const shown = Boolean(documentKey) || view === 'skill';
   const unpinned = shown && !pinned;
   // Held open after a plugin tab was chosen, until the pointer is over neither the tab bar nor the list pane.

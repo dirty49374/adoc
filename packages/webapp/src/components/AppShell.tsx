@@ -52,15 +52,15 @@ function ShellLayout() {
   const drafts = useDrafts();
   useActivityReports();
   const [warningsOpen, setWarningsOpen] = useState(false);
-  const [dockWidth, setDockWidth] = useState(() => readStored('adoc.dock-width', 420));
-  const [dockLeft, setDockLeft] = useState(() => readStored('adoc.dock-left', false));
+  const [dockWidth, setDockWidth] = useState(() => readStored('dock-width', 420));
+  const [dockLeft, setDockLeft] = useState(() => readStored('dock-left', false));
   const swap = () => {
     setDockLeft(!dockLeft);
-    writeStored('adoc.dock-left', !dockLeft || undefined);
+    writeStored('dock-left', !dockLeft || undefined);
   };
   const resize = useCallback((width: number) => {
     setDockWidth(width);
-    writeStored('adoc.dock-width', width);
+    writeStored('dock-width', width);
   }, []);
   return (
     <div className="app-shell">

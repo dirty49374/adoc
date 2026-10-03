@@ -1,4 +1,5 @@
 import type { PluginInfo } from './api.js';
+import { under } from './base.js';
 
 const loaded = new Set<string>();
 
@@ -10,7 +11,7 @@ export function loadClientModules(plugins: readonly PluginInfo[]): void {
   for (const plugin of plugins) {
     if (!plugin.client || loaded.has(plugin.key)) continue;
     loaded.add(plugin.key);
-    const base = `/assets/plugins/${plugin.key}/`;
+    const base = under(`/assets/plugins/${plugin.key}/`);
     if (plugin.client.style) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';

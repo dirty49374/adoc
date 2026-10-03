@@ -1,3 +1,5 @@
+import { under } from './base.js';
+
 export interface DocumentSummary {
   title: string;
   status: string;
@@ -129,7 +131,7 @@ export class HttpError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, init);
+  const response = await fetch(under(path), init);
   const body = (await response.json().catch(() => ({}))) as T & { error?: string };
   if (!response.ok && response.status !== 409 && response.status !== 422) throw new HttpError(response.status, body.error ?? `${path} failed (${response.status})`);
   return body;

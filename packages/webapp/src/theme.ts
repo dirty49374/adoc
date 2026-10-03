@@ -4,7 +4,7 @@ import { readStored, writeStored } from './storage.js';
 /** A colour scheme choice; `system` follows the operating system. */
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
-const KEY = 'adoc.theme';
+const KEY = 'theme';
 const listeners = new Set<() => void>();
 const root = document.documentElement;
 /** The default of the _Adoc_Config_ (`ui.theme`), which the server writes into the page as `data-theme`. */

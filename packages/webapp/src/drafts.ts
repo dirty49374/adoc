@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { formatTarget, type MessageTarget, type UserComment } from './api.js';
+import { readStored, writeStored } from './storage.js';
 
 /** A draft _User_Comment_ waiting in the _Draft_Comment_List_. */
 /** Where a target's own draft comes from: an element of a plugin client module (`adoc-draft`), or the _File_Editor_. */
@@ -20,27 +21,20 @@ export function sentComment({ id: _id, origin: _origin, base: _base, ...comment 
 
 const isOwnDraft = (d: DraftComment, origin: DraftOrigin, target: MessageTarget) => d.origin === origin && formatTarget(d.target) === formatTarget(target);
 
-const STORAGE_KEY = 'adoc.drafts';
+const STORAGE_KEY = 'drafts';
 const listeners = new Set<() => void>();
 
 function load(): DraftComment[] {
-  try {
-    const value = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
-  }
+  const value = readStored<unknown>(STORAGE_KEY, []);
+  return Array.isArray(value) ? (value as DraftComment[]) : [];
 }
 
 let drafts: DraftComment[] = load();
 
 function save(next: DraftComment[]): void {
   drafts = next;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // Drafts still live in memory when storage is unavailable.
-  }
+  // Drafts still live in memory when storage is unavailable.
+  writeStored(STORAGE_KEY, next);
   for (const listener of listeners) listener();
 }
 

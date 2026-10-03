@@ -4,6 +4,7 @@ import { AppShell } from './components/AppShell.js';
 import { PluginRoute } from './components/PluginRoute.js';
 import { SkillView } from './components/SkillView.js';
 import { WorkspaceHomePanel } from './components/WorkspaceHomePanel.js';
+import { BASE } from './base.js';
 import { LiveProvider } from './live.js';
 
 /** `/skills/:name`: the _Skill_View_ of a skill that belongs to no plugin, as the whole main area. */
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
       { path: 'skills/:skillName', Component: StandaloneSkill },
     ],
   },
-]);
+], { basename: BASE.replace(/\/$/, '') || '/' });
 
 const navigate = (location: string) => void router.navigate(location);
 

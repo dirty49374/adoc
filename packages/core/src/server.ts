@@ -12,7 +12,7 @@ import { LOCAL_ID_PATTERN, PLUGIN_KEY_PATTERN, parseDocumentTarget } from './nam
 import { attachTransport, createTransport, type MessageTransport } from './transports.js';
 import { formatCheck } from './report.js';
 import { checkSkills, editSkillFile, listSkills, readSkillFile, viewSkill } from './skills.js';
-import { readServerRecord, removeServerRecord, writeServerRecord } from './registry.js';
+import { readServerRecord, removeServerRecord, workspaceId, writeServerRecord } from './registry.js';
 import { readClaim, CLAIM_FILE, type AgentClaim } from './claim.js';
 import { herdrPanes, herdrSubscribe } from './herdr.js';
 import { TerminalRelay } from './terminal.js';
@@ -537,14 +537,14 @@ export class AdocServer {
       return sendJson(response, outcome.status === 'refused' ? 409 : 422, outcome);
     }
     if (path.startsWith('/api/')) return sendJson(response, 404, { error: `no route ${method} ${path}` });
-    return this.serveWebapp(path, response);
+    return this.serveWebapp(path, request, response);
   }
 
   /**
    * Serves a built file under `/assets/` (the `client/` folder of a plugin under `/assets/plugins/<KEY>/`); every other
    * path is a client route and gets index.html.
    */
-  private async serveWebapp(path: string, response: ServerResponse): Promise<void> {
+  private async serveWebapp(path: string, request: IncomingMessage, response: ServerResponse): Promise<void> {
     const asset = path.startsWith('/assets/') && /^\/assets(\/[\w-][\w.-]*)+$/.test(path);
     const plugin = asset ? /^\/assets\/plugins\/([A-Z]+)\/(.+)$/.exec(path) : null;
     const directory = plugin ? this.workspace.pluginInfos().find((p) => p.key === plugin[1] && p.client)?.directory : undefined;
@@ -552,8 +552,17 @@ export class AdocServer {
     if (!file) return sendJson(response, 404, { error: `no file ${path}` });
     try {
       let body: Buffer | string = await readFile(file);
-      // The configured colour scheme is in the page from the first paint; a browser's own choice replaces it.
-      if (!asset) body = body.toString('utf8').replace('__ADOC_THEME__', this.workspace.config.ui.theme);
+      // The page carries what the browser needs from the first paint: the configured colour scheme (a browser's own choice
+      // replaces it), the _Web_UI_Base_ and the hub that serves it, if any, and the workspace id that names its storage keys.
+      if (!asset) {
+        const { base, hub } = webUiBase(request);
+        body = body
+          .toString('utf8')
+          .replace('__ADOC_THEME__', this.workspace.config.ui.theme)
+          .replace('__ADOC_BASE__', escapeAttribute(base))
+          .replace('__ADOC_HUB__', escapeAttribute(hub))
+          .replace('__ADOC_WORKSPACE__', workspaceId(this.workspace.root));
+      }
       response.writeHead(200, { 'content-type': WEBAPP_TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
       response.end(body);
     } catch {
@@ -567,4 +576,23 @@ export class AdocServer {
 /** Whether a listen address accepts connections from this computer only. */
 function isLoopback(host: string): boolean {
   return host === 'localhost' || host === '::1' || host.startsWith('127.');
+}
+
+/**
+ * The _Web_UI_Base_ of a request: the prefix a hub names in `X-Forwarded-Prefix` (with a trailing slash), or `/`; and the
+ * hub's discovery path from `X-Adoc-Hub`, or nothing for a direct connection.
+ */
+export function webUiBase(request: IncomingMessage): { base: string; hub: string } {
+  const header = (name: string) => {
+    const value = request.headers[name];
+    return (Array.isArray(value) ? value[0] : value)?.trim() ?? '';
+  };
+  const prefix = header('x-forwarded-prefix');
+  const safe = /^(\/[\w.~-]+)+$/.test(prefix);
+  const hub = header('x-adoc-hub');
+  return { base: safe ? `${prefix}/` : '/', hub: safe && /^(\/[\w.~-]+)+$/.test(hub) ? hub : '' };
+}
+
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }

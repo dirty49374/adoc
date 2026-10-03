@@ -8,7 +8,7 @@ import { readStored, writeStored } from '../storage.js';
 import { useWorkspace } from '../workspace.js';
 import { DraftChipList } from './DraftChipList.js';
 
-const TEXT_KEY = 'adoc.composer';
+const TEXT_KEY = 'composer';
 
 /** The targets the route allows, narrowest first: document or skill, plugin, workspace. */
 function routeTargets(pluginKey?: string, documentKey?: string, skill?: string): MessageTarget[] {
@@ -38,7 +38,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const [text, setText] = useState(() => readStored(TEXT_KEY, ''));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
-  const [pinned, pin] = usePinned('adoc.composer-pinned');
+  const [pinned, pin] = usePinned('composer-pinned');
   useEffect(() => setChosen(0), [pluginKey, documentKey, skill]);
   const area = useRef<HTMLTextAreaElement>(null);
   const box = useRef<HTMLDivElement>(null);

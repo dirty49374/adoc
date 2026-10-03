@@ -10,7 +10,7 @@ import { useClock } from '../time.js';
 import { DocumentRow } from './DocumentRow.js';
 import { DocumentSortPicker, isDocumentSort, sortEntries, type DocumentSort } from './DocumentSortPicker.js';
 
-const SORT_KEY = 'adoc.list-sort';
+const SORT_KEY = 'list-sort';
 
 /** The list of one plugin; `pluginKey` says whose, so that a list fetched for another tab is never used. */
 type ListState = { phase: 'loading' } | { phase: 'plugin-error'; error: string } | { phase: 'showing'; pluginKey: string; documents: SummaryEntry[] };

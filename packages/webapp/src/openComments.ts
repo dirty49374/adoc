@@ -9,7 +9,7 @@ export interface OpenComment {
   text: string;
 }
 
-const KEY = 'adoc.open-comments';
+const KEY = 'open-comments';
 
 /** Unsaved popover input per document, restored when the user returns to that document. */
 export const openComments = {

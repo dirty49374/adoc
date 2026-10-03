@@ -14,7 +14,7 @@ import { readStored, writeStored } from '../storage.js';
 type ActionEvent = ActionRequest['event'];
 const DRAG_TYPE = 'application/x-adoc-drag';
 /** The actions, as `<plugin key> <action name>`, whose confirmation the user turned off in this browser. */
-const CONFIRM_OFF = 'adoc.confirm-off';
+const CONFIRM_OFF = 'confirm-off';
 
 interface Props {
   /** The document (or skill) the body shows. */
