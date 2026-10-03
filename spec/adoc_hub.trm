@@ -155,7 +155,8 @@ concept _Hub_Remap_ in hub = {
   sets _adoc:Web_UI_Base_
 .contract
   - The _Hub_Server_ must forward a request for `/<host>/<path>` to that host's server as `/<path>`, with `X-Forwarded-Prefix: /<host>` and `X-Adoc-Hub: /adoc-discovery`, and must forward WebSocket upgrades the same way.
-  - The _Hub_Server_ must pass the pages, scripts and responses of each host unchanged, so that every host serves its own adoc version, with two exceptions, because all hosts share the hub's one origin: it must drop every `Set-Cookie` of a host, and must give HTML from a host a `Content-Security-Policy` that allows scripts only from the hub's origin, never inline.
+  - The _Hub_Server_ must pass the pages, scripts and responses of each host unchanged, so that every host serves its own adoc version, with two exceptions, because all hosts share the hub's one origin: it must drop every `Set-Cookie` of a host, must mark every response `nosniff`, and must give HTML from a host a `Content-Security-Policy` that allows scripts only from the hub's origin, never inline.
+  - Every page of the hub, its own and those of hosts, must forbid framing by other origins (`frame-ancestors 'self'`): other services under the same registrable domain could otherwise frame a terminal with the cookie.
   - The _Hub_Server_ must refuse a request body over 64 MiB and more than 32 WebSockets of one browser at a time.
   - A request for an offline or unknown host must get a page saying so, with a link to the list.
 }

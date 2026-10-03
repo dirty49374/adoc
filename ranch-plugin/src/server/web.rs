@@ -32,7 +32,9 @@ const MAX_WS_PER_BROWSER: usize = 32;
 /// on HTML from a host: scripts only from the hub's origin, never inline, so that agent-authored
 /// markup in a rendered document cannot act with the hub's authority over every host's terminal;
 /// eval and WebAssembly stay allowed for bundled code (the SKETCH editor needs them)
-const CSP: &str = "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'self'";
+const CSP: &str = "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'";
+/// on the hub's own pages: no framing by other same-site pages (clickjacking a terminal)
+const OWN_CSP: &str = "frame-ancestors 'self'";
 
 pub async fn serve(listener: tokio::net::TcpListener, shared: Shared) {
     let app = axum::Router::new().fallback(handle).with_state(shared);
@@ -82,11 +84,11 @@ fn host_segment(s: &str) -> bool { !s.is_empty() && s.len() <= 100 && s.chars().
 fn is_upgrade(headers: &HeaderMap) -> bool { headers.get(header::UPGRADE).and_then(|v| v.to_str().ok()).is_some_and(|v| v.eq_ignore_ascii_case("websocket")) }
 
 fn page(status: StatusCode, html: String) -> Response {
-    (status, [(header::CONTENT_TYPE, "text/html; charset=utf-8"), (header::CACHE_CONTROL, "no-store")], html).into_response()
+    (status, [(header::CONTENT_TYPE, "text/html; charset=utf-8"), (header::CACHE_CONTROL, "no-store"), (header::CONTENT_SECURITY_POLICY, OWN_CSP), (header::X_FRAME_OPTIONS, "SAMEORIGIN"), (header::X_CONTENT_TYPE_OPTIONS, "nosniff")], html).into_response()
 }
 
 fn json_response(status: StatusCode, value: serde_json::Value) -> Response {
-    (status, [(header::CONTENT_TYPE, "application/json"), (header::CACHE_CONTROL, "no-store")], value.to_string()).into_response()
+    (status, [(header::CONTENT_TYPE, "application/json"), (header::CACHE_CONTROL, "no-store"), (header::X_CONTENT_TYPE_OPTIONS, "nosniff")], value.to_string()).into_response()
 }
 
 fn escape(s: &str) -> String { s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;") }
@@ -298,12 +300,14 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
     // hosts share the hub's origin: none may set cookies (adoc uses none), which would reach every
     // other host or shadow the hub's own
     for (name, value) in &head.headers {
-        if !proto::hop_by_hop(name) && !name.eq_ignore_ascii_case("set-cookie") && !name.eq_ignore_ascii_case("content-security-policy") {
+        if !proto::hop_by_hop(name) && !["set-cookie", "content-security-policy", "x-content-type-options", "x-frame-options"].iter().any(|h| name.eq_ignore_ascii_case(h)) {
             response = response.header(name, value);
         }
     }
+    // script-src 'self' trusts every file of the origin: no response may be sniffed into a script
+    response = response.header(header::X_CONTENT_TYPE_OPTIONS, "nosniff");
     if head.headers.iter().any(|(n, v)| n.eq_ignore_ascii_case("content-type") && v.to_ascii_lowercase().starts_with("text/html")) {
-        response = response.header(header::CONTENT_SECURITY_POLICY, CSP);
+        response = response.header(header::CONTENT_SECURITY_POLICY, CSP).header(header::X_FRAME_OPTIONS, "SAMEORIGIN");
     }
     response.body(Body::from_stream(ResponseBody { rx, tunnel, id, done: false })).unwrap_or_else(|_| StatusCode::BAD_GATEWAY.into_response())
 }
