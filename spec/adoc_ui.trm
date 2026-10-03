@@ -281,9 +281,11 @@ panel _Document_Body_ in document = {
   contains _Comment_Popover_
   contains _Draft_Marker_Column_
   contains _Reference_Tooltip_
+  contains _Action_Confirm_Dialog_
 .contract
   - _Document_Body_ must show the HTML returned by the _adoc:Plugin_Renderer_ unchanged, except for removing scripts.
-  - _Document_Body_ must send a _adoc:Document_Action_ to the _adoc:Adoc_Server_ with the shown _adoc:Document_Version_ when a marked control is clicked, toggled or dropped onto a marked drop target.
+  - _Document_Body_ must send a _adoc:Document_Action_ to the _adoc:Adoc_Server_ with the shown _adoc:Document_Version_ when a marked control is clicked, toggled or dropped onto a marked drop target, after the _Action_Confirm_Dialog_ when the control carries a confirmation question.
+  - A toggled checkbox must keep showing the state of the file: _Document_Body_ must undo the browser's change of the checkbox at once, and the new state appears only when the _adoc:Document_ changes.
   - _Document_Body_ must show an _Anchor_Comment_Button_ beside each element marked as a _adoc:Document_Anchor_ while the pointer is over it.
   - _Document_Body_ must open the _Comment_Popover_ when the user selects text inside it.
   - _Document_Body_ must show the _Reference_Tooltip_ while the pointer is over an element marked as a _adoc:Document_Reference_, and must lead to the referenced _adoc:Document_ when it is clicked.
@@ -295,6 +297,21 @@ panel _Document_Body_ in document = {
 .rules
   - Through _Document_Body_ the user must never start a comment by clicking a control of a _adoc:Document_Action_.
   - Through _Document_Body_ the user must never send two _adoc:Document_Action_ requests for one click.
+}
+
+panel _Action_Confirm_Dialog_ in document = {
+  The dialog of the _Document_Body_ that asks the user to confirm a _adoc:Document_Action_ whose control carries a confirmation question, before the action is sent.
+.relations
+  part of _Document_Body_
+  references _adoc:Document_Action_
+  references _adoc:Anchor_Markup_Convention_
+  references _adoc:Plugin_Key_
+.contract
+  - _Action_Confirm_Dialog_ must show the question with a confirm button, a cancel button and a "don't ask again" checkbox.
+  - _Action_Confirm_Dialog_ must send the _adoc:Document_Action_ only on confirm; on cancel, Escape or a click outside it nothing is sent.
+  - When the user confirms with "don't ask again" checked, _Action_Confirm_Dialog_ must not appear again in this browser for that action name of that _adoc:Plugin_Key_, and the action is sent at once.
+.remarks
+  - Chosen: the choice is kept per browser, like the other view choices, because it is a habit of one user and not part of the workspace.
 }
 
 button _Anchor_Comment_Button_ in comment = {

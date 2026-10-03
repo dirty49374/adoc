@@ -526,6 +526,7 @@ concept _Anchor_Markup_Convention_ in document = {
   - A rendered _Document_Reference_ must carry the referenced _Document_Key_, optionally with `#anchor`, in `data-adoc-ref`.
   - A rendered control of a _Document_Action_ must carry the action name in `data-adoc-action`, the kind in `data-adoc-kind` and the value in `data-adoc-value`.
   - A drop zone of a drag action must carry the action name in `data-adoc-drop` and its value in `data-adoc-drop-value`.
+  - A rendered control of a _Document_Action_ may carry in `data-adoc-confirm` a question that the _Adoc_Web_UI_ asks the user before it sends the action, such as when the action asks the agent to start work.
 .remarks
   - Chosen: data attributes rather than class names, because class names serve styling.
   - Chosen: the body never carries the _Document_Key_ itself, because a _Document_Detail_View_ shows one _Document_ and its frame knows the key.
@@ -767,7 +768,7 @@ concept _User_Message_Format_ in message = {
   - With `--output json` or `--output yaml`, the same content must be returned as structured data.
 .remarks
   - Example of a comment: `[adoc message 3] comment · TASK-261002-herdr-integration`, the composer text, then `--` and `comments:` with entries such as `- target: TASK-1231#method`, `source: docs/tasks/TASK-1231.md:19`, `quote: infinite scroll`, `text: use page numbers instead`.
-  - Example of an action: `[adoc message 4] action · TODO-gui#3`, `TODO-gui#3 checked: Refactor PaymentRepo`, then `--`, `action: toggle`, `value: "3"`, `applied: true`.
+  - Example of an action: `[adoc message 4] action · TODO-gui#3`, `user request: do item TODO-gui#3: Refactor PaymentRepo`, then `--`, `action: toggle`, `value: "3"`, `applied: false`.
   - Chosen: the user's words come first and the machine fields last, so that a pushed prompt reads like a chat message.
   - Chosen: the plugin writes only the text of an action; adoc writes every other field, because those come from the _Adoc_Web_UI_.
 }
