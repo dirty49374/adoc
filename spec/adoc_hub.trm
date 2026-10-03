@@ -37,7 +37,8 @@ concept _Hub_Server_ in hub = {
   - The _Hub_Server_ must take the address of `web` from `RANCH_EXPOSED_PORTS`, never a fixed one, and must serve plain HTTP from `/` of that port: ranch adds no path prefix, and TLS, when used, ends before it.
   - Secrets of the _Hub_Server_ must be set with `herdr-ranch env`, never in the plugin's shared settings file.
   - The _Hub_Server_ must keep its state, the host names and the approved browsers, in `RANCH_PLUGIN_DATA_DIR`, written atomically.
-  - The _Hub_Server_ must answer every browser request without an approved browser cookie with the approval page of _Browser_Approval_, except the approval requests themselves.
+  - The _Hub_Server_ must answer every browser request without an approved browser cookie with the approval page of _Browser_Approval_, except the approval requests themselves, and must refuse such a WebSocket upgrade: nothing in front of it authenticates browsers, and hosts serve terminals.
+  - The _Hub_Server_ must never build an absolute URL from its own address: browsers reach it under another name and port, such as `http://adoc.hubbartt.arpa` through the ingress.
 }
 
 concept _Hub_Client_ in hub = {
