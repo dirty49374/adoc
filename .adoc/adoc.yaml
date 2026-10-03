@@ -1,17 +1,12 @@
-# adoc for the adoc repository itself. Plugins come from ./plugins.
+# adoc for the adoc repository itself. Plugins come from ../plugins, so that editing one reloads it. Paths are relative to this file.
 plugins:
-  - key: NOTE
-    from: ./plugins/note
-  - key: TODO
-    from: ./plugins/todo
-  - key: SKETCH
-    from: ./plugins/sketch
-  - key: TASK
-    from: ./plugins/task
-  - key: KANBAN
-    from: ./plugins/kanban
+  NOTE: ../plugins/note
+  TODO: ../plugins/todo
+  SKETCH: ../plugins/sketch
+  TASK: ../plugins/task
+  KANBAN: ../plugins/kanban
 watch:
-  - docs
+  - ../docs
 agent:
   name: adoc-dev
   transport:
@@ -19,3 +14,5 @@ agent:
 server:
   host: 0.0.0.0
   port: 7700
+ui:
+  tabs: [NOTE, TODO, SKETCH, TASK, KANBAN]

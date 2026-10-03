@@ -1,13 +1,10 @@
-# adoc demo workspace. Plugins come from the adoc repository.
+# adoc demo workspace. Plugins come from the adoc repository. Paths are relative to this file.
 plugins:
-  - key: TODO
-    from: ../../plugins/todo
-  - key: TASK
-    from: ../../plugins/task
-  - key: KANBAN
-    from: ../../plugins/kanban
+  TODO: ../../../plugins/todo
+  TASK: ../../../plugins/task
+  KANBAN: ../../../plugins/kanban
 watch:
-  - docs
+  - ../docs
 agent:
   name: demo-agent
   transport:
