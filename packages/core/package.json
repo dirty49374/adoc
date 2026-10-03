@@ -1,5 +1,5 @@
 {
-  "name": "@adoc/core",
+  "name": "@agent-workshop/adoc-core",
   "version": "0.1.0",
   "type": "module",
   "description": "adoc workspace, plugins, documents, messages, transports and server.",
@@ -10,11 +10,11 @@
     }
   },
   "dependencies": {
-    "@adoc/plugin-kit": "workspace:*",
+    "@agent-workshop/adoc-plugin-kit": "workspace:*",
     "ws": "8.21.3",
     "yaml": "2.9.0",
     "zod": "4.5.4",
-    "@adoc/webapp": "workspace:*"
+    "@agent-workshop/adoc-webapp": "workspace:*"
   },
   "scripts": {
     "build": "tsc -b",
@@ -23,6 +23,6 @@
   },
   "devDependencies": {
     "@types/ws": "8.18.1",
-    "@adoc/testing": "workspace:*"
+    "@agent-workshop/adoc-testing": "workspace:*"
   }
 }

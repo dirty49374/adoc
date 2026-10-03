@@ -3,7 +3,7 @@ import { createRequire, registerHooks } from 'node:module';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { PluginDefinition } from '@adoc/plugin-kit';
+import type { PluginDefinition } from '@agent-workshop/adoc-plugin-kit';
 import { parse } from 'yaml';
 import type { AdocConfig } from './config.js';
 import { errorMessage } from './errors.js';
@@ -32,9 +32,9 @@ export interface LoadedPlugin {
   readonly error?: string;
 }
 
-const KIT = '@adoc/plugin-kit';
+const KIT = '@agent-workshop/adoc-plugin-kit';
 
-// A plugin imports `@adoc/plugin-kit` of the running adoc wherever its folder is, also outside any node_modules tree
+// A plugin imports `@agent-workshop/adoc-plugin-kit` of the running adoc wherever its folder is, also outside any node_modules tree
 // that has the kit (for example in the user _Plugin_Directory_).
 registerHooks({
   resolve(specifier, context, next) {

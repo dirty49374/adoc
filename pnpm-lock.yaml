@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@adoc/plugin-kit':
+      '@agent-workshop/adoc-plugin-kit':
         specifier: workspace:*
         version: link:packages/plugin-kit
     devDependencies:
@@ -24,7 +24,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@adoc/core':
+      '@agent-workshop/adoc-core':
         specifier: workspace:*
         version: link:../core
       '@modelcontextprotocol/sdk':
@@ -43,7 +43,7 @@ importers:
         specifier: 4.5.4
         version: 4.5.4
     devDependencies:
-      '@adoc/testing':
+      '@agent-workshop/adoc-testing':
         specifier: workspace:*
         version: link:../testing
       '@types/shell-quote':
@@ -52,10 +52,10 @@ importers:
 
   packages/core:
     dependencies:
-      '@adoc/plugin-kit':
+      '@agent-workshop/adoc-plugin-kit':
         specifier: workspace:*
         version: link:../plugin-kit
-      '@adoc/webapp':
+      '@agent-workshop/adoc-webapp':
         specifier: workspace:*
         version: link:../webapp
       ws:
@@ -68,7 +68,7 @@ importers:
         specifier: 4.5.4
         version: 4.5.4
     devDependencies:
-      '@adoc/testing':
+      '@agent-workshop/adoc-testing':
         specifier: workspace:*
         version: link:../testing
       '@types/ws':

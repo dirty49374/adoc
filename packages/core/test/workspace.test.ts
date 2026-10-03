@@ -5,7 +5,7 @@ import { discoverHome } from '../src/home.js';
 import { formatMessage, MessageQueue } from '../src/messages.js';
 import { attachTransport, type MessageTransport } from '../src/transports.js';
 import { Workspace } from '../src/workspace.js';
-import { fixture, type Fixture } from '@adoc/testing';
+import { fixture, type Fixture } from '@agent-workshop/adoc-testing';
 
 const TODO = '# GUI\n\n- [ ] One [[TASK-a]]\n- [x] Two\n- [ ] Three [[TASK-missing]]\n';
 const TASK = '---\ntitle: A task\nstatus: RUNNING\n---\n\n## Goal\n\nDo it.\n';

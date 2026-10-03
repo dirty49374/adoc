@@ -1,5 +1,5 @@
-import { action, anchor, definePlugin, dropTarget, html, markdown, parseYaml, source } from '@adoc/plugin-kit';
-import type { PluginDocument } from '@adoc/plugin-kit';
+import { action, anchor, definePlugin, dropTarget, html, markdown, parseYaml, source } from '@agent-workshop/adoc-plugin-kit';
+import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
 
 const HIDDEN = 'REMOVE';
 

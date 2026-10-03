@@ -1,12 +1,12 @@
 /** How the files of one document are laid out on disk. */
 export type DocumentLayout =
   /**
-   * One file named `<KEY>-<id><extension>`, such as `TODO-gui.md`, and optionally companion files with the same name
+   * One file named `<KEY>-<local id><extension>`, such as `TODO-gui.md`, and optionally companion files with the same name
    * and the listed extensions, such as `SKETCH-login.png` beside `SKETCH-login.excalidraw`. Companion files belong to
    * the document but are not handed to plugin functions, since they may be binary.
    */
   | { kind: 'file'; extension: string; companions?: string[] }
-  /** One folder named `<KEY>-<id>/` whose main file is `entry`, such as `BUG-42/bug.yaml`. */
+  /** One folder named `<KEY>-<local id>/` whose main file is `entry`, such as `BUG-42/bug.yaml`. */
   | { kind: 'folder'; entry: string };
 
 /** One document as adoc hands it to a plugin function. All paths are relative to the workspace root. */

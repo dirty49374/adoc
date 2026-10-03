@@ -5,7 +5,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
 import { parse } from 'shell-quote';
 import { z } from 'zod';
-import { AdocError, errorMessage, type ServerExtension } from '@adoc/core';
+import { AdocError, errorMessage, type ServerExtension } from '@agent-workshop/adoc-core';
 import type { CommandContext } from './contracts.js';
 import { commands } from './commands.js';
 import { runCommand } from './program.js';

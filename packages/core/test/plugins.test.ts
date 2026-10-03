@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { fixture, type Fixture } from '@adoc/testing';
+import { fixture, type Fixture } from '@agent-workshop/adoc-testing';
 
 const DIST = pathToFileURL(resolve(import.meta.dirname, '../dist/index.js')).href;
 
 /**
  * Loads the plugins of a workspace with the built core in a plain Node process: vitest runs dynamic imports through
- * its own module runner, which skips the `@adoc/plugin-kit` resolve hook that the loader registers in Node.
+ * its own module runner, which skips the `@agent-workshop/adoc-plugin-kit` resolve hook that the loader registers in Node.
  */
 function loadInNode(root: string, xdg: string): Record<string, { error?: string; description?: string; skill?: { name: string; scope: string } }> {
   const script = `const c = await import(${JSON.stringify(DIST)}); const h = await c.discoverHome(${JSON.stringify(root)});
@@ -25,12 +25,12 @@ afterEach(async () => {
   current = undefined;
 });
 
-/** A minimal plugin folder that imports @adoc/plugin-kit; `skill: false` leaves out skill/SKILL.md. */
+/** A minimal plugin folder that imports @agent-workshop/adoc-plugin-kit; `skill: false` leaves out skill/SKILL.md. */
 async function writePlugin(folder: string, name: string, skill = true) {
   await mkdir(join(folder, 'skill'), { recursive: true });
   await writeFile(
     join(folder, 'index.ts'),
-    `import { definePlugin, html } from '@adoc/plugin-kit';\nexport default definePlugin({ description: '${name}', layout: { kind: 'file', extension: '.md' }, summarize: (doc) => ({ title: doc.key, status: 'x' }), render: () => html\`<p>x</p>\` });\n`,
+    `import { definePlugin, html } from '@agent-workshop/adoc-plugin-kit';\nexport default definePlugin({ description: '${name}', layout: { kind: 'file', extension: '.md' }, summarize: (doc) => ({ title: doc.key, status: 'x' }), render: () => html\`<p>x</p>\` });\n`,
   );
   if (skill) await writeFile(join(folder, 'skill/SKILL.md'), `---\nname: adoc-${name}\ndescription: "${name} documents"\n---\n\n# ${name}\n`);
 }

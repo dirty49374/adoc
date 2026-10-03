@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { unifiedDiff } from '@adoc/plugin-kit';
+import { unifiedDiff } from '@agent-workshop/adoc-plugin-kit';
 import { AdocError } from './errors.js';
 import { readSkillSource, type SkillSource } from './plugins.js';
 import type { CheckEntry, Workspace } from './workspace.js';
@@ -16,7 +16,7 @@ export interface SkillEntry extends SkillSource {
 }
 
 /** The folders of the core package and the _Plugin_Kit_, which own the skills `adoc` and `adoc-plugin-authoring`. */
-const OWNERS = [dirname(dirname(fileURLToPath(import.meta.url))), dirname(dirname(createRequire(import.meta.url).resolve('@adoc/plugin-kit/skill/SKILL.md')))];
+const OWNERS = [dirname(dirname(fileURLToPath(import.meta.url))), dirname(dirname(createRequire(import.meta.url).resolve('@agent-workshop/adoc-plugin-kit/skill/SKILL.md')))];
 
 /** Every _Agent_Skill_: the core package and the kit in user scope, then each loaded plugin's skill in its scope. */
 export async function listSkills(workspace: Workspace): Promise<SkillEntry[]> {

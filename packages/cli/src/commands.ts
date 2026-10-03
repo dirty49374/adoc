@@ -18,7 +18,7 @@ import {
   uninstallSkills,
   viewSkill,
   Workspace,
-} from '@adoc/core';
+} from '@agent-workshop/adoc-core';
 import type { CommandContext, CommandDefinition, CommandResult } from './contracts.js';
 import { createMcpEndpoint, serveStdio } from './mcp.js';
 

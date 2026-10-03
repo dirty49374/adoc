@@ -12,7 +12,7 @@ import {
   type FileContent,
   type PluginDefinition,
   type PluginDocument,
-} from '@adoc/plugin-kit';
+} from '@agent-workshop/adoc-plugin-kit';
 import { readConfig, type AdocConfig } from './config.js';
 import { AdocError, errorMessage } from './errors.js';
 import type { AdocHome } from './home.js';
@@ -221,7 +221,7 @@ export class Workspace {
       const info: PluginInfo = { key: p.key, from: p.from, documents: [...this.documents.values()].filter((d) => d.pluginKey === p.key && !d.archived).length };
       if (p.definition) {
         info.description = p.definition.description;
-        info.layout = p.definition.layout.kind === 'file' ? `file ${p.key}-<id>${p.definition.layout.extension}` : `folder ${p.key}-<id>/${p.definition.layout.entry}`;
+        info.layout = p.definition.layout.kind === 'file' ? `file ${p.key}-<local id>${p.definition.layout.extension}` : `folder ${p.key}-<local id>/${p.definition.layout.entry}`;
       }
       if (p.directory) info.directory = p.directory;
       // Looked up on every call: a plugin may build its client module while the server runs.

@@ -1,6 +1,6 @@
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
-import { AdocError, errorMessage } from '@adoc/core';
+import { AdocError, errorMessage } from '@agent-workshop/adoc-core';
 import { commands, groups, skillWarnings } from './commands.js';
 import type { CommandContext, CommandDefinition, CommandResult, OutputFormat } from './contracts.js';
 import { VERSION } from './version.js';

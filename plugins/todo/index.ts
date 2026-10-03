@@ -1,5 +1,5 @@
-import { action, anchor, definePlugin, html, markdown, raw, source } from '@adoc/plugin-kit';
-import type { PluginDocument } from '@adoc/plugin-kit';
+import { action, anchor, definePlugin, html, markdown, raw, source } from '@agent-workshop/adoc-plugin-kit';
+import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
 
 const ITEM = /^(\s*)- \[( |x|X)\] (.*)$/;
 const GROUP = /^## (.+)$/;

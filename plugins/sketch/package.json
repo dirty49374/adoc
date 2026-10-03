@@ -1,5 +1,5 @@
 {
-  "name": "@adoc/plugin-sketch",
+  "name": "@agent-workshop/adoc-plugin-sketch",
   "version": "0.1.0",
   "private": true,
   "type": "module",

@@ -1,7 +1,7 @@
 import { cp, mkdir, rm } from 'node:fs/promises';
 import { build } from 'esbuild';
 
-// Bundles the web UI into dist/, which @adoc/core serves: index.html for every client route, files under assets/.
+// Bundles the web UI into dist/, which @agent-workshop/adoc-core serves: index.html for every client route, files under assets/.
 const out = new URL('./dist/', import.meta.url).pathname;
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });

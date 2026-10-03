@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { afterEach, describe, expect, it } from 'vitest';
-import { fixture, freePort, type Fixture } from '@adoc/testing';
+import { fixture, freePort, type Fixture } from '@agent-workshop/adoc-testing';
 import { runCommand } from '../src/program.js';
 
 const ENTRY = resolve(import.meta.dirname, '../dist/entry.js');
@@ -25,7 +25,7 @@ describe('adoc CLI', () => {
   it('lists plugins, checks with a nonzero exit on errors, and shows guides', async () => {
     current = await fixture({ 'docs/TODO-a.md': '- [ ] x [[TASK-none]]\n' });
     const list = await run(['plugin', 'list'], current.root);
-    expect(list.stdout).toMatch(/TODO\s+1\s+file TODO-<id>\.md/);
+    expect(list.stdout).toMatch(/TODO\s+1\s+file TODO-<local id>\.md/);
     const json = await run(['plugin', 'list', '--output', 'json'], current.root);
     expect(JSON.parse(json.stdout)[0].key).toBe('TODO');
     expect((await run(['check'], current.root)).code).toBe(0);
