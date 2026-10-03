@@ -1,0 +1,26 @@
+{
+  "name": "@agent-workshop/adoc-plugin-kanban",
+  "version": "0.1.0",
+  "license": "0BSD",
+  "private": true,
+  "type": "module",
+  "description": "The KANBAN plugin of adoc: one board of about ten cards in columns.",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "skill"
+  ],
+  "scripts": {
+    "build": "esbuild index.ts --outfile=dist/index.js --format=esm --platform=node --log-level=warning"
+  },
+  "peerDependencies": {
+    "@agent-workshop/adoc-plugin-kit": "^0.1.0"
+  },
+  "devDependencies": {
+    "@agent-workshop/adoc-plugin-kit": "workspace:*",
+    "esbuild": "0.28.2"
+  }
+}

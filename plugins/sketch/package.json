@@ -4,17 +4,30 @@
   "license": "0BSD",
   "private": true,
   "type": "module",
-  "description": "The SKETCH plugin: Excalidraw drawings that the person makes and the agent reads.",
+  "description": "The SKETCH plugin of adoc: Excalidraw drawings that the user makes and the agent reads.",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "skill",
+    "client"
+  ],
   "scripts": {
     "build": "node build.mjs",
     "check": "tsc -p web"
   },
   "devDependencies": {
+    "@agent-workshop/adoc-plugin-kit": "workspace:*",
     "@excalidraw/excalidraw": "0.18.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "esbuild": "0.28.2",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2"
+    "react-dom": "19.3.0"
+  },
+  "peerDependencies": {
+    "@agent-workshop/adoc-plugin-kit": "^0.1.0"
   }
 }

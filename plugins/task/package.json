@@ -1,0 +1,26 @@
+{
+  "name": "@agent-workshop/adoc-plugin-task",
+  "version": "0.1.0",
+  "license": "0BSD",
+  "private": true,
+  "type": "module",
+  "description": "The TASK plugin of adoc: work orders that go from TODO through RUNNING and REVIEW to DONE.",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "skill"
+  ],
+  "scripts": {
+    "build": "esbuild index.ts --outfile=dist/index.js --format=esm --platform=node --log-level=warning"
+  },
+  "peerDependencies": {
+    "@agent-workshop/adoc-plugin-kit": "^0.1.0"
+  },
+  "devDependencies": {
+    "@agent-workshop/adoc-plugin-kit": "workspace:*",
+    "esbuild": "0.28.2"
+  }
+}

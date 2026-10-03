@@ -11,11 +11,17 @@
     }
   },
   "dependencies": {
+    "@agent-workshop/adoc-plugin-kanban": "workspace:*",
     "@agent-workshop/adoc-plugin-kit": "workspace:*",
+    "@agent-workshop/adoc-plugin-note": "workspace:*",
+    "@agent-workshop/adoc-plugin-sketch": "workspace:*",
+    "@agent-workshop/adoc-plugin-task": "workspace:*",
+    "@agent-workshop/adoc-plugin-todo": "workspace:*",
+    "@agent-workshop/adoc-webapp": "workspace:*",
+    "semver": "7.8.5",
     "ws": "8.21.3",
     "yaml": "2.9.0",
-    "zod": "4.5.4",
-    "@agent-workshop/adoc-webapp": "workspace:*"
+    "zod": "4.5.4"
   },
   "scripts": {
     "build": "tsc -b",
@@ -23,7 +29,8 @@
     "test": "vitest run --testTimeout 20000"
   },
   "devDependencies": {
-    "@types/ws": "8.18.1",
-    "@agent-workshop/adoc-testing": "workspace:*"
+    "@agent-workshop/adoc-testing": "workspace:*",
+    "@types/semver": "7.8.0",
+    "@types/ws": "8.18.1"
   }
 }
