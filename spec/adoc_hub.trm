@@ -65,7 +65,7 @@ procedure _Local_Discovery_ in hub = {
 .contract
   - _Local_Discovery_ must take the servers only from the JSON of the _adoc:Server_List_Command_, with their workspace, URL, process id and online or offline status, never from the server record files.
   - _Local_Discovery_ must find the `adoc` program in this order: the path set by `ADOC_BIN`, the programs on `PATH`, then the path that the user's login shell reports for `adoc`; when none is found, the _Hub_Status_Screen_ must say so.
-  - For each online server, _Local_Discovery_ must add the server's name, version and claimed pane from its `/api/workspace`; who the agent in that pane is, its name, status and conversation, must come from the ranch Directory only.
+  - For each online server, _Local_Discovery_ must add the server's name, workspace id, version and claimed pane from its `/api/workspace`; who the agent in that pane is, its name, status and conversation, must come from the ranch Directory only.
   - _Local_Discovery_ may run the command every few seconds, but the _Hub_Client_ must report only when the result changes.
 .remarks
   - Chosen: herdr runs plugins without the user's login shell, so an `adoc` installed by npm under nvm is usually not on their `PATH`; the login shell finds it as the user's terminal does.
@@ -136,7 +136,7 @@ concept _Hub_Discovery_ in hub = {
   lists _Hub_Host_
   read by _adoc_ui:Host_Switcher_
 .contract
-  - `GET /adoc-discovery` must return, for each _Hub_Host_, its address, name, machine, workspace path, online or offline, adoc version, and the name and status of its assigned agent.
+  - `GET /adoc-discovery` must return, for each _Hub_Host_, its address, name, machine, workspace path and workspace id, online or offline, adoc version, and the name and status of its assigned agent.
   - The _Hub_Discovery_ must offer the same list as a stream of changes, so that a browser follows hosts and agent status without polling.
   - The shape of the _Hub_Discovery_ is a contract between the hub and every adoc version; it may only grow.
 }

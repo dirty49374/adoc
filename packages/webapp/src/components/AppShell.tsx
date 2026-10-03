@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
+import { HUB, currentRoute } from '../base.js';
 import { reportActivity } from '../live.js';
 import { WorkspaceProvider, useWorkspace } from '../workspace.js';
 import { ConnectionStatusLabel } from './ConnectionStatusLabel.js';
 import { AgentPaneLabel } from './AgentPaneLabel.js';
 import { GitStatusLabel } from './GitStatusLabel.js';
+import { HostSwitcher } from './HostSwitcher.js';
 import { PanelResizer } from './PanelResizer.js';
 import { readStored, writeStored } from '../storage.js';
 import { useDrafts } from '../drafts.js';
@@ -28,13 +30,17 @@ export function AppShell() {
 function useActivityReports() {
   const where = useLocation();
   const current = where.pathname + where.hash;
-  useEffect(() => reportActivity(current), [current]);
+  useEffect(() => {
+    reportActivity(current);
+    // Where this browser was at this workspace, for returning to it from the _Host_Switcher_ under a hub.
+    writeStored('last-location', current);
+  }, [current]);
   useEffect(() => {
     let last = 0;
     const report = () => {
       if (Date.now() - last < 2000) return;
       last = Date.now();
-      reportActivity(location.pathname + location.hash);
+      reportActivity(currentRoute());
     };
     window.addEventListener('click', report, true);
     window.addEventListener('keydown', report, true);
@@ -65,10 +71,14 @@ function ShellLayout() {
   return (
     <div className="app-shell">
       <header className="top-bar">
-        <Link to="/" className="workspace-name">
-          <span className="product">adoc</span>
-          {workspace?.name ?? '…'}
-        </Link>
+        {HUB ? (
+          <HostSwitcher />
+        ) : (
+          <Link to="/" className="workspace-name">
+            <span className="product">adoc</span>
+            {workspace?.name ?? '…'}
+          </Link>
+        )}
         <PluginTabBar />
         <div className="top-bar-right">
           <WarningLink count={workspace?.check.length ?? 0} onOpen={() => setWarningsOpen(true)} />

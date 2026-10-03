@@ -152,7 +152,7 @@ adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work
 | `adoc skill install` / `update` / `uninstall` | manage the installed skills (command line only; through MCP, ask the user to run them) |
 | `adoc plugin list` | the declared plugins, in tab order |
 | `adoc plugin install` / `adoc plugin update [KEY…]` | fetch the GitHub plugin sources not fetched yet / again (command line only) |
-| `adoc server run` / `adoc mcp run` / `adoc init` | run the server / serve the MCP tool / create a workspace (command line only) |
+| `adoc server run` / `adoc server list` / `adoc mcp run` / `adoc init` | run the server / the servers of this computer, online or offline (any directory) / serve the MCP tool / create a workspace (command line only) |
 
 Every command takes `--output text|markdown|json|yaml` and answers `--help`; the workspace is the parent of the nearest `.adoc` folder upwards, or of the `.adoc` folder named by `--home <path>` (command line only) or `ADOC_HOME`. `adoc message` and `adoc ui` need the running server of the workspace; the user usually starts it with `adoc server run`. The other commands read the workspace directly. Through MCP, call the tool `adoc` with the command line without `adoc`, such as `{ "cmd": "document list --plugin TASK" }`.
 

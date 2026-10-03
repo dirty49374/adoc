@@ -411,6 +411,7 @@ export class AdocServer {
       return sendJson(response, 200, {
         name: ws.name,
         root: ws.root,
+        id: workspaceId(ws.root),
         version: VERSION,
         revision: ws.revision,
         agent: this.agentInfo(),

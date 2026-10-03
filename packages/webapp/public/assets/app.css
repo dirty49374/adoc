@@ -130,6 +130,18 @@ button.adoc-chip.active { color: var(--adoc-surface); background: var(--adoc-pri
 .top-bar { display: flex; align-items: stretch; gap: 16px; padding: 0 12px; background: var(--adoc-surface-panel); min-height: 36px; font-size: var(--adoc-size-small); }
 .workspace-name { display: flex; align-items: center; gap: 6px; text-decoration: none; color: var(--adoc-text); font-weight: 600; white-space: nowrap; }
 .workspace-name .product { color: var(--adoc-primary); font-weight: 800; }
+button.workspace-name { background: transparent; padding: 0; font-size: inherit; cursor: pointer; }
+.host-switcher { position: relative; }
+.host-menu { top: calc(100% + 6px); left: 0; z-index: 20; min-width: 320px; margin: 0; padding: 4px 0; list-style: none; box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-primary); }
+.host-menu button { display: grid; grid-template-columns: 7px 1fr; column-gap: 8px; align-items: center; width: 100%; padding: 5px 12px 5px calc(12px + var(--adoc-bar)); background: transparent; color: var(--adoc-text); text-align: left; }
+.host-menu button:hover:not(:disabled) { background: var(--adoc-surface-panel); }
+.host-menu button.current .host-label { color: var(--adoc-primary); font-weight: 600; }
+.host-menu button:disabled { opacity: 0.5; cursor: default; }
+.host-menu .adoc-muted { grid-column: 2; }
+.host-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--adoc-text-muted); }
+.host-dot.idle { background: var(--adoc-success); }
+.host-dot.working { background: var(--adoc-warning); }
+.host-dot.no-agent { background: var(--adoc-info); }
 .top-bar-right { display: flex; gap: 14px; align-items: center; margin-left: auto; white-space: nowrap; }
 .connection-status { display: inline-flex; align-items: center; gap: 6px; color: var(--adoc-text-muted); }
 .connection-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--adoc-text-muted); }

@@ -13,3 +13,9 @@ export const WORKSPACE_ID = /^[0-9a-f]{16}$/.test(meta('adoc-workspace')) ? meta
 export function under(path: string): string {
   return BASE + path.replace(/^\//, '');
 }
+
+/** The current route without the base, as the server and the router know it: `/p/NOTE/NOTE-x#ideas`. */
+export function currentRoute(): string {
+  const path = location.pathname.startsWith(BASE) ? `/${location.pathname.slice(BASE.length)}` : location.pathname;
+  return path + location.hash;
+}

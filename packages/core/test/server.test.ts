@@ -116,6 +116,19 @@ describe('AdocServer', () => {
     expect((await fetch(`${server.url}/assets/missing.js`)).status).toBe(404);
   });
 
+  it('puts the base and the hub of a forwarding hub into index.html and ignores a malformed prefix', async () => {
+    const { server } = await start();
+    const page = (headers: Record<string, string>) => fetch(`${server.url}/p/TODO`, { headers }).then((r) => r.text());
+    const direct = await page({});
+    expect(direct).toContain('<base href="/" />');
+    expect(direct).toContain('<meta name="adoc-hub" content="" />');
+    const hub = await page({ 'x-forwarded-prefix': '/mldev_7700', 'x-adoc-hub': '/adoc-discovery' });
+    expect(hub).toContain('<base href="/mldev_7700/" />');
+    expect(hub).toContain('<meta name="adoc-hub" content="/adoc-discovery" />');
+    expect(hub).toMatch(/<meta name="adoc-workspace" content="[0-9a-f]{16}" \/>/);
+    expect(await page({ 'x-forwarded-prefix': '/a"><script>' })).toContain('<base href="/" />');
+  });
+
   it('runs once per workspace and records itself outside the repository', async () => {
     const { server, f } = await start();
     expect(await readServerRecord(f.root)).toMatchObject({ pid: process.pid, url: server.url });

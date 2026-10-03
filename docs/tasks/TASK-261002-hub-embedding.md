@@ -1,6 +1,6 @@
 ---
 title: adoc under a hub (server list, base path, host switcher)
-status: RUNNING
+status: REVIEW
 assignee: adoc-dev
 notes: [NOTE-261002-ranch-adoc-hub]
 related: [TASK-261002-adoc-hub-plugin]
@@ -31,13 +31,15 @@ Spec Terms (aterm):
 
 ## Done when
 
-- [ ] `adoc server list --output json` lists the servers of this computer with online and offline status, from any directory.
-- [ ] A server record is never read half-written (atomic write).
-- [ ] Through the fake hub, the web UI works under `/<host>/`: documents, comments, actions, live updates, the terminal and plugin client modules (SKETCH).
-- [ ] The host switcher lists the hosts with their state and switches; `adoc ui open` in another workspace moves the browser to that host.
-- [ ] Drafts and choices of two workspaces under one origin stay apart.
-- [ ] A direct connection behaves as before; tests, `pnpm check`, `aterm corpus check` and `adoc check` pass.
+- [x] `adoc server list --output json` lists the servers of this computer with online and offline status, from any directory.
+- [x] A server record is never read half-written (atomic write).
+- [x] Through the fake hub, the web UI works under `/<host>/`: documents, comments, actions, live updates, the terminal and plugin client modules (SKETCH).
+- [x] The host switcher lists the hosts with their state and switches; `adoc ui open` in another workspace moves the browser to that host.
+- [x] Drafts and choices of two workspaces under one origin stay apart.
+- [x] A direct connection behaves as before; tests, `pnpm check`, `aterm corpus check` and `adoc check` pass.
 
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-ranch-adoc-hub]].
+- 2026-10-02: implemented. `adoc server list` (core `listServers`, atomic record write); `X-Forwarded-Prefix`/`X-Adoc-Hub` put into `index.html` as `<base>`, `adoc-hub` and `adoc-workspace`; the web UI resolves fetch, WebSocket, assets, plugin modules and routes under the base; storage keys `adoc.<workspace id>.<name>`; `/api/workspace` tells `id` and `version`; `_Host_Switcher_` (`hub.ts`, `HostSwitcher.tsx`) with presence connections and the last location per host; `tooling/dev-hub.mjs` as the stand-in hub (optional list of server ports, so tests stay off other servers).
+- 2026-10-02: checked through the dev hub with 7701 (demo) and 7702 (a scratch workspace): the menu lists both with state, switching keeps each host's last location, `adoc ui open` in 7701 moved the browser from 7702 to 7701, and a direct connection shows the workspace name as before. Tests, `pnpm check`, `aterm corpus check` and `adoc check` pass.

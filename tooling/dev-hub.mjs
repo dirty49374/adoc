@@ -2,7 +2,8 @@
 // A stand-in for the adoc hub on this machine, for developing and testing the web UI under a hub without the ranch
 // plugin: `/adoc-discovery` (JSON, and `/adoc-discovery/events` as server-sent events) from `adoc server list`, and
 // `/<machine>_<port>/…` forwarded to that server with X-Forwarded-Prefix and X-Adoc-Hub, WebSockets included.
-// Usage: node tooling/dev-hub.mjs [port]   (default 7790; no authentication, loopback only)
+// Usage: node tooling/dev-hub.mjs [port] [server ports]   (default 7790 and every server; no authentication, loopback
+// only). Tests name their servers, e.g. `7701,7702`, so that the browser never joins another server.
 import { execFile } from 'node:child_process';
 import { request as httpRequest, createServer } from 'node:http';
 import { connect } from 'node:net';
@@ -11,22 +12,23 @@ import { promisify } from 'node:util';
 
 const run = promisify(execFile);
 const PORT = Number(process.argv[2] ?? 7790);
+const ONLY = process.argv[3]?.split(',');
 const MACHINE = hostname().split('.')[0];
 const ADOC = new URL('../packages/cli/dist/entry.js', import.meta.url).pathname;
 
 /** The hosts of this machine, in the shape of the hub's discovery list. */
 async function discover() {
   const { stdout } = await run(process.execPath, [ADOC, 'server', 'list', '--output', 'json']);
-  const servers = JSON.parse(stdout);
+  const servers = JSON.parse(stdout).filter((s) => !ONLY || ONLY.includes(new URL(s.url).port));
   return Promise.all(
     servers.map(async (server) => {
       const port = new URL(server.url).port;
-      const host = { address: `${MACHINE}_${port}`, name: null, machine: MACHINE, workspace: server.workspace, url: server.url, status: server.status, version: null, agent: null };
+      const host = { address: `${MACHINE}_${port}`, id: null, name: null, machine: MACHINE, workspace: server.workspace, url: server.url, status: server.status, version: null, agent: null };
       if (server.status !== 'online') return host;
       try {
         const info = await (await fetch(`${server.url}/api/workspace`)).json();
         const claim = info.agent?.claim;
-        return { ...host, name: null, title: info.name, version: info.version ?? null, agent: claim ? { name: info.agent.name, status: claim.gone ? 'gone' : claim.status ?? 'unknown' } : null };
+        return { ...host, name: null, id: info.id ?? null, title: info.name, version: info.version ?? null, agent: claim ? { name: info.agent.name, status: claim.gone ? 'gone' : claim.status ?? 'unknown' } : null };
       } catch {
         return host;
       }

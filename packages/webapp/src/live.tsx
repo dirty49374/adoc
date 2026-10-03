@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { PublicMessage } from './api.js';
-import { under } from './base.js';
+import { currentRoute, under } from './base.js';
 import { sessionId } from './storage.js';
 
 /** The assigned agent as the server reports it. */
@@ -57,7 +57,7 @@ export function LiveProvider({ children, onNavigate }: { children: ReactNode; on
     const connect = () => {
       const current = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}${under('/api/events')}?session=${sessionId()}`);
       socket = current;
-      current.onopen = () => reportActivity(location.pathname + location.hash);
+      current.onopen = () => reportActivity(currentRoute());
       current.onmessage = (event) => {
         const data = JSON.parse(String(event.data));
         if (data.type === 'navigate') {
