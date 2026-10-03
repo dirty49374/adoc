@@ -10,3 +10,6 @@ packages/*/THIRD_PARTY_NOTICES.md
 plugins/*/LICENSE
 plugins/*/THIRD_PARTY_NOTICES.md
 packages/cli/README.md
+# Editor and note-app settings of each developer
+.obsidian/
+.vscode/
