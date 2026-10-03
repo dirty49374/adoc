@@ -52,7 +52,7 @@ export default definePlugin({
         ${group.items.map(
           (item) => html`
             <li class="adoc-item ${item.done ? 'adoc-done' : ''}" ${anchor(item.line)} ${source(doc.file, item.line)}>
-              <input type="checkbox" ${action({ kind: 'toggle', name: 'toggle', value: item.line })} ${item.done ? raw('checked') : ''} />
+              <input type="checkbox" ${action({ kind: 'toggle', name: 'toggle', value: item.line, confirm: item.done ? 'Ask the agent to reopen this item?' : 'Ask the agent to do this item?' })} ${item.done ? raw('checked') : ''} />
               <span>${markdown(item.text, { inline: true })}</span>
             </li>`,
         )}
@@ -71,13 +71,13 @@ export default definePlugin({
   },
 
   actions: {
+    // A click asks the agent: checking an open item asks it to do the item, unchecking a done one to reopen it.
+    // The file stays as it is until the agent checks or unchecks the item itself.
     toggle(doc, event) {
       const { lines } = parse(doc);
-      const index = Number(event.value) - 1;
-      const m = ITEM.exec(lines[index] ?? '');
+      const m = ITEM.exec(lines[Number(event.value) - 1] ?? '');
       if (!m) throw new Error(`line ${event.value} is not a task item`);
-      lines[index] = `${m[1]}- [${event.checked ? 'x' : ' '}] ${m[3]}`;
-      return { text: lines.join('\n'), message: `${doc.key}#${event.value} ${event.checked ? 'checked' : 'unchecked'}: ${m[3]}` };
+      return { message: `user request: ${event.checked ? 'do' : 'reopen'} item ${doc.key}#${event.value}: ${m[3]}` };
     },
   },
 });
