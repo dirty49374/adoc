@@ -430,7 +430,7 @@ panel _Terminal_Panel_ in message = {
   shows _adoc:Agent_Claim_
   part of _Message_Dock_
 .contract
-  - _Terminal_Panel_ must render the frames of the _adoc:Agent_Terminal_Stream_ and follow the size of the panel.
+  - _Terminal_Panel_ must render the frames of the _adoc:Agent_Terminal_Stream_ and follow the size of the panel; it must draw each frame as one synchronized update (DEC 2026), so that a full frame never shows the cleared screen it starts with.
   - _Terminal_Panel_ must take control of the stream when its page loads with focus and on any click, key press or focus in the page, and must then send every key, including keys composed by an input method such as Korean, the mouse wheel and mouse buttons, to the pane; Shift+Enter must reach the pane as a new line (ESC CR, the Alt+Enter sequence), not as Enter.
   - _Terminal_Panel_ must report whether this tab controls or observes the stream to the header of the _Message_Dock_, and must draw with the colours and the monospace font of the _adoc:Web_UI_Theme_.
 .states

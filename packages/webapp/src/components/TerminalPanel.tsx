@@ -46,6 +46,25 @@ function decode(base64: string): Uint8Array {
   return bytes;
 }
 
+const encoder = new TextEncoder();
+/** Synchronized output (DEC 2026) on, and the terminal reset (RIS) that a full frame starts with. */
+const BEGIN = encoder.encode('\x1b[?2026h');
+const BEGIN_FULL = encoder.encode('\x1bc\x1b[?2026h');
+const END = encoder.encode('\x1b[?2026l');
+
+/**
+ * One frame as one synchronized update: xterm.js draws nothing until the frame is complete, so a full frame never shows
+ * the cleared screen it starts with, and a large frame parsed over several slices never shows half of itself.
+ */
+function frame(bytes: Uint8Array, full: boolean): Uint8Array {
+  const begin = full ? BEGIN_FULL : BEGIN;
+  const out = new Uint8Array(begin.length + bytes.length + END.length);
+  out.set(begin, 0);
+  out.set(bytes, begin.length);
+  out.set(END, begin.length + bytes.length);
+  return out;
+}
+
 /**
  * _Terminal_Panel_: the live terminal of the claimed herdr pane. The tab the user is using controls it
  * (taken on load when focused, and on any click, key press or focus in the page), so keys and the size go
@@ -78,8 +97,7 @@ export function TerminalPanel({ claim, onPhase }: { claim: NonNullable<AgentInfo
       const off = onTerminal((message) => {
         if (message.type === 'terminal.frame' && typeof message.bytes === 'string') {
           lastFrame = Date.now();
-          if (message.full) term.reset();
-          term.write(decode(message.bytes));
+          term.write(frame(decode(message.bytes), message.full === true));
         } else if (message.type === 'terminal.mode') {
           mode.current = message.mode === 'control' ? 'control' : 'observe';
           onPhase(mode.current);
