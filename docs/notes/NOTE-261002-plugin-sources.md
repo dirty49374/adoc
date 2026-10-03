@@ -1,6 +1,7 @@
 ---
 title: plugin 출처, 설치와 사용, 설정 겹쳐 쓰기
-status: OPEN
+status: MOVED
+moved_to: TASK-261002-plugin-sources
 ---
 
 ## Background
@@ -56,8 +57,7 @@ flowchart LR
 
 ## Open questions
 
-- plugin hot reload가 `index.ts`만 다시 읽는 문제(여러 파일 plugin)는 이번 범위에서 빼고 TODO로 둘까요? (지금 동작은 skill에 정확히 적혀 있습니다.)
-- `.adoc/plugins-lock.json`을 commit할지는 `skills-lock.json`처럼 사용자가 정하게 할까요?
+- (없음)
 
 ## Decisions
 
@@ -74,3 +74,5 @@ flowchart LR
 - **호환성:** plugin은 `package.json`의 `peerDependencies`에 `@agent-workshop/adoc-plugin-kit` 범위를 적고, adoc은 load할 때 범위를 검사해 맞지 않으면 알기 쉬운 load 오류를 냅니다.
 - 이름만 쓰는 출처와 `~/.config/adoc/plugins/`를 찾는 규칙은 없앱니다. 출시 전이라 옛 형식은 지원하지 않고, 옛 형식을 만나면 새 형식을 알려 주는 오류를 냅니다.
 - `adoc init`은 기본 plugin 다섯 개를 `npm:`으로 선언하고 `ui.tabs`를 씁니다.
+- 여러 파일로 된 plugin의 hot reload는 이번 범위에서 빼고 TODO에 둡니다.
+- `.adoc/`(그 안의 `plugins-lock.json`까지)를 commit할지는 사용자가 정합니다. adoc은 관여하지 않습니다.

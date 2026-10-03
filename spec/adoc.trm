@@ -293,6 +293,7 @@ concept _Plugin_Directory_ in plugin = {
   - `adoc plugin update` must refuse to replace a fetched folder whose files differ from the commit it recorded; to change a fetched _Plugin_, the user copies it to another folder and declares that directory.
 .remarks
   - Chosen: the XDG base directory convention (`$XDG_CONFIG_HOME`, default `~/.config`).
+  - Chosen: whether `.adoc/`, with its `plugins-lock.json`, is committed is the user's decision; adoc does not prescribe it.
 }
 
 concept _Plugin_Client_Module_ in plugin = {

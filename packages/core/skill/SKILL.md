@@ -89,7 +89,7 @@ A workspace (project scope):
 
 ```
 <project-dir>/
-  .adoc/
+  .adoc/                # the user decides whether it is committed
     adoc.yaml           # the configuration (above)
     .gitignore          # keeps claim.yaml out of git
     claim.yaml          # the assigned agent's herdr pane, written by `adoc agent claim`; this machine only
