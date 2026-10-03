@@ -203,7 +203,7 @@ concept _Plugin_Interface_ in plugin = {
 }
 
 concept _Plugin_Kit_ in plugin = {
-  The package `@adoc/plugin-kit`, the only package a _Plugin_ imports, which provides `definePlugin`, the `html` template, Markdown rendering with references and source positions, and helpers that write the _Anchor_Markup_Convention_.
+  The package `@agent-workshop/adoc-plugin-kit`, the only package a _Plugin_ imports, which provides `definePlugin`, the `html` template, Markdown rendering with references and source positions, and helpers that write the _Anchor_Markup_Convention_.
 .relations
   used by _Plugin_
   defines _Plugin_Interface_
@@ -234,7 +234,7 @@ concept _Plugin_Directory_ in plugin = {
 .contract
   - A plugin source in the _Adoc_Config_ that is a bare name must be looked up as a folder of that name in the project _Plugin_Directory_ first, then in the user _Plugin_Directory_; a path and an npm package name keep working.
   - A _Plugin_ has the scope of the place it is loaded from: project when it is inside the _Adoc_Workspace_, user otherwise; its _Agent_Skill_ is installed in the same scope.
-  - A _Plugin_ may have its own `package.json` with dependencies installed in its folder; it imports `@adoc/plugin-kit` of the running adoc wherever its folder is.
+  - A _Plugin_ may have its own `package.json` with dependencies installed in its folder; it imports `@agent-workshop/adoc-plugin-kit` of the running adoc wherever its folder is.
 .remarks
   - Chosen: the XDG base directory convention (`$XDG_CONFIG_HOME`, default `~/.config`).
 }

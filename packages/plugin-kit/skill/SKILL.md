@@ -56,7 +56,7 @@ If a function throws, adoc shows the message as the document's error and in `ado
 
 The main file is written by hand, too: the agent edits it directly, and the user can edit the whole main file in the web UI. Parse it leniently (ignore lines you do not understand, give defaults for missing fields) and throw only when the file cannot be read at all.
 
-## Helpers (`import { … } from '@adoc/plugin-kit'`)
+## Helpers (`import { … } from '@agent-workshop/adoc-plugin-kit'`)
 
 | helper | use |
 |---|---|
@@ -150,16 +150,16 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 
 ## Rules that avoid load errors
 
-- Import types with `import type { PluginDocument } from '@adoc/plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
+- Import types with `import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
 - No TypeScript `enum`, `namespace` or parameter properties (`constructor(private x)`): Node cannot strip them.
-- `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@adoc/plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
+- `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@agent-workshop/adoc-plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
 - Action names are lowercase kebab-case: `toggle`, `move`, `add-card`. Never name one `archive` or `unarchive`: the document header sends those, and the agent archives or restores the document.
 
 ## Complete example: the TODO plugin
 
 ```ts
-import { action, anchor, definePlugin, html, markdown, raw, source } from '@adoc/plugin-kit';
-import type { PluginDocument } from '@adoc/plugin-kit';
+import { action, anchor, definePlugin, html, markdown, raw, source } from '@agent-workshop/adoc-plugin-kit';
+import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
 
 const ITEM = /^(\s*)- \[( |x|X)\] (.*)$/;
 
