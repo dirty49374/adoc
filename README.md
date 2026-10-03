@@ -1,66 +1,71 @@
 # adoc
 
-adoc is a document collaboration system for agents. Its documents are plugin-defined files kept in git, such as TODO lists, task work orders and KANBAN boards. **An agent edits them directly.** A user reads the rendered documents in a web UI and comments on a section or on selected text, or uses buttons, checkboxes and drag-and-drop. Each of those becomes a one-time **message** to the agent. adoc does not depend on any agent harness: an agent can receive messages through the `adoc` CLI, through MCP, or by having them pushed into its herdr pane.
+adoc is a place where you and a coding agent work on documents together. The documents are plain files in your
+repository, such as notes, TODO lists, task work orders, boards and drawings, and each kind comes from a **plugin**.
 
-The specification is an aterm corpus, and it is the authority:
+- **The agent edits the files** with the `adoc` command line or its MCP tool, and commits them.
+- **You read them rendered in a web UI**, comment on a section or on selected text, edit them, or press their buttons.
+  Each of those reaches the agent as a **message**; in a herdr pane it arrives as a prompt, and the
+  web UI shows the agent's terminal beside the documents.
 
-| file | contents |
-|---|---|
-| `spec/adoc.trm` | concepts and contracts |
-| `spec/adoc_ui.trm` | web UI regions; React components carry the same names |
+adoc does not depend on one agent: any agent that can run a command or use MCP can work with it.
 
-Run `aterm corpus check` to validate it.
+## Requirements
 
-## Layout
+- Node.js 24 or later
+- git (recommended: the agent commits every change)
+- herdr 0.9.3 or later (recommended), for pushed messages and the terminal in the web UI
 
-```
-spec/                 aterm corpus (adoc.trm, adoc_ui.trm); .aterm/ is its Home
-packages/             every folder is a package: package.json, src/, test/, tsconfig.json, its own build
-  plugin-kit/           @agent-workshop/adoc-plugin-kit: the package every plugin imports; skill/ = how to write a plugin
-  core/                 workspace, plugins, documents, messages, transports, server; skill/ = the agent's workflow
-  cli/                  the adoc command line and the MCP tool
-  webapp/               React 19 + react-router web UI, bundled into its dist/ for core to serve
-  testing/              @agent-workshop/adoc-testing (private): test helpers every package's tests share (temporary workspaces, free ports)
-plugins/              every folder is a plugin: index.ts + skill/SKILL.md (TODO, TASK, KANBAN, NOTE, SKETCH);
-                        SKETCH also has package.json and web/, built into client/ (its browser code)
-examples/demo/        a demo workspace (port 7701)
-docs/                 this repository's own adoc documents (port 7700)
-bin/adoc              runs the CLI of this checkout
-```
-
-Every agent skill that `adoc skill` shows and installs is the `skill/` folder (with `SKILL.md`) of its owner folder.
-
-## Use
+## Install
 
 ```sh
-pnpm install && pnpm build
-export PATH="$PWD/bin:$PATH"
-
-cd examples/demo
-adoc server run            # web UI at http://127.0.0.1:7701
-adoc message wait          # in another terminal: what the agent receives
-adoc check                 # problems in the workspace
-adoc skill view adoc       # the agent's workflow skill
-adoc skill view adoc-plugin-authoring   # how to write a plugin
+npm install -g @agent-workshop/adoc
 ```
 
-A new workspace is a git repository with `adoc init`, which declares the five plugins of adoc in `.adoc/adoc.yaml`, and documents under `docs/`.
+This installs the `adoc` command, the web UI and the five plugins of adoc: NOTE (shared notes), TODO (task lists), TASK
+(work orders), KANBAN (a board) and SKETCH (drawings).
 
-Install the agent skills with `adoc skill install` (it runs the Vercel `skills` CLI, `npx skills add`, for every skill folder: adoc's own in user scope, each plugin's in its scope). Every adoc command warns while a skill is missing or its installed copy differs. Plugins are declared as `KEY: <source>`: `npm:<package>`, `github:<owner>/<repo>/<folder>` (fetched by `adoc plugin install`), or a path from the config file such as `./plugins/<name>`; `~/.config/adoc/adoc.yaml` declares plugins for every workspace.
-
-## Workflow for this repository
-
-Work on adoc itself goes through adoc:
-
-1. **NOTE**: the agent summarizes a conversation into a `NOTE-…` and develops it with the user's comments.
-2. **Design in aterm**: the agreed ideas become Terms and contracts in `spec/*.trm`, checked with `aterm corpus check`.
-3. **TASK**: a `TASK-…` describes the work, lists the NOTEs it came from in `notes:`, and points at the Terms it implements.
-4. **Implement**: the agent works through the TASK, logging progress; the spec may still change during the work and is kept in sync.
-
-## Develop
+## Quick start
 
 ```sh
-pnpm build     # every package builds itself, in dependency order
-pnpm test      # build, then each package's tests
-pnpm check     # type-check every package, its tests, and plugins/
+cd my-project               # a git repository
+adoc init                   # .adoc/adoc.yaml with the five plugins, and docs/
+adoc skill install          # teaches your agents adoc and each plugin (agent skills)
+adoc server run             # the web UI at http://127.0.0.1:7700
 ```
+
+Then start your agent in a herdr pane and let it run `adoc agent claim`: your comments and actions in the web UI are
+pushed into that pane. Without herdr, set `agent.transport.kind: wait` in `.adoc/adoc.yaml`, and the agent takes its
+messages with `adoc message wait`.
+
+The agent learns the rest from its skills: `adoc skill view adoc` shows what it reads.
+
+## Configuration
+
+`.adoc/adoc.yaml` declares which plugins the workspace uses, as `KEY: <source>`, laid over your own
+`~/.config/adoc/adoc.yaml`. Paths are relative to the file:
+
+```yaml
+plugins:
+  NOTE: npm:@agent-workshop/adoc-plugin-note     # an npm package (the five come with adoc)
+  TASK: ./plugins/task                           # a folder, here .adoc/plugins/task
+  MIND: github:someone/adoc-plugins/mindmap#v1   # fetched by `adoc plugin install`
+watch:
+  - ../docs
+ui:
+  tabs: [NOTE, TASK, MIND]
+```
+
+A plugin is a folder with `index.ts` and `skill/SKILL.md`; `adoc skill view adoc-plugin-authoring` explains how to write
+one.
+
+## Security
+
+The server listens on `127.0.0.1` by default. With `server.host: 0.0.0.0` it accepts the internal network **without
+authentication**: anyone who reaches the port can read and edit the documents and control the agent's terminal.
+
+## License
+
+adoc is released under the [Zero-Clause BSD License](LICENSE). The bundled browser code and fonts keep their own
+licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). To work on adoc itself, see
+[CONTRIBUTING.md](CONTRIBUTING.md).
