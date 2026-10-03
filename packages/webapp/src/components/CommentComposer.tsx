@@ -24,9 +24,10 @@ function routeTargets(pluginKey?: string, documentKey?: string, skill?: string):
  * _Comment_Composer_: the one composer. Sends every draft plus its own text on the chosen target
  * as one comment message; clears only after the server accepted. The input starts with three lines and grows with its text.
  * It floats over the bottom of the main area; unpinned, it folds into one line (see fold.tsx), keeping text and drafts.
- * Its open height is published as `--adoc-composer-space` so that the main area leaves room for it.
+ * Its open height is published as `--adoc-composer-space` so that the main area leaves room for it. `docked` (a touch
+ * device) makes it a band across the bottom of the page instead: always open, laid out below the main area, covering nothing.
  */
-export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
+export function CommentComposer({ drafts, docked = false }: { drafts: DraftComment[]; docked?: boolean }) {
   const { pluginKey, documentKey } = useParams();
   // On a skill view the skill is the narrowest target: the plugin's skill at /p/:plugin/skill, or /skills/:name.
   const plugins = useWorkspace()?.plugins ?? [];
@@ -38,7 +39,8 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   const [text, setText] = useState(() => readStored(TEXT_KEY, ''));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
-  const [pinned, pin] = usePinned('composer-pinned');
+  const [pinnedChoice, pin] = usePinned('composer-pinned');
+  const pinned = docked || pinnedChoice;
   useEffect(() => setChosen(0), [pluginKey, documentKey, skill]);
   const area = useRef<HTMLTextAreaElement>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -55,6 +57,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
    * main area. A folded composer is measured open but invisible (`measuring`) when no open height is known yet.
    */
   const measure = () => {
+    if (docked) return;
     const element = box.current;
     const shell = element?.parentElement;
     if (!element || !shell) return;
@@ -98,7 +101,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
   };
 
   return (
-    <div ref={box} className={`composer-area foldable${pinned ? '' : ' unpinned'}`} onPointerEnter={grow} onFocus={grow}>
+    <div ref={box} className={`composer-area foldable${pinned ? '' : ' unpinned'}${docked ? ' docked' : ''}`} onPointerEnter={grow} onFocus={grow}>
       <button className="composer-folded fold-closed" onClick={() => area.current?.focus()} data-testid="composer-folded">
         <MessageSquare />
         <span>Message to the agent</span>
@@ -115,7 +118,7 @@ export function CommentComposer({ drafts }: { drafts: DraftComment[] }) {
               </button>
             ))}
             <span className="spacer" />
-            <PinButton pinned={pinned} onPin={pin} what="composer" testId="composer-pin" />
+            {!docked && <PinButton pinned={pinned} onPin={pin} what="composer" testId="composer-pin" />}
           </div>
           <div className="composer-row">
             <textarea

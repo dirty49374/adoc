@@ -343,7 +343,6 @@ body.resizing { user-select: none; cursor: col-resize; }
 .message-dock.collapsed .dock-header { writing-mode: vertical-rl; padding: 10px 0; min-height: 0; }
 .terminal-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--adoc-surface); }
 .terminal-host { flex: 1; min-height: 0; padding: 4px 0 0 6px; overflow: hidden; } /* a frame wider than the panel never reaches the page */
-.terminal-input-line { flex: none; margin: 4px 6px 6px; padding: 6px 8px calc(6px) calc(8px + var(--adoc-bar)); border: none; background: var(--adoc-surface-element); color: var(--adoc-text); font: var(--adoc-size-base) var(--adoc-font-mono); box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-primary); }
 .dock-note { margin: 0; font-size: var(--adoc-size-small); }
 .pending-message-list { flex: 1; overflow: auto; list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: var(--adoc-size-small); }
 .pending-empty { flex: 1; padding: 12px; margin: 0; font-size: var(--adoc-size-small); }
@@ -370,6 +369,10 @@ body.resizing { user-select: none; cursor: col-resize; }
 .composer-target .spacer { flex: 1; }
 .composer-folded { width: 100%; padding: 5px 8px 5px calc(10px + var(--adoc-bar)); color: var(--adoc-text-muted); box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); }
 .main-scroll { padding-bottom: calc(var(--adoc-composer-space, 0px) + 16px); }
+/* on a touch device: a band across the bottom of the page, opposite the top bar, laid out below the main area and the dock */
+.composer-area.docked { position: static; flex: none; max-width: none; margin: 0; padding: 0; background: var(--adoc-surface-panel); }
+.composer-area.docked .draft-chip-list { padding: 6px 12px 0; }
+.composer-area.docked .comment-composer { margin-top: 0; box-shadow: inset var(--adoc-bar) 0 0 var(--adoc-secondary); background: var(--adoc-surface-panel); padding: 6px 12px 8px calc(12px + var(--adoc-bar)); }
 .comment-composer { margin-top: 6px; padding: 6px 6px 6px calc(10px + var(--adoc-bar)); background: var(--adoc-surface-element); box-shadow: var(--adoc-shadow), inset var(--adoc-bar) 0 0 var(--adoc-secondary); display: flex; flex-direction: column; gap: 4px; }
 .composer-row { display: flex; align-items: flex-end; gap: 6px; }
 .comment-composer textarea { flex: 1; resize: none; border: none; background: transparent; padding: 2px 0; max-height: 30vh; line-height: 1.5; }
