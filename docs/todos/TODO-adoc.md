@@ -8,7 +8,7 @@
 
 ## Release
 
-- [x] Rename the packages into the npm org `@agent-workshop` (aterm's org), each as `adoc-…` so no name clashes there: `@agent-workshop/adoc` (the CLI, command `adoc`), `@agent-workshop/adoc-core`, `@agent-workshop/adoc-plugin-kit`, `@agent-workshop/adoc-webapp`, `@agent-workshop/adoc-plugin-sketch`, `@agent-workshop/adoc-testing` (private); plugins and the skills import `@adoc/plugin-kit` today, so the resolve hook, the plugins and both skills change too
+- [x] Rename the packages into the npm org `@agent-workshop` (aterm's org), each as `adoc-…` so no name clashes there: `@agent-workshop/adoc` (the CLI, command `adoc`), `@agent-workshop/adoc-core`, `@agent-workshop/adoc-plugin-kit`, `@agent-workshop/adoc-webapp`, `@agent-workshop/adoc-plugin-sketch`, `@agent-workshop/adoc-testing` (private); plugins and the skills import `@adoc/plugin-kit` today, so the resolve hook, the plugins and both skills change too; done: every package, import, the resolve hook, both skills, the spec and the README use the new names
 - [ ] Publish adoc as a public npm package under those names, see [[NOTE-261002-installation]]
 - [ ] Ship the five plugins (NOTE, TODO, TASK, KANBAN, SKETCH) with the adoc package, and let `adoc init` declare them; today they live only in this repository's `plugins/` and `adoc init` writes `plugins: []`, while the `adoc` skill says they come with adoc
 
