@@ -4,6 +4,24 @@
   "license": "0BSD",
   "type": "module",
   "description": "adoc workspace, plugins, documents, messages, transports and server.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirty49374/adoc.git",
+    "directory": "packages/core"
+  },
+  "files": [
+    "dist",
+    "skill",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -26,7 +44,8 @@
   "scripts": {
     "build": "tsc -b",
     "check": "tsc -b && tsc -p test",
-    "test": "vitest run --testTimeout 20000"
+    "test": "vitest run --testTimeout 20000",
+    "prepack": "node ../../tooling/package-files.mjs"
   },
   "devDependencies": {
     "@agent-workshop/adoc-testing": "workspace:*",

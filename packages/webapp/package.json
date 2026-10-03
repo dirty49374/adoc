@@ -2,15 +2,32 @@
   "name": "@agent-workshop/adoc-webapp",
   "version": "0.1.0",
   "license": "0BSD",
-  "private": true,
   "type": "module",
   "description": "The adoc web UI: React 19 + react-router, bundled into dist/ for @agent-workshop/adoc-core to serve.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirty49374/adoc.git",
+    "directory": "packages/webapp"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "exports": {
     "./package.json": "./package.json"
   },
   "scripts": {
     "build": "node build.mjs",
-    "check": "tsc -p ."
+    "check": "tsc -p .",
+    "prepack": "node ../../tooling/package-files.mjs"
   },
   "devDependencies": {
     "@types/react": "19.2.2",

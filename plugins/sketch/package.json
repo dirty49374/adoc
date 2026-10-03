@@ -2,21 +2,35 @@
   "name": "@agent-workshop/adoc-plugin-sketch",
   "version": "0.1.0",
   "license": "0BSD",
-  "private": true,
   "type": "module",
   "description": "The SKETCH plugin of adoc: Excalidraw drawings that the user makes and the agent reads.",
-  "exports": {
-    ".": "./dist/index.js",
-    "./package.json": "./package.json"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirty49374/adoc.git",
+    "directory": "plugins/sketch"
   },
   "files": [
     "dist",
     "skill",
-    "client"
+    "client",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "build": "node build.mjs",
-    "check": "tsc -p web"
+    "check": "tsc -p web",
+    "prepack": "node ../../tooling/package-files.mjs"
   },
   "devDependencies": {
     "@agent-workshop/adoc-plugin-kit": "workspace:*",

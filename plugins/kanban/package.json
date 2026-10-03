@@ -2,19 +2,33 @@
   "name": "@agent-workshop/adoc-plugin-kanban",
   "version": "0.1.0",
   "license": "0BSD",
-  "private": true,
   "type": "module",
   "description": "The KANBAN plugin of adoc: one board of about ten cards in columns.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirty49374/adoc.git",
+    "directory": "plugins/kanban"
+  },
+  "files": [
+    "dist",
+    "skill",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "skill"
-  ],
   "scripts": {
-    "build": "esbuild index.ts --outfile=dist/index.js --format=esm --platform=node --log-level=warning"
+    "build": "esbuild index.ts --outfile=dist/index.js --format=esm --platform=node --log-level=warning",
+    "prepack": "node ../../tooling/package-files.mjs"
   },
   "peerDependencies": {
     "@agent-workshop/adoc-plugin-kit": "^0.1.0"

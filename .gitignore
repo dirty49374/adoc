@@ -4,3 +4,8 @@ dist/
 .playwright-mcp/
 .aterm/usage.jsonl
 *.swp
+# Copied into each published package by tooling/package-files.mjs at pack time
+packages/*/LICENSE
+packages/*/THIRD_PARTY_NOTICES.md
+plugins/*/LICENSE
+plugins/*/THIRD_PARTY_NOTICES.md
