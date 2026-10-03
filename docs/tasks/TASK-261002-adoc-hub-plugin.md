@@ -18,10 +18,10 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 - `_Hub_Server_`: exposed port `web` for browsers, forwarded port `tunnel` for clients; state in `RANCH_PLUGIN_DATA_DIR`.
 - `_Hub_Client_` and `_Local_Discovery_`: `adoc server list --output json` every few seconds, `adoc` found by `ADOC_BIN`, `PATH`, then the user's login shell; details from `/api/workspace`.
 - `_Hub_Host_`, `_Hub_Host_Name_`: `<machine>_<port>` or a given name, both answering.
-- `_Routing_Client_`: one per machine, picked on connect and moved when it leaves.
-- `_Hub_Tunnel_`: one WebSocket per machine, numbered streams for HTTP requests and WebSockets; datagrams only for signals and reports.
+- `_Routing_Client_`: one per machine, the lowest session name with a client in the Directory; picked again on `peer_left`, `directory_change` and server start (seeded from the snapshot).
+- `_Hub_Tunnel_`: one WebSocket per machine, numbered streams for HTTP requests and WebSockets; datagrams only for signals and reports; a token sent by datagram and checked on the first frame; the forwarded port looked up again after every welcome.
 - `_Hub_Discovery_` (`/adoc-discovery` and its change stream), `_Hub_Remap_` (`/<host>/…` with `X-Forwarded-Prefix` and `X-Adoc-Hub`).
-- `_Browser_Approval_`: code page, request on every status screen, approve or reject with single keys, long-lived cookie (hash stored), revocable.
+- `_Browser_Approval_`: herdr-glasses' pairing flow and cookie handling; the server takes the first answer and tells every client; pending requests in the herdr sidebar icon.
 - `_Hub_Status_Screen_` (ratatui in the ranch pane) and `_Hub_Name_Command_`.
 
 ## Method
@@ -31,8 +31,8 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 3. Tunnel: framing for streams (open, data, close, WebSocket messages), server side in axum, client side forwarding to `127.0.0.1`.
 4. Browser side of the server: `/adoc-discovery` (JSON and SSE), `/<host>/…` remap for HTTP and WebSocket, the approval page and cookie.
 5. Client: local discovery with the `adoc` lookup, reports, tunnel when asked, `name` command through the client.
-6. Status screen: hosts, names (edit), waiting approvals (approve, reject), revocation; plain output when not a TTY; re-exec on `plugin_updated`.
-7. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; install with `herdr-ranch install`.
+6. Status screen from herdr-glasses' console: hosts, names (edit), waiting approvals (approve, reject), revocation; plain output when not a TTY; never open the pane itself when ranch is on; re-exec on `plugin_updated`; end on Ctrl-C.
+7. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; the exposed port in the Ranch Server's `server.toml` and a k3s Service port (set up by the ranch owner once the port number is chosen); install with `herdr-ranch install`.
 8. Check on the real network: mldev and segv-mbp, two hosts, approval from each machine, switching, `adoc ui open` across machines, a client leaving and the routing moving.
 
 ## Done when
@@ -47,3 +47,4 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 ## Log
 
 - 2026-10-02: designed in aterm from [[NOTE-261002-ranch-adoc-hub]]; plugin layout surveyed from herdr-connect, herdr-claude-voice and echo-plugin.
+- 2026-10-02: reviewed by the herdr-ranch agent (thread #548): tunnel token, forwarded port per welcome, deterministic routing client, first-answer approvals, herdr-glasses' pairing as the model, agents only from the Directory.

@@ -34,6 +34,7 @@ concept _Hub_Server_ in hub = {
   stores _Hub_Host_Name_
 .contract
   - The _Hub_Server_ must listen for browsers on its exposed port `web` and for tunnels on a port forwarded to every machine as `tunnel`.
+  - Secrets of the _Hub_Server_ must be set with `herdr-ranch env`, never in the plugin's shared settings file.
   - The _Hub_Server_ must keep its state, the host names and the approved browsers, in `RANCH_PLUGIN_DATA_DIR`, written atomically.
   - The _Hub_Server_ must answer every browser request without an approved browser cookie with the approval page of _Browser_Approval_, except the approval requests themselves.
 }
@@ -51,6 +52,7 @@ concept _Hub_Client_ in hub = {
   - A _Hub_Client_ picked as the _Routing_Client_ of its machine must report the result of _Local_Discovery_ to the _Hub_Server_ by datagram when it is picked and whenever the result changes.
   - A _Hub_Client_ must reach adoc servers only on their loopback URLs on its own machine.
   - A _Hub_Client_ must connect again after a ranch network disconnect and report again after the next welcome, since datagrams are never replayed.
+  - A _Hub_Client_ must never open the plugin pane itself while ranch is on for its session, must re-execute itself in place on `plugin_updated`, and must end on Ctrl-C.
 }
 
 procedure _Local_Discovery_ in hub = {
@@ -63,7 +65,8 @@ procedure _Local_Discovery_ in hub = {
 .contract
   - _Local_Discovery_ must take the servers only from the JSON of the _adoc:Server_List_Command_, with their workspace, URL, process id and online or offline status, never from the server record files.
   - _Local_Discovery_ must find the `adoc` program in this order: the path set by `ADOC_BIN`, the programs on `PATH`, then the path that the user's login shell reports for `adoc`; when none is found, the _Hub_Status_Screen_ must say so.
-  - For each online server, _Local_Discovery_ must add the server's name, version and assigned agent from its `/api/workspace`.
+  - For each online server, _Local_Discovery_ must add the server's name, version and claimed pane from its `/api/workspace`; who the agent in that pane is, its name, status and conversation, must come from the ranch Directory only.
+  - _Local_Discovery_ may run the command every few seconds, but the _Hub_Client_ must report only when the result changes.
 .remarks
   - Chosen: herdr runs plugins without the user's login shell, so an `adoc` installed by npm under nvm is usually not on their `PATH`; the login shell finds it as the user's terminal does.
   - Chosen: the command rather than the record files, because the files may change place or shape; adoc owns them.
@@ -104,8 +107,8 @@ concept _Routing_Client_ in hub = {
   routes _Hub_Host_
   opens _Hub_Tunnel_
 .contract
-  - The _Hub_Server_ must pick a _Routing_Client_ for a machine when the first _Hub_Client_ of that machine connects, and must tell it by datagram.
-  - When the _Routing_Client_ leaves, the _Hub_Server_ must pick another connected _Hub_Client_ of the same machine, if any; until one is picked, the hosts of that machine are shown as unreachable.
+  - The _Hub_Server_ must pick the _Routing_Client_ of a machine deterministically: the _Hub_Client_ of the session with the lowest name among that machine's sessions whose persistent client is present in the ranch Directory; it must tell the picked client by datagram.
+  - The _Hub_Server_ must pick again on `peer_left`, on `directory_change` and after its own start, seeding from the Directory snapshot, since a starting server gets no `peer_joined` for clients already connected; until one is picked, the hosts of that machine are shown as unreachable.
   - Only the _Routing_Client_ of a machine reports and carries its hosts; the reports of other clients of that machine are ignored.
 }
 
@@ -117,9 +120,12 @@ concept _Hub_Tunnel_ in hub = {
   carries _Hub_Remap_
 .contract
   - A _Routing_Client_ must open its _Hub_Tunnel_ when the _Hub_Server_ asks by datagram, and must open it again after it drops.
+  - The _Hub_Server_ must send the _Routing_Client_ a fresh token by datagram, whose sender ranch guarantees, and must accept a _Hub_Tunnel_ only when its first frame carries that token, since every local process can reach a forwarded port.
+  - A _Routing_Client_ must look up the forwarded port `tunnel` again after every welcome and dial that port; it must never keep the port, which changes with every ranch connection.
   - A _Hub_Tunnel_ must carry each HTTP request and each WebSocket as its own stream, so that a slow stream, such as a large asset, does not hold back another, such as terminal frames.
   - Datagrams must carry only signals and reports; every byte of a request or a WebSocket must travel through the _Hub_Tunnel_.
 .remarks
+  - Chosen: the tunnel shares the session's one SSH connection with ranch's own traffic, which suits HTTP and terminal frames but not bulk transfers.
   - Chosen: one connection per machine, opened from the machine to the central server, so that adoc servers stay on loopback and no machine needs to accept connections.
 }
 
@@ -156,11 +162,13 @@ concept _Browser_Approval_ in hub = {
   decided on _Hub_Status_Screen_
 .contract
   - A browser without an approved cookie must get a page showing a short code and waiting; the _Hub_Server_ must send the request, with the code, the browser's address and its user agent, to every _Hub_Client_.
-  - When a person approves the request on any _Hub_Status_Screen_, the waiting browser must get a long-lived cookie and continue; a rejection must end the request; the other screens must drop it.
+  - The _Hub_Server_ must decide each request by the first answer it receives from any _Hub_Status_Screen_: an approval gives the waiting browser a long-lived cookie and lets it continue, a rejection ends the request; it must then tell every _Hub_Client_ the outcome, so that the other screens clear it.
+  - While a request waits, each _Hub_Client_ must show it in its herdr sidebar icon (`set_status_icon`).
   - A code must be valid for one request and expire after a few minutes.
   - The _Hub_Server_ must keep only a hash of each approved cookie, and the _Hub_Status_Screen_ must be able to revoke an approved browser.
 .remarks
   - Chosen: whoever can type in a herdr pane on the ranch network can approve, which is the trust the network already gives.
+  - Chosen: the pairing flow and cookie handling of herdr-glasses, which approves devices from a session the same way, rather than a second scheme.
 }
 
 concept _Hub_Status_Screen_ in hub = {
@@ -186,5 +194,5 @@ procedure _Hub_Name_Command_ in hub = {
   sets _Hub_Host_Name_
   references _Hub_Host_
 .contract
-  - The _Hub_Name_Command_ must find the _Hub_Host_ of the adoc workspace containing the current directory, send the name to the _Hub_Server_ through the _Hub_Client_ of its session, and print the result or the reason for a refusal.
+  - The _Hub_Name_Command_ must find the _Hub_Host_ of the adoc workspace containing the current directory, send the name to the _Hub_Server_ as a transient client of the plugin, and print the result or the reason for a refusal.
 }
