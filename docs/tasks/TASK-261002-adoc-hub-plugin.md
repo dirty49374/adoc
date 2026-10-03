@@ -42,7 +42,7 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 - [ ] A new browser shows a code; approving it in any session lets it in; rejecting ends it; a revoked browser must approve again.
 - [ ] `/adoc-discovery` lists the adoc servers of mldev and segv-mbp with online and offline status and agent status.
 - [ ] A browser without an approved cookie gets nothing but the code request: no proxying, no `/adoc-discovery`, no WebSocket upgrade; code requests are rate-limited, codes short-lived and single-use.
-- [ ] The pane lists approved browsers with last-seen time; revoking one refuses its cookie and closes its WebSockets at once; cookies are `HttpOnly`, `SameSite=Strict` and expire after 30 days unseen.
+- [ ] The pane lists approved browsers with last-seen time; revoking one refuses its cookie and closes its WebSockets at once; cookies are `HttpOnly` and `SameSite=Strict` and never expire.
 - [ ] The herdr-ranch agent reviewed the authentication before the first install.
 - [ ] `/<host>/` shows each host's web UI, live updates and terminal included; a named host answers at both addresses.
 - [ ] With two sessions on one machine, closing the routing client's session moves the routing to the other.
@@ -56,3 +56,4 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 - 2026-10-02: browser entry ready (#555, #556): `http://adoc.hubbartt.arpa` on port 80 through Traefik to herdr-ranch:10954 (DNS A record requested, #557; meanwhile `curl -H 'Host: adoc.hubbartt.arpa' http://192.168.105.30/`), also `192.168.105.35:10954`; plain HTTP end to end, LAN/VPN only; nothing authenticates in front, so the approval fails closed; the ranch restart for `RANCH_EXPOSED_PORTS` is done by the herdr-ranch agent at install.
 - 2026-10-02: the Owner decided no basicAuth in front (#555): approval is the only gate (user LAN, other VLANs, other houses' VPN); fail closed for every path but the code request, rate-limited single-use short-lived codes, approvals in `RANCH_PLUGIN_DATA_DIR`; auth diff reviewed by the herdr-ranch agent before the first install.
 - 2026-10-02: approved cookies must be revocable (#559, from the k3s owner: plain HTTP lets a cookie be sniffed and replayed): approved-browser list with revoke in the pane, effective at once including open WebSockets; expiry (30 days unseen, chosen) and last-seen shown; `HttpOnly`, `SameSite=Strict`. Part of the auth review.
+- 2026-10-02: the Owner removed the expiry: approvals never expire (a home network); the last-seen time and revocation stay.

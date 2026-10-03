@@ -168,14 +168,15 @@ concept _Browser_Approval_ in hub = {
   - While a request waits, each _Hub_Client_ must show it in its herdr sidebar icon (`set_status_icon`).
   - A code must be valid for one request and expire after a few minutes, and the _Hub_Server_ must limit how often one address may ask for a code.
   - _Browser_Approval_ must fail closed: without an approved cookie the only answer is the code request and its page; every other path, `/adoc-discovery` and WebSocket upgrades included, must be refused.
-  - The _Hub_Server_ must keep only a hash of each approved cookie, with when it was approved and when it was last seen, and must refuse a cookie not seen for 30 days.
+  - The _Hub_Server_ must keep only a hash of each approved cookie, with when it was approved and when it was last seen; an approval never expires.
   - The cookie must be `HttpOnly` and `SameSite=Strict`; `Secure` is impossible, since the hub is plain HTTP.
   - Revoking an approved browser must take effect at once: the _Hub_Server_ refuses its cookie and closes its open WebSockets.
 .remarks
   - Chosen: whoever can type in a herdr pane on the ranch network can approve, which is the trust the network already gives.
   - Chosen by the Owner: nothing in front of the hub (no basicAuth at the ingress); _Browser_Approval_ is the only gate for a page reachable from the user LAN, other VLANs and the site VPN of other houses, and it serves terminals.
   - Chosen: the pairing flow and cookie handling of herdr-glasses, which approves devices from a session the same way, rather than a second scheme.
-  - Known risk: over plain HTTP a cookie can be sniffed on the LAN or VPN and replayed; the expiry, the last-seen time and immediate revocation limit it.
+  - Known risk: over plain HTTP a cookie can be sniffed on the LAN or VPN and replayed; the last-seen time and immediate revocation limit it.
+  - Chosen by the Owner: no expiry; the network is a home.
 }
 
 concept _Hub_Status_Screen_ in hub = {
