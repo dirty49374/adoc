@@ -1,0 +1,18 @@
+# A sample workspace for the screenshots in the README: a team building a todo app with an agent.
+plugins:
+  NOTE: npm:@agent-workshop/adoc-plugin-note
+  TODO: npm:@agent-workshop/adoc-plugin-todo
+  SKETCH: npm:@agent-workshop/adoc-plugin-sketch
+  TASK: npm:@agent-workshop/adoc-plugin-task
+  KANBAN: npm:@agent-workshop/adoc-plugin-kanban
+watch:
+  - ../docs
+agent:
+  name: todoapp-dev
+  transport:
+    kind: herdr
+server:
+  host: 127.0.0.1
+  port: 7702
+ui:
+  tabs: [NOTE, TODO, SKETCH, TASK, KANBAN]

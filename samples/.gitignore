@@ -1,0 +1,4 @@
+# Installed copies of the plugin skills (adoc skill install / npx skills add); install them again to run the sample
+.agents/
+.claude/skills/
+skills-lock.json

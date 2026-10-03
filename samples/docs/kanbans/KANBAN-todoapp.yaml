@@ -1,0 +1,24 @@
+title: Todo app 1.0
+columns: [TODO, RUNNING, REVIEW, DONE, REMOVE]
+cards:
+  - id: c1
+    text: Due dates [[TASK-260928-due-dates]]
+    column: DONE
+  - id: c2
+    text: Dark mode
+    column: DONE
+  - id: c3
+    text: Recurring tasks [[TASK-261001-recurring-tasks]]
+    column: REVIEW
+  - id: c4
+    text: Offline sync [[TASK-261002-offline-sync]]
+    column: RUNNING
+  - id: c5
+    text: Empty state illustration
+    column: TODO
+  - id: c6
+    text: Swipe to delete with undo
+    column: TODO
+  - id: c7
+    text: Remember the last list
+    column: TODO
