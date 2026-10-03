@@ -166,10 +166,12 @@ concept _Browser_Approval_ in hub = {
   - A browser without an approved cookie must get a page showing a short code and waiting; the _Hub_Server_ must send the request, with the code, the browser's address and its user agent, to every _Hub_Client_.
   - The _Hub_Server_ must decide each request by the first answer it receives from any _Hub_Status_Screen_: an approval gives the waiting browser a long-lived cookie and lets it continue, a rejection ends the request; it must then tell every _Hub_Client_ the outcome, so that the other screens clear it.
   - While a request waits, each _Hub_Client_ must show it in its herdr sidebar icon (`set_status_icon`).
-  - A code must be valid for one request and expire after a few minutes.
+  - A code must be valid for one request and expire after a few minutes, and the _Hub_Server_ must limit how often one address may ask for a code.
+  - _Browser_Approval_ must fail closed: without an approved cookie the only answer is the code request and its page; every other path, `/adoc-discovery` and WebSocket upgrades included, must be refused.
   - The _Hub_Server_ must keep only a hash of each approved cookie, and the _Hub_Status_Screen_ must be able to revoke an approved browser.
 .remarks
   - Chosen: whoever can type in a herdr pane on the ranch network can approve, which is the trust the network already gives.
+  - Chosen by the Owner: nothing in front of the hub (no basicAuth at the ingress); _Browser_Approval_ is the only gate for a page reachable from the user LAN, other VLANs and the site VPN of other houses, and it serves terminals.
   - Chosen: the pairing flow and cookie handling of herdr-glasses, which approves devices from a session the same way, rather than a second scheme.
 }
 

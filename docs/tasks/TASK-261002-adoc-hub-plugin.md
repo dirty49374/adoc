@@ -32,15 +32,17 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 4. Browser side of the server: `/adoc-discovery` (JSON and SSE), `/<host>/…` remap for HTTP and WebSocket, the approval page and cookie.
 5. Client: local discovery with the `adoc` lookup, reports on change, tunnel when asked; the `name` command as a transient client sending to the server.
 6. Status screen from herdr-glasses' console: hosts, names (edit), waiting approvals (approve, reject), revocation; plain output when not a TTY; never open the pane itself when ranch is on; re-exec on `plugin_updated`; end on Ctrl-C.
-7. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; the exposed port (10954, `[exposed_ports.adoc-hub] web` in the Ranch Server's `server.toml`, set) and `http://adoc.hubbartt.arpa` (port 80, Traefik IngressRoute to 10954, plain HTTP; `192.168.105.35:10954` directly) set up by the k3s owner; the Ranch Server restart that makes `web` appear is done by the herdr-ranch agent at install; install with `herdr-ranch install`.
-8. Check on the real network: mldev and segv-mbp, two hosts, approval from each machine, switching, `adoc ui open` across machines, a client leaving and the routing moving.
+7. Review of the authentication by the herdr-ranch agent (send the diff) before the first install.
+8. Release: `scripts/release.sh` with the bookworm build of the server and `.sha256` assets; the exposed port (10954, `[exposed_ports.adoc-hub] web` in the Ranch Server's `server.toml`, set) and `http://adoc.hubbartt.arpa` (port 80, Traefik IngressRoute to 10954, plain HTTP; `192.168.105.35:10954` directly) set up by the k3s owner; the Ranch Server restart that makes `web` appear is done by the herdr-ranch agent at install; install with `herdr-ranch install`.
+9. Check on the real network: mldev and segv-mbp, two hosts, approval from each machine, switching, `adoc ui open` across machines, a client leaving and the routing moving.
 
 ## Done when
 
 - [ ] `herdr-ranch install` installs adoc-hub; every session opens its status pane.
 - [ ] A new browser shows a code; approving it in any session lets it in; rejecting ends it; a revoked browser must approve again.
 - [ ] `/adoc-discovery` lists the adoc servers of mldev and segv-mbp with online and offline status and agent status.
-- [ ] A browser without an approved cookie gets no proxying, WebSocket upgrades included.
+- [ ] A browser without an approved cookie gets nothing but the code request: no proxying, no `/adoc-discovery`, no WebSocket upgrade; code requests are rate-limited, codes short-lived and single-use.
+- [ ] The herdr-ranch agent reviewed the authentication before the first install.
 - [ ] `/<host>/` shows each host's web UI, live updates and terminal included; a named host answers at both addresses.
 - [ ] With two sessions on one machine, closing the routing client's session moves the routing to the other.
 - [ ] `adoc-hub name <name>` run by an agent names its host.
@@ -51,3 +53,4 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 - 2026-10-02: reviewed by the herdr-ranch agent (thread #548): tunnel token, forwarded port per welcome, deterministic routing client, first-answer approvals, herdr-glasses' pairing as the model, agents only from the Directory.
 - 2026-10-02: the Owner approved a DNS name for the browser entry (thread #555): port 10954 set in `server.toml`; plugin id must be `adoc-hub`, `[server] exposed_ports = ["web"]`, address from `RANCH_EXPOSED_PORTS`, no prefix, plain HTTP; DNS name and Service port pending with the k3s owner.
 - 2026-10-02: browser entry ready (#555, #556): `http://adoc.hubbartt.arpa` on port 80 through Traefik to herdr-ranch:10954 (DNS A record requested, #557; meanwhile `curl -H 'Host: adoc.hubbartt.arpa' http://192.168.105.30/`), also `192.168.105.35:10954`; plain HTTP end to end, LAN/VPN only; nothing authenticates in front, so the approval fails closed; the ranch restart for `RANCH_EXPOSED_PORTS` is done by the herdr-ranch agent at install.
+- 2026-10-02: the Owner decided no basicAuth in front (#555): approval is the only gate (user LAN, other VLANs, other houses' VPN); fail closed for every path but the code request, rate-limited single-use short-lived codes, approvals in `RANCH_PLUGIN_DATA_DIR`; auth diff reviewed by the herdr-ranch agent before the first install.
