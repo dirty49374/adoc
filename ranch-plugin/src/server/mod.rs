@@ -49,6 +49,8 @@ pub struct Shared {
     pub changes: Arc<watch::Sender<u64>>,
     /// the id of every revoked browser, so that its open WebSockets close at once
     pub revoked: broadcast::Sender<String>,
+    /// open WebSockets per browser
+    pub sockets: Arc<std::sync::Mutex<HashMap<String, usize>>>,
 }
 
 impl Shared {
@@ -229,6 +231,7 @@ pub async fn run() -> Result<()> {
         endpoint: endpoint.clone(),
         changes: Arc::new(changes),
         revoked,
+        sockets: Arc::new(std::sync::Mutex::new(HashMap::new())),
     };
 
     let tunnel_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;

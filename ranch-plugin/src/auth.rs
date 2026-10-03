@@ -15,6 +15,8 @@ pub const COOKIE: &str = "adoc_hub";
 pub const CODE_TTL_SECS: i64 = 180;
 /// waiting requests on the whole hub
 pub const MAX_PENDING: usize = 10;
+/// waiting requests of one address
+pub const MAX_PENDING_PER_ADDRESS: usize = 2;
 /// code requests of one address within `RATE_WINDOW_SECS`
 pub const RATE_LIMIT: usize = 5;
 pub const RATE_WINDOW_SECS: i64 = 600;
@@ -106,6 +108,9 @@ impl Approvals {
         times.retain(|t| *t > now - Duration::seconds(RATE_WINDOW_SECS));
         if times.len() >= RATE_LIMIT {
             return Err("too many code requests from this address; try again in a few minutes".into());
+        }
+        if self.pending.iter().filter(|p| p.address == address).count() >= MAX_PENDING_PER_ADDRESS {
+            return Err("this address already waits for approval; approve or reject that code first".into());
         }
         if self.pending.len() >= MAX_PENDING {
             return Err("too many browsers are waiting for approval; try again in a few minutes".into());
@@ -204,10 +209,16 @@ mod tests {
         let now = Utc::now();
         let mut a = Approvals::default();
         for _ in 0..RATE_LIMIT {
-            a.ask("1.1.1.1", "ua", now).unwrap();
+            let p = a.ask("1.1.1.1", "ua", now).unwrap();
+            a.decide(&p.code, false, now).unwrap();
         }
         assert!(a.ask("1.1.1.1", "ua", now).is_err());
         assert!(a.ask("1.1.1.1", "ua", now + Duration::seconds(RATE_WINDOW_SECS + 1)).is_ok(), "the window moves on");
+        let mut c = Approvals::default();
+        for _ in 0..MAX_PENDING_PER_ADDRESS {
+            c.ask("2.2.2.2", "ua", now).unwrap();
+        }
+        assert!(c.ask("2.2.2.2", "ua", now).is_err(), "waiting codes are capped per address");
         let mut b = Approvals::default();
         for i in 0..MAX_PENDING {
             b.ask(&format!("10.0.0.{i}"), "ua", now).unwrap();

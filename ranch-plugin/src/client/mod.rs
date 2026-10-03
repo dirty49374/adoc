@@ -85,7 +85,8 @@ async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::Unbound
     tokio::spawn(endpoint.clone().run_persistent(tx));
     // the route epoch: 0 while not picked; a new value for every Route, so that discovery reports at once
     let (route_tx, route_rx) = watch::channel(0u64);
-    tokio::spawn(discovery_loop(shared.clone(), endpoint.clone(), route_rx));
+    let allowed: tunnel::Allowed = Default::default();
+    tokio::spawn(discovery_loop(shared.clone(), endpoint.clone(), route_rx, allowed.clone()));
     let mut tunnel_task: Option<tokio::task::JoinHandle<()>> = None;
     let mut icon_pending = 0usize;
     loop {
@@ -137,7 +138,7 @@ async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::Unbound
                         }
                         route_tx.send_modify(|n| *n += 1);
                         shared.board.lock().await.routing = "this session · tunnel dialing".into();
-                        tunnel_task = Some(tokio::spawn(tunnel_loop(shared.clone(), endpoint.clone(), token)));
+                        tunnel_task = Some(tokio::spawn(tunnel_loop(shared.clone(), endpoint.clone(), token, allowed.clone())));
                     }
                     Datagram::Unroute => {
                         if let Some(t) = tunnel_task.take() {
@@ -178,7 +179,7 @@ async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::Unbound
 
 /// The tunnel while this session is the routing client: dial the forwarded port, looked up anew for
 /// every dial (it changes with every ranch connection), again after every drop.
-async fn tunnel_loop(shared: Shared, endpoint: Endpoint, token: String) {
+async fn tunnel_loop(shared: Shared, endpoint: Endpoint, token: String, allowed: tunnel::Allowed) {
     let http = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build().expect("http client");
     let mut wait = Duration::from_secs(1);
     loop {
@@ -186,7 +187,7 @@ async fn tunnel_loop(shared: Shared, endpoint: Endpoint, token: String) {
             Ok(addr) => {
                 shared.board.lock().await.routing = "this session · tunnel open".into();
                 shared.redraw.notify_one();
-                tunnel::run(&addr, &token, http.clone()).await
+                tunnel::run(&addr, &token, http.clone(), allowed.clone()).await
             }
             Err(e) => Err(e),
         };
@@ -204,7 +205,7 @@ async fn tunnel_loop(shared: Shared, endpoint: Endpoint, token: String) {
 }
 
 /// _Local_Discovery_ every 3 s while routed; a report only when the result changes or a new route came.
-async fn discovery_loop(shared: Shared, endpoint: Endpoint, mut route: watch::Receiver<u64>) {
+async fn discovery_loop(shared: Shared, endpoint: Endpoint, mut route: watch::Receiver<u64>, allowed: tunnel::Allowed) {
     let http = reqwest::Client::new();
     let server = product::server_address();
     let mut adoc: Option<std::path::PathBuf> = None;
@@ -245,6 +246,7 @@ async fn discovery_loop(shared: Shared, endpoint: Endpoint, mut route: watch::Re
                 (vec![], None)
             }
         };
+        *allowed.write().expect("allowed ports") = hosts.iter().map(|h| h.port).collect();
         let now = (epoch, hosts, found);
         if last.as_ref() != Some(&now) {
             let d = Datagram::Report { hosts: now.1.clone(), adoc: now.2.clone() };

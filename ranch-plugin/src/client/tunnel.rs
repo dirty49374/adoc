@@ -4,7 +4,8 @@ use crate::proto::{self, Head, Kind, Open, TunnelHello};
 use anyhow::{Result, anyhow};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, RwLock};
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
@@ -21,8 +22,12 @@ struct StreamTask {
     task: tokio::task::JoinHandle<()>,
 }
 
+/// The ports of the adoc servers this client reported last; a stream to any other port is refused,
+/// so that neither a bug nor a compromised hub reaches another service on this machine.
+pub type Allowed = Arc<RwLock<HashSet<u16>>>;
+
 /// One tunnel connection, until it drops. `addr` is the forwarded `127.0.0.1:<port>`.
-pub async fn run(addr: &str, token: &str, http: reqwest::Client) -> Result<()> {
+pub async fn run(addr: &str, token: &str, http: reqwest::Client, allowed: Allowed) -> Result<()> {
     let (socket, _) = tokio_tungstenite::connect_async(format!("ws://{addr}/")).await?;
     let (mut sink, mut stream) = socket.split();
     sink.send(Message::Text(serde_json::to_string(&TunnelHello { token: token.to_string() })?.into())).await?;
@@ -51,6 +56,10 @@ pub async fn run(addr: &str, token: &str, http: reqwest::Client) -> Result<()> {
         match kind {
             Kind::OpenHttp | Kind::OpenWs => {
                 let Ok(open) = serde_json::from_slice::<Open>(payload) else { continue };
+                if !allowed.read().expect("allowed ports").contains(&open.port) {
+                    send_head(&out_tx, Kind::Head, id, &Head { status: 403, headers: vec![] });
+                    continue;
+                }
                 let (tx, rx) = mpsc::unbounded_channel();
                 let out = out_tx.clone();
                 let task = if kind == Kind::OpenHttp { tokio::spawn(serve_http(id, open, rx, out, http.clone())) } else { tokio::spawn(serve_ws(id, open, rx, out)) };

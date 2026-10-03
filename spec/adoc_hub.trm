@@ -126,6 +126,7 @@ concept _Hub_Tunnel_ in hub = {
   - A _Routing_Client_ must look up the forwarded port `tunnel` again after every welcome and dial that port; it must never keep the port, which changes with every ranch connection.
   - A _Hub_Tunnel_ must carry each HTTP request and each WebSocket as its own stream, so that a slow stream, such as a large asset, does not hold back another, such as terminal frames.
   - Datagrams must carry only signals and reports; every byte of a request or a WebSocket must travel through the _Hub_Tunnel_.
+  - A _Routing_Client_ must open streams only to the ports of the adoc servers it reported last, and refuse any other port, so that neither a bug nor a compromised hub reaches another service on its machine.
 .remarks
   - Chosen: the tunnel shares the session's one SSH connection with ranch's own traffic, which suits HTTP and terminal frames but not bulk transfers.
   - Chosen: one connection per machine, opened from the machine to the central server, so that adoc servers stay on loopback and no machine needs to accept connections.
@@ -154,7 +155,8 @@ concept _Hub_Remap_ in hub = {
   sets _adoc:Web_UI_Base_
 .contract
   - The _Hub_Server_ must forward a request for `/<host>/<path>` to that host's server as `/<path>`, with `X-Forwarded-Prefix: /<host>` and `X-Adoc-Hub: /adoc-discovery`, and must forward WebSocket upgrades the same way.
-  - The _Hub_Server_ must pass the pages, scripts and responses of each host unchanged, so that every host serves its own adoc version.
+  - The _Hub_Server_ must pass the pages, scripts and responses of each host unchanged, so that every host serves its own adoc version, with two exceptions, because all hosts share the hub's one origin: it must drop every `Set-Cookie` of a host, and must give HTML from a host a `Content-Security-Policy` that allows scripts only from the hub's origin, never inline.
+  - The _Hub_Server_ must refuse a request body over 64 MiB and more than 32 WebSockets of one browser at a time.
   - A request for an offline or unknown host must get a page saying so, with a link to the list.
 }
 
@@ -168,7 +170,9 @@ concept _Browser_Approval_ in hub = {
   - A browser without an approved cookie must get a page showing a short code and waiting; the _Hub_Server_ must send the request, with the code, the browser's address and its user agent, to every _Hub_Client_.
   - The _Hub_Server_ must decide each request by the first answer it receives from any _Hub_Status_Screen_: an approval gives the waiting browser a long-lived cookie and lets it continue, a rejection ends the request; it must then tell every _Hub_Client_ the outcome, so that the other screens clear it.
   - While a request waits, each _Hub_Client_ must show it in its herdr sidebar icon (`set_status_icon`).
-  - A code must be valid for one request and expire after a few minutes, and the _Hub_Server_ must limit how often one address may ask for a code.
+  - A code must be valid for one request and expire after a few minutes, and the _Hub_Server_ must limit how often one address may ask for a code and how many codes of one address may wait at a time.
+  - The browser's address, shown to the person who approves, must be the TCP peer, or the entry that the ingress appended to `X-Forwarded-For` when the peer is the ingress; a header from anyone else must be ignored.
+  - Every WebSocket upgrade and every request other than GET and HEAD must carry an `Origin` that names the `Host` it was sent to, else it is refused: `SameSite=Strict` lets the cookie travel with requests from every other service under the same registrable domain.
   - _Browser_Approval_ must fail closed: without an approved cookie the only answer is the code request and its page; every other path, `/adoc-discovery` and WebSocket upgrades included, must be refused.
   - The _Hub_Server_ must keep only a hash of each approved cookie, with when it was approved and when it was last seen; an approval never expires.
   - The cookie must be `HttpOnly` and `SameSite=Strict`; `Secure` is impossible, since the hub is plain HTTP.

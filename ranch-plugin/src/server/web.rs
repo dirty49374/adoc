@@ -25,6 +25,14 @@ const APPROVE_PAGE: &str = include_str!("../../web/approve.html");
 const LIST_PAGE: &str = include_str!("../../web/index.html");
 const UNAVAILABLE_PAGE: &str = include_str!("../../web/unavailable.html");
 const DISCOVERY: &str = "/adoc-discovery";
+/// the largest request body passed on to a host
+const MAX_BODY: u64 = 64 * 1024 * 1024;
+/// open WebSockets of one browser through the hub (its own UI plus presence on every other host)
+const MAX_WS_PER_BROWSER: usize = 32;
+/// on HTML from a host: scripts only from the hub's origin, never inline, so that agent-authored
+/// markup in a rendered document cannot act with the hub's authority over every host's terminal;
+/// eval and WebAssembly stay allowed for bundled code (the SKETCH editor needs them)
+const CSP: &str = "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'self'";
 
 pub async fn serve(listener: tokio::net::TcpListener, shared: Shared) {
     let app = axum::Router::new().fallback(handle).with_state(shared);
@@ -33,10 +41,43 @@ pub async fn serve(listener: tokio::net::TcpListener, shared: Shared) {
     }
 }
 
-/// The browser's address: the first `X-Forwarded-For` entry (the ingress), else the peer.
-fn client_address(headers: &HeaderMap, peer: SocketAddr) -> String {
-    headers.get("x-forwarded-for").and_then(|v| v.to_str().ok()).and_then(|v| v.split(',').next()).map(|v| v.trim().to_string()).filter(|v| !v.is_empty()).unwrap_or_else(|| peer.ip().to_string())
+/// The networks of the ingress, whose `X-Forwarded-For` is believed: `ADOC_HUB_TRUSTED_PROXIES`
+/// (IPv4 CIDRs, comma-separated), else k3s's pod network 10.42.0.0/16.
+fn trusted_proxy(peer: std::net::IpAddr) -> bool {
+    let list = std::env::var("ADOC_HUB_TRUSTED_PROXIES").unwrap_or_else(|_| "10.42.0.0/16".into());
+    let std::net::IpAddr::V4(ip) = peer else { return false };
+    list.split(',').filter_map(|c| {
+        let (net, bits) = c.trim().split_once('/')?;
+        Some((net.parse::<std::net::Ipv4Addr>().ok()?, bits.parse::<u32>().ok().filter(|b| *b <= 32)?))
+    }).any(|(net, bits)| {
+        let mask = if bits == 0 { 0 } else { u32::MAX << (32 - bits) };
+        u32::from(ip) & mask == u32::from(net) & mask
+    })
 }
+
+/// The browser's address: from the ingress, the last `X-Forwarded-For` entry (the one the ingress
+/// appended; earlier ones are whatever the client sent); from anywhere else, the peer.
+fn client_address(headers: &HeaderMap, peer: SocketAddr) -> String {
+    if trusted_proxy(peer.ip()) {
+        let last = headers.get_all("x-forwarded-for").iter().filter_map(|v| v.to_str().ok()).flat_map(|v| v.split(',')).map(str::trim).rfind(|v| !v.is_empty()).map(str::to_string);
+        if let Some(a) = last {
+            return a;
+        }
+    }
+    peer.ip().to_string()
+}
+
+/// Whether a request comes from a page of the hub itself: its `Origin` names the `Host` it was sent
+/// to. SameSite=Strict does not cover this: every other service under the same registrable domain
+/// is same-site.
+fn same_origin(headers: &HeaderMap) -> bool {
+    let get = |n: header::HeaderName| headers.get(n).and_then(|v| v.to_str().ok()).map(str::to_ascii_lowercase);
+    let (Some(origin), Some(host)) = (get(header::ORIGIN), get(header::HOST)) else { return false };
+    origin.strip_prefix("http://").or_else(|| origin.strip_prefix("https://")).is_some_and(|o| o == host)
+}
+
+/// A path segment that may name a host: a _Hub_Host_Name_ or `<machine>_<port>`.
+fn host_segment(s: &str) -> bool { !s.is_empty() && s.len() <= 100 && s.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.')) }
 
 fn is_upgrade(headers: &HeaderMap) -> bool { headers.get(header::UPGRADE).and_then(|v| v.to_str().ok()).is_some_and(|v| v.eq_ignore_ascii_case("websocket")) }
 
@@ -104,6 +145,12 @@ async fn handle(State(shared): State<Shared>, ConnectInfo(peer): ConnectInfo<Soc
         return page(StatusCode::UNAUTHORIZED, APPROVE_PAGE.to_string());
     };
 
+    // a cookie travels with requests from other same-site pages too: what changes or opens a socket
+    // must come from a page of the hub
+    if (is_upgrade(req.headers()) || !(method == Method::GET || method == Method::HEAD)) && !same_origin(req.headers()) {
+        return (StatusCode::FORBIDDEN, "the request does not come from a page of the adoc hub").into_response();
+    }
+
     match path.as_str() {
         "/" => page(StatusCode::OK, LIST_PAGE.to_string()),
         DISCOVERY => {
@@ -111,6 +158,7 @@ async fn handle(State(shared): State<Shared>, ConnectInfo(peer): ConnectInfo<Soc
             json_response(StatusCode::OK, json!({"hosts": hosts}))
         }
         "/adoc-discovery/events" => discovery_events(shared, browser).await,
+        "/adoc-hub" | "/favicon.ico" => unavailable(StatusCode::NOT_FOUND, "Not found."),
         _ => remap(shared, browser, address, req).await,
     }
 }
@@ -155,8 +203,14 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
     let query = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
     let rest = &path[1..];
     let Some((segment, tail)) = rest.split_once('/') else {
+        if !host_segment(rest) {
+            return unavailable(StatusCode::NOT_FOUND, "Not found.");
+        }
         return (StatusCode::FOUND, [(header::LOCATION, format!("/{rest}/{query}"))]).into_response();
     };
+    if !host_segment(segment) {
+        return unavailable(StatusCode::NOT_FOUND, "Not found.");
+    }
     let (host, tunnel) = {
         let hub = shared.hub.lock().await;
         let Some((machine, host)) = hub.resolve(segment) else {
@@ -185,6 +239,9 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
     headers.push(("x-forwarded-prefix".into(), format!("/{segment}")));
     headers.push(("x-adoc-hub".into(), DISCOVERY.into()));
     headers.push(("x-forwarded-for".into(), address));
+    if req.headers().get(header::CONTENT_LENGTH).and_then(|v| v.to_str().ok()).and_then(|v| v.parse::<u64>().ok()).is_some_and(|n| n > MAX_BODY) {
+        return (StatusCode::PAYLOAD_TOO_LARGE, "the request body is larger than the hub passes on").into_response();
+    }
     let has_body = req.headers().get(header::CONTENT_LENGTH).and_then(|v| v.to_str().ok()).is_some_and(|v| v != "0") || req.headers().contains_key(header::TRANSFER_ENCODING);
     let upgrade = is_upgrade(req.headers());
     let open = Open { port: host.port, method: req.method().as_str().to_string(), path: format!("/{tail}{query}"), headers, body: has_body && !upgrade };
@@ -195,10 +252,16 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
             Ok(ws) => ws,
             Err(e) => return e.into_response(),
         };
+        let Some(slot) = WsSlot::take(&shared, &browser) else {
+            return (StatusCode::TOO_MANY_REQUESTS, "this browser has too many WebSockets open through the hub").into_response();
+        };
         return match tunnel.ws(&open).await {
             Ok((id, rx)) => {
                 let revoked = shared.revoked.subscribe();
-                ws.max_message_size(proto::CHUNK * 64).on_upgrade(move |socket| pump(socket, tunnel, id, rx, browser, revoked))
+                ws.max_message_size(proto::CHUNK * 64).on_upgrade(move |socket| async move {
+                    pump(socket, tunnel, id, rx, browser, revoked).await;
+                    drop(slot);
+                })
             }
             Err(head) => StatusCode::from_u16(head.status).unwrap_or(StatusCode::BAD_GATEWAY).into_response(),
         };
@@ -209,11 +272,17 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
         let t = tunnel.clone();
         let mut body = req.into_body().into_data_stream();
         tokio::spawn(async move {
+            let mut total = 0u64;
             while let Some(chunk) = body.next().await {
                 let Ok(chunk) = chunk else {
                     t.send(Kind::Close, id, b"");
                     return;
                 };
+                total += chunk.len() as u64;
+                if total > MAX_BODY {
+                    t.send(Kind::Close, id, b"");
+                    return;
+                }
                 for part in chunk.chunks(proto::CHUNK) {
                     t.send(Kind::Data, id, part);
                 }
@@ -226,12 +295,47 @@ async fn remap(shared: Shared, browser: String, address: String, req: Request) -
         Err(e) => return unavailable(StatusCode::BAD_GATEWAY, &format!("The adoc host {segment} did not answer: {e}.")),
     };
     let mut response = Response::builder().status(StatusCode::from_u16(head.status).unwrap_or(StatusCode::BAD_GATEWAY));
+    // hosts share the hub's origin: none may set cookies (adoc uses none), which would reach every
+    // other host or shadow the hub's own
     for (name, value) in &head.headers {
-        if !proto::hop_by_hop(name) {
+        if !proto::hop_by_hop(name) && !name.eq_ignore_ascii_case("set-cookie") && !name.eq_ignore_ascii_case("content-security-policy") {
             response = response.header(name, value);
         }
     }
+    if head.headers.iter().any(|(n, v)| n.eq_ignore_ascii_case("content-type") && v.to_ascii_lowercase().starts_with("text/html")) {
+        response = response.header(header::CONTENT_SECURITY_POLICY, CSP);
+    }
     response.body(Body::from_stream(ResponseBody { rx, tunnel, id, done: false })).unwrap_or_else(|_| StatusCode::BAD_GATEWAY.into_response())
+}
+
+/// One of a browser's WebSockets through the hub, counted while it lives.
+struct WsSlot {
+    shared: Shared,
+    browser: String,
+}
+
+impl WsSlot {
+    fn take(shared: &Shared, browser: &str) -> Option<WsSlot> {
+        let mut counts = shared.sockets.lock().expect("socket counts");
+        let n = counts.entry(browser.to_string()).or_default();
+        if *n >= MAX_WS_PER_BROWSER {
+            return None;
+        }
+        *n += 1;
+        Some(WsSlot { shared: shared.clone(), browser: browser.to_string() })
+    }
+}
+
+impl Drop for WsSlot {
+    fn drop(&mut self) {
+        let mut counts = self.shared.sockets.lock().expect("socket counts");
+        if let Some(n) = counts.get_mut(&self.browser) {
+            *n = n.saturating_sub(1);
+            if *n == 0 {
+                counts.remove(&self.browser);
+            }
+        }
+    }
 }
 
 /// A host's response body as it arrives through the tunnel; a browser that goes away closes the stream.
@@ -307,11 +411,32 @@ async fn pump(socket: WebSocket, tunnel: Arc<Tunnel>, id: u32, mut rx: mpsc::Unb
 mod tests {
     use super::*;
     #[test]
-    fn address_prefers_the_ingress_header() {
-        let peer: SocketAddr = "10.42.0.7:5555".parse().unwrap();
+    fn address_takes_the_ingress_entry_only_from_the_ingress() {
+        let ingress: SocketAddr = "10.42.0.7:5555".parse().unwrap();
+        let direct: SocketAddr = "192.168.1.50:5555".parse().unwrap();
         let mut h = HeaderMap::new();
-        assert_eq!(client_address(&h, peer), "10.42.0.7");
-        h.insert("x-forwarded-for", HeaderValue::from_static("192.168.1.20, 10.42.0.1"));
-        assert_eq!(client_address(&h, peer), "192.168.1.20");
+        assert_eq!(client_address(&h, ingress), "10.42.0.7");
+        h.insert("x-forwarded-for", HeaderValue::from_static("1.2.3.4, 192.168.1.20"));
+        assert_eq!(client_address(&h, ingress), "192.168.1.20", "the entry the ingress appended, not the client's");
+        assert_eq!(client_address(&h, direct), "192.168.1.50", "a direct peer's header is ignored");
+    }
+
+    #[test]
+    fn origin_must_name_the_host() {
+        let mut h = HeaderMap::new();
+        h.insert(header::HOST, HeaderValue::from_static("adoc.hubbartt.arpa"));
+        assert!(!same_origin(&h), "no Origin");
+        h.insert(header::ORIGIN, HeaderValue::from_static("http://adoc.hubbartt.arpa"));
+        assert!(same_origin(&h));
+        h.insert(header::ORIGIN, HeaderValue::from_static("http://aterm.hubbartt.arpa"));
+        assert!(!same_origin(&h), "same site, other origin");
+        h.insert(header::ORIGIN, HeaderValue::from_static("http://adoc.hubbartt.arpa:8080"));
+        assert!(!same_origin(&h));
+    }
+
+    #[test]
+    fn host_segments() {
+        assert!(host_segment("mldev_7700") && host_segment("todo-app") && host_segment("segv-mbp.local_7700"));
+        assert!(!host_segment("\\evil.example") && !host_segment("") && !host_segment("a b") && !host_segment("%2F"));
     }
 }
