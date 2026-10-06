@@ -73,25 +73,52 @@ pub async fn run() -> Result<()> {
     Ok(())
 }
 
+/// The client's life under ranch: one connection after another. A restarted Ranch Client listens on a
+/// new url, published in the session file, so every connection starts by reading that file again;
+/// the url is never kept across a disconnect (herdr-ranch #580, the fix herdr-connect made in 0.7.10).
 async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::UnboundedReceiver<Datagram>) -> Result<()> {
-    let endpoint = loop {
-        if let Ok(e) = Endpoint::client(ID, VERSION, &session) {
-            break e;
+    loop {
+        match Endpoint::client(ID, VERSION, &session) {
+            Ok(endpoint) => {
+                connection(&shared, &endpoint, &mut commands).await?;
+                let mut b = shared.board.lock().await;
+                b.ranch = "disconnected · looking the ranch client up again".into();
+                b.routing = "not picked".into();
+                b.ev("ranch event stream ended; looking the ranch client up again");
+            }
+            Err(_) => shared.board.lock().await.ranch = "waiting for ranch".into(),
         }
+        shared.redraw.notify_one();
         tokio::time::sleep(Duration::from_secs(2)).await;
-    };
+    }
+}
+
+/// One connection to the Ranch Client at `endpoint`, until its event stream ends; returns Err only when
+/// re-executing after `plugin_updated` failed. Everything tied to the connection (the stream, discovery,
+/// the tunnel) ends with it.
+async fn connection(shared: &Shared, endpoint: &Endpoint, commands: &mut mpsc::UnboundedReceiver<Datagram>) -> Result<()> {
     let server = product::server_address();
     let (tx, mut rx) = mpsc::channel(256);
-    tokio::spawn(endpoint.clone().run_persistent(tx));
+    // one stream, ended by the first disconnect: the next connection reads the session file again
+    let stream = {
+        let endpoint = endpoint.clone();
+        tokio::spawn(async move {
+            if let Err(e) = endpoint.recv_once(&tx).await {
+                tracing::debug!("{e:#}");
+            }
+            let _ = tx.send(RanchEvent::Disconnected).await;
+        })
+    };
     // the route epoch: 0 while not picked; a new value for every Route, so that discovery reports at once
     let (route_tx, route_rx) = watch::channel(0u64);
     let allowed: tunnel::Allowed = Default::default();
-    tokio::spawn(discovery_loop(shared.clone(), endpoint.clone(), route_rx, allowed.clone()));
+    let discovery = tokio::spawn(discovery_loop(shared.clone(), endpoint.clone(), route_rx, allowed.clone()));
     let mut tunnel_task: Option<tokio::task::JoinHandle<()>> = None;
-    let mut icon_pending = 0usize;
-    loop {
+    // the sidebar icon belongs to this connection: set it again on the first state
+    let mut icon_pending = usize::MAX;
+    let result = loop {
         let ev = tokio::select! {
-            ev = rx.recv() => match ev { Some(ev) => ev, None => return Ok(()) },
+            ev = rx.recv() => ev.unwrap_or(RanchEvent::Disconnected),
             c = commands.recv() => {
                 if let Some(c) = c
                     && let Err(e) = endpoint.send(&server, &c.to_bytes()).await {
@@ -111,15 +138,12 @@ async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::Unbound
                 }
                 let _ = endpoint.send(&server, &Datagram::Hello.to_bytes()).await;
             }
-            RanchEvent::Disconnected => {
-                let mut b = shared.board.lock().await;
-                b.ranch = "ranch network disconnect".into();
-            }
+            RanchEvent::Disconnected => break Ok(()),
             RanchEvent::Notification { op, .. } => match op.as_str() {
                 "plugin_updated" => {
                     shared.board.lock().await.ev("plugin updated; re-executing in place");
                     tui::restore();
-                    return Err(anyhow!("re-exec failed: {}", reexec()));
+                    break Err(anyhow!("re-exec failed: {}", reexec()));
                 }
                 "peer_joined" => {
                     let _ = endpoint.send(&server, &Datagram::Hello.to_bytes()).await;
@@ -174,7 +198,13 @@ async fn ranch_loop(shared: Shared, session: String, mut commands: mpsc::Unbound
             }
         }
         shared.redraw.notify_one();
+    };
+    stream.abort();
+    discovery.abort();
+    if let Some(t) = tunnel_task {
+        t.abort();
     }
+    result
 }
 
 /// The tunnel while this session is the routing client: dial the forwarded port, looked up anew for
