@@ -29,4 +29,4 @@ gh release create "$TAG" --target master --title "adoc-hub $V" --latest=false --
 rm -rf "$tmp"
 sudo -n docker image prune -f >/dev/null
 echo "== done: $TAG · macOS assets: gh run list --workflow adoc-hub-release.yml --limit 1"
-echo "   ranch server: herdr-ranch install dirty49374/adoc/ranch-plugin@$TAG"
+echo "   ranch server: herdr-ranch install garage49/adoc/ranch-plugin@$TAG"

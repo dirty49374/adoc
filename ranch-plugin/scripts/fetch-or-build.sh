@@ -14,7 +14,7 @@ case "$OS" in darwin) OS=macos ;; esac
 ARCH="$(uname -m)"
 case "$ARCH" in x86_64|amd64) ARCH=x86_64 ;; arm64|aarch64) ARCH=aarch64 ;; esac
 ASSET="adoc-hub-${OS}-${ARCH}"
-REPO="${ADOC_HUB_REPO:-dirty49374/adoc}"
+REPO="${ADOC_HUB_REPO:-garage49/adoc}"
 TAG="${ADOC_HUB_TAG:-adoc-hub-v${VERSION}}"
 mkdir -p bin
 have() { command -v "$1" >/dev/null 2>&1; }

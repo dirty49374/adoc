@@ -6,7 +6,7 @@
   "description": "The TASK plugin of adoc: work orders that go from TODO through RUNNING and REVIEW to DONE.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "plugins/task"
   },
   "files": [

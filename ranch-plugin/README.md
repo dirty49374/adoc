@@ -56,4 +56,4 @@ From the `master` worktree, run `scripts/release.sh`.
 2. It builds the Linux asset in the Dockerfile (Debian bookworm, glibc 2.36, the Ranch Server's pod) and creates the GitHub release. The release is not marked latest.
 3. `.github/workflows/adoc-hub-release.yml` adds the macOS assets.
 
-Install with `herdr-ranch install dirty49374/adoc/ranch-plugin@adoc-hub-vX.Y.Z`, always with the tag.
+Install with `herdr-ranch install garage49/adoc/ranch-plugin@adoc-hub-vX.Y.Z`, always with the tag.

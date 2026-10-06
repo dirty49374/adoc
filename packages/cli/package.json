@@ -6,7 +6,7 @@
   "description": "adoc: the command line and MCP tool for a user and an agent working on plugin-defined documents.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "packages/cli"
   },
   "engines": {

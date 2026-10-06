@@ -1,6 +1,6 @@
 # adoc-hub — herdr plugin manifest. A ranch plugin only (ranch.toml): ranch installs it in every
 # session and keeps the "status" pane open; nothing here opens a pane or a workspace itself.
-#   herdr-ranch install dirty49374/adoc/ranch-plugin@adoc-hub-vX.Y.Z
+#   herdr-ranch install garage49/adoc/ranch-plugin@adoc-hub-vX.Y.Z
 id = "adoc-hub"
 name = "adoc-hub"
 version = "0.1.1"

@@ -6,7 +6,7 @@
   "description": "The SKETCH plugin of adoc: Excalidraw drawings that the user makes and the agent reads.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "plugins/sketch"
   },
   "files": [

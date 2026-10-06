@@ -6,7 +6,7 @@
   "description": "The TODO plugin of adoc: lists of one-line things to do, as Markdown task lists.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "plugins/todo"
   },
   "files": [

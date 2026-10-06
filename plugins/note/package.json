@@ -6,7 +6,7 @@
   "description": "The NOTE plugin of adoc: free-form shared notes for ideas, open questions and decisions.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "plugins/note"
   },
   "files": [

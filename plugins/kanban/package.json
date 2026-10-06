@@ -6,7 +6,7 @@
   "description": "The KANBAN plugin of adoc: one board of about ten cards in columns.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "plugins/kanban"
   },
   "files": [

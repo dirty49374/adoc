@@ -6,7 +6,7 @@
   "description": "adoc workspace, plugins, documents, messages, transports and server.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dirty49374/adoc.git",
+    "url": "git+https://github.com/garage49/adoc.git",
     "directory": "packages/core"
   },
   "files": [
