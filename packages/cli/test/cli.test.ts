@@ -59,7 +59,9 @@ describe('adoc CLI', () => {
     current = await fixture();
     const home = join(current.root, 'home');
     await mkdir(home);
-    const env = { HOME: home, ADOC_SKILLS_CLI: `node ${resolve(import.meta.dirname, 'fake-skills.mjs')}` };
+    // The command runs with this env only (no PATH): name the node of this test by its path, not as `node`, which would
+    // be looked up in /usr/bin:/bin (found on CI, where node lives in /usr/local/bin).
+    const env = { HOME: home, ADOC_SKILLS_CLI: `${process.execPath} ${resolve(import.meta.dirname, 'fake-skills.mjs')}` };
     expect((await run(['plugin', 'list'], current.root, env)).stderr).toContain('adoc: warning: The agent skill adoc is not installed; run adoc skill install.');
     // The repository's plugins lie outside the test workspace, so every skill goes to user scope.
     expect((await run(['skill', 'install'], current.root, env)).stdout).toContain('Installed 6 skills: adoc (user), adoc-plugin-authoring (user), adoc-todo (user)');
