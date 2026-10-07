@@ -741,9 +741,9 @@ dependencies = [
 
 [[package]]
 name = "garage49-tui-iocraft"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebcabd90cae2d4f328f24e728caf4fb6941e9eb59332665d0aba364175f91ac9"
+checksum = "8c32aae9543c5870981e52e94422b5f4863525eb85b689540c65c47ccfa2902d"
 dependencies = [
  "iocraft",
  "smol",
