@@ -60,17 +60,28 @@ pub async fn run() -> Result<()> {
     };
     let (cmd_tx, cmd_rx) = mpsc::unbounded_channel::<Datagram>();
     let ranch_task = tokio::spawn(ranch_loop(shared.clone(), session, cmd_rx));
-    if plain {
+    // The client ends when its ranch side ends (a failed re-exec after plugin_updated): ranch then opens the pane again
+    // with the installed binary. The status screen alone must never keep a client alive that no longer talks to ranch.
+    let ended = if plain {
         tokio::select! {
-            r = ranch_task => return r.map_err(|e| anyhow!(e))?,
-            _ = tokio::signal::ctrl_c() => {}
+            r = ranch_task => Some(r),
+            _ = tokio::signal::ctrl_c() => None,
         }
     } else {
-        tui::run(shared, cmd_tx).await;
+        let r = tokio::select! {
+            r = ranch_task => Some(r),
+            _ = tui::run(shared, cmd_tx) => None,
+        };
         tui::restore();
+        r
+    };
+    match ended {
+        Some(r) => r.map_err(|e| anyhow!(e))?.and_then(|()| Err(anyhow!("the ranch connection ended"))),
+        None => {
+            println!("adoc-hub client: ended by Ctrl-C");
+            Ok(())
+        }
     }
-    println!("adoc-hub client: ended by Ctrl-C");
-    Ok(())
 }
 
 /// The client's life under ranch: one connection after another. A restarted Ranch Client listens on a
@@ -289,13 +300,17 @@ async fn discovery_loop(shared: Shared, endpoint: Endpoint, mut route: watch::Re
 }
 
 /// Unix exec of this program with the same arguments (returns only on failure).
+/// herdr installs an update in place: the binary at the path the pane started (`argv[0]`, absolute) is the new one, while
+/// `current_exe()` names the replaced file, which Linux reports as `… (deleted)` (herdr-ranch #661). Re-exec that path.
 fn reexec() -> std::io::Error {
     use std::os::unix::process::CommandExt;
-    let exe = match std::env::current_exe() {
-        Ok(e) => e,
-        Err(e) => return e,
-    };
-    std::process::Command::new(exe).args(std::env::args_os().skip(1)).exec()
+    let program = std::env::args_os().next().map(std::path::PathBuf::from).filter(|p| p.is_absolute() && p.exists()).or_else(|| {
+        let exe = std::env::current_exe().ok()?;
+        let text = exe.to_string_lossy();
+        Some(std::path::PathBuf::from(text.strip_suffix(" (deleted)").unwrap_or(&text)))
+    });
+    let Some(program) = program else { return std::io::Error::other("no path of this program to re-execute") };
+    std::process::Command::new(program).args(std::env::args_os().skip(1)).exec()
 }
 
 /// `adoc-hub name <name> | --clear`, as a transient client of this session.

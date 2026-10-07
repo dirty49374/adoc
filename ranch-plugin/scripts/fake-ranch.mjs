@@ -4,6 +4,10 @@
 // command line, event streams, datagrams by address or prefix, the Directory with peer_joined /
 // peer_left / directory_change, subscribe, forward and set_status_icon.
 //
+// Test controls: POST /admin/notify?op=<op> sends a notification (e.g. plugin_updated) to every persistent client;
+// POST /admin/server-restart?secs=<n> imitates a Ranch Server restart: ranch_network_disconnect to every stream, the
+// streams end, and /recv answers 503 for n seconds (the session file's url stays the same, as with a real one).
+//
 // Usage: node scripts/fake-ranch.mjs <port> <runtime dir> <session>[:<pane>=<agent name>]…
 //   The plugin server runs with RANCH_URL=http://127.0.0.1:<port>; each client with
 //   RANCH_RUNTIME_DIR=<runtime dir> and HERDR_SESSION=<session> (this script writes <session>.json).
@@ -50,11 +54,29 @@ function endpointOf(path) {
 const body = (req) => new Promise((resolve) => { const parts = []; req.on('data', (c) => parts.push(c)); req.on('end', () => resolve(Buffer.concat(parts))); });
 const json = (res, status, value) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(value)); };
 
+let downUntil = 0;
+
 createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
+  if (url.pathname === '/admin/notify' && req.method === 'POST') {
+    const op = url.searchParams.get('op');
+    for (const a of streams.keys()) if (a.endsWith('/0')) event(a, 'notification', { op, data: {} });
+    res.writeHead(204);
+    return res.end();
+  }
+  if (url.pathname === '/admin/server-restart' && req.method === 'POST') {
+    downUntil = Date.now() + Number(url.searchParams.get('secs') ?? 3) * 1000;
+    for (const [a, stream] of [...streams]) {
+      event(a, 'notification', { op: 'ranch_network_disconnect', data: {} });
+      stream.end();
+    }
+    res.writeHead(204);
+    return res.end();
+  }
   const ep = endpointOf(url.pathname);
   if (!ep) return json(res, 404, { reason: 'no such endpoint' });
   if (ep.rest === '/recv') {
+    if (Date.now() < downUntil) return json(res, 503, { reason: 'ranch network disconnect' });
     if (streams.has(ep.address)) return json(res, 409, { reason: 'address in use' });
     res.writeHead(200, { 'content-type': 'text/event-stream' });
     streams.set(ep.address, res);
