@@ -742,7 +742,7 @@ dependencies = [
 [[package]]
 name = "garage49-tui-iocraft"
 version = "0.1.0"
-source = "git+https://github.com/garage49/garage49-tui?rev=ddd505d438e1c7606f240b4f3ff3c86e8e225410#ddd505d438e1c7606f240b4f3ff3c86e8e225410"
+source = "git+https://github.com/garage49/garage49-tui?rev=6997c5a6ee10504c95e6a555cb7066d755dc8aec#6997c5a6ee10504c95e6a555cb7066d755dc8aec"
 dependencies = [
  "iocraft",
  "smol",

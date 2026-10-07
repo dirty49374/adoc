@@ -6,7 +6,7 @@
 use crate::client::{Board, Shared};
 use crate::proto::{BrowserView, Datagram, HostView, PendingView};
 use garage49_tui_iocraft::{
-    App, Binding, Column, Content, KeyHint, Label, LabelVariant, ListItem, LogEntry, LogLevel, LogView, Main, MainFocus, Row, Sidebar, StatusSegment, StatusTone, Table, TextField, TypingState, UseKeys, UseStatus,
+    App, Binding, Column, Content, Form, Intro, KeyHint, Label, LabelVariant, List, ListItem, LogEntry, LogLevel, LogView, Main, MainFocus, Row, Section, Sidebar, StatusSegment, StatusTone, Table, TextField, TypingState, UseKeys, UseStatus,
 };
 use iocraft::prelude::*;
 use std::sync::OnceLock;
@@ -68,22 +68,19 @@ pub fn browser_rows(s: &Snapshot) -> Vec<Row> {
     s.browsers.iter().map(|b| Row::new(&b.id, &[&short_time(&b.approved_at), &short_time(&b.last_seen), &b.user_agent])).collect()
 }
 
-/// The status page as (label, value) pairs: what ranch's status_command showed, and more.
+/// The status page's client facts as (label, value): with the adoc program and the machine's servers (below), what ranch's
+/// status_command showed, and more.
 pub fn status_lines(s: &Snapshot) -> Vec<(String, String)> {
-    let mut lines = vec![
+    vec![
         ("Session".into(), format!("{} on {}", s.session, if s.machine.is_empty() { "?" } else { &s.machine })),
         ("Ranch".into(), s.ranch.clone()),
         ("Routing".into(), s.routing.clone()),
-        ("adoc program".into(), s.adoc.clone()),
-    ];
-    let local: Vec<&HostView> = s.hosts.iter().filter(|h| h.machine == s.machine).collect();
-    if local.is_empty() {
-        lines.push(("adoc servers".into(), "none on this machine".into()));
-    }
-    for h in local {
-        lines.push(("adoc server".into(), format!("{:<11} {}  {}", h.status, h.address, h.workspace)));
-    }
-    lines
+    ]
+}
+
+/// The adoc servers of this machine, as the hub knows them.
+pub fn local_rows(s: &Snapshot) -> Vec<Row> {
+    s.hosts.iter().filter(|h| h.machine == s.machine).map(|h| Row::new(&h.address, &[&h.status, &h.address, &h.workspace])).collect()
 }
 
 /// `HH:MM:SS  text` lines of the board as log entries.
@@ -217,12 +214,17 @@ fn WaitingPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'sta
     table_keys(&mut hooks, active, ui, rows.clone(), waiting_of, vec![Binding::new(&["a"], move || act::decide(ui, &s1, true)), Binding::new(&["r"], move || act::decide(ui, &s2, false))]);
     let columns = vec![Column::new("Code", 9), Column::new("Asked", 12), Column::new("Left", 6).right(), Column::new("Browser", 60)];
     element! {
-        View(flex_direction: FlexDirection::Column) {
-            #(if rows.is_empty() {
-                element!(Label(content: "No browser is waiting. A browser at the hub's address shows a code; it appears here.", variant: LabelVariant::Muted)).into_any()
-            } else {
-                element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: select_on(ui, waiting_of), on_select: select_on(ui, waiting_of))).into_any()
-            })
+        View(flex_direction: FlexDirection::Column, flex_grow: 1.0_f32) {
+            Intro(title: "A browser at the hub's address shows a code".to_string()) {
+                Label(content: "Check the code against the browser in front of you, then approve or reject it here; the first answer in any session decides.", variant: LabelVariant::Muted)
+            }
+            Section(title: "Waiting".to_string(), grow: true) {
+                #(if rows.is_empty() {
+                    element!(Label(content: "No browser is waiting.", variant: LabelVariant::Muted)).into_any()
+                } else {
+                    element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: select_on(ui, waiting_of), on_select: select_on(ui, waiting_of))).into_any()
+                })
+            }
         }
     }
     .into_any()
@@ -244,15 +246,20 @@ fn HostsPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'stati
     // The name field stays while the page is shown and takes the keys only while naming.
     let shown = editing.unwrap_or_else(|| props.snapshot.hosts.iter().find(|h| Some(&h.address) == id.as_ref()).and_then(|h| h.name.clone()).unwrap_or_default());
     element! {
-        View(flex_direction: FlexDirection::Column) {
-            #(if rows.is_empty() {
-                element!(Label(content: "No adoc host is known yet.", variant: LabelVariant::Muted)).into_any()
-            } else {
-                element!(Table(columns: columns, rows: rows, selected_id: id, focused: focused && !is_editing, on_click: select_on(ui, hosts_of), on_select: select_on(ui, hosts_of))).into_any()
-            })
-            View(margin_top: 1) {
-                TextField(label: "Name", value: shown, placeholder: (if is_editing { "lowercase letters, digits, - · empty removes" } else { "n names the selected host" }).to_string(), focused: focused && is_editing,
-                    on_change: move |v: String| update(ui, |u| u.naming = Some(v.chars().filter(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c == '-').collect())))
+        View(flex_direction: FlexDirection::Column, flex_grow: 1.0_f32) {
+            Section(title: "Hosts".to_string()) {
+                #(if rows.is_empty() {
+                    element!(Label(content: "No adoc host is known yet.", variant: LabelVariant::Muted)).into_any()
+                } else {
+                    element!(Table(columns: columns, rows: rows, selected_id: id, focused: focused && !is_editing, on_click: select_on(ui, hosts_of), on_select: select_on(ui, hosts_of))).into_any()
+                })
+            }
+            Section(title: "Name of the selected host".to_string()) {
+                Label(content: "The host answers at its name and at its machine_port address.", variant: LabelVariant::Muted)
+                Form {
+                    TextField(label: "Name", value: shown, placeholder: (if is_editing { "lowercase letters, digits, - · empty removes" } else { "n names the selected host" }).to_string(), focused: focused && is_editing,
+                        on_change: move |v: String| update(ui, |u| u.naming = Some(v.chars().filter(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c == '-').collect())))
+                }
             }
         }
     }
@@ -269,12 +276,15 @@ fn BrowsersPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'st
     table_keys(&mut hooks, active, ui, rows.clone(), browsers_of, vec![Binding::new(&["x"], move || act::revoke(ui, &s1))]);
     let columns = vec![Column::new("Approved", 12), Column::new("Last seen", 12), Column::new("Browser", 70)];
     element! {
-        View(flex_direction: FlexDirection::Column) {
-            #(if rows.is_empty() {
-                element!(Label(content: "No browser is approved.", variant: LabelVariant::Muted)).into_any()
-            } else {
-                element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: select_on(ui, browsers_of), on_select: select_on(ui, browsers_of))).into_any()
-            })
+        View(flex_direction: FlexDirection::Column, flex_grow: 1.0_f32) {
+            Section(title: "Approved browsers".to_string(), grow: true) {
+                Label(content: "An approval never expires; revoking one refuses its cookie and closes its open connections at once.", variant: LabelVariant::Muted)
+                #(if rows.is_empty() {
+                    element!(Label(content: "No browser is approved.", variant: LabelVariant::Muted)).into_any()
+                } else {
+                    element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: select_on(ui, browsers_of), on_select: select_on(ui, browsers_of))).into_any()
+                })
+            }
         }
     }
     .into_any()
@@ -282,15 +292,23 @@ fn BrowsersPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'st
 
 #[component]
 fn StatusPage(props: &PageProps) -> impl Into<AnyElement<'static>> {
-    let lines = status_lines(&props.snapshot);
+    let items: Vec<ListItem> = status_lines(&props.snapshot).into_iter().map(|(label, value)| ListItem::new(&label, &label).value(&value)).collect();
+    let servers = local_rows(&props.snapshot);
+    let columns = vec![Column::new("Status", 11), Column::new("Address", 16), Column::new("Workspace", 50)];
     element! {
-        View(flex_direction: FlexDirection::Column) {
-            #(lines.into_iter().enumerate().map(|(i, (label, value))| element! {
-                View(key: i, flex_direction: FlexDirection::Row, height: 1) {
-                    View(width: 14, flex_shrink: 0.0_f32) { Label(content: label, variant: LabelVariant::Muted) }
-                    Label(content: value, wrap: TextWrap::NoWrap)
-                }
-            }))
+        View(flex_direction: FlexDirection::Column, flex_grow: 1.0_f32) {
+            Section(title: "This session's client".to_string()) { List(items: items, focused: false) }
+            Section(title: "adoc program".to_string()) {
+                Label(content: "Found through ADOC_BIN, then PATH, then the login shell; runs adoc server list every 3 s while this session routes its machine.", variant: LabelVariant::Muted)
+                Label(content: props.snapshot.adoc.clone())
+            }
+            Section(title: "adoc servers of this machine".to_string()) {
+                #(if servers.is_empty() {
+                    element!(Label(content: "None known.", variant: LabelVariant::Muted)).into_any()
+                } else {
+                    element!(Table(columns: columns, rows: servers, focused: false)).into_any()
+                })
+            }
         }
     }
 }
@@ -301,7 +319,11 @@ fn LogPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'static>
     let (_, rows) = hooks.use_terminal_size();
     let entries = log_entries(&props.snapshot);
     element! {
-        LogView(entries: entries, offset: offset.get(), rows: rows.saturating_sub(7), on_scroll: move |o: u32| { let mut offset = offset; offset.set(o) })
+        View(flex_direction: FlexDirection::Column, flex_grow: 1.0_f32) {
+            Section(title: "Log".to_string(), grow: true) {
+                LogView(entries: entries, offset: offset.get(), rows: rows.saturating_sub(11), on_scroll: move |o: u32| { let mut offset = offset; offset.set(o) })
+            }
+        }
     }
 }
 
@@ -491,12 +513,10 @@ mod tests {
     #[test]
     fn status_shows_what_status_command_showed() {
         let s = snap();
-        let lines = status_lines(&s);
-        assert!(lines.iter().any(|(l, v)| l == "adoc program" && v == "/usr/bin/adoc"));
-        assert!(lines.iter().any(|(l, v)| l == "adoc server" && v.contains("mldev_7700")));
-        assert!(!lines.iter().any(|(_, v)| v.contains("segv-mbp")), "only this machine's servers");
-        let empty = Snapshot { hosts: vec![], ..snap() };
-        assert!(status_lines(&empty).iter().any(|(_, v)| v == "none on this machine"));
+        assert!(status_lines(&s).iter().any(|(l, v)| l == "Routing" && v.contains("tunnel open")));
+        let local = local_rows(&s);
+        assert_eq!(local.len(), 1, "only this machine's servers");
+        assert_eq!(local[0].cells, vec!["online", "mldev_7700", "/w/adoc"]);
     }
 
     #[test]
