@@ -3,7 +3,7 @@
 #   herdr-ranch install garage49/adoc/ranch-plugin@vX.Y.Z
 id = "adoc-hub"
 name = "adoc-hub"
-version = "0.2.0"
+version = "0.2.1"
 description = "Every adoc on the ranch network in one browser."
 min_herdr_version = "0.8.0"
 platforms = ["linux", "macos"]

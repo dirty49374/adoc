@@ -1,6 +1,6 @@
 ---
 title: adoc-hub status pane on the garage49 TUI design system; no status_command
-status: REVIEW
+status: DONE
 assignee: adoc-dev
 notes: [NOTE-261002-ranch-adoc-hub]
 related: [TASK-261002-adoc-hub-plugin]
@@ -39,3 +39,4 @@ Spec Terms (aterm, `spec/adoc_hub.trm`):
 - 2026-10-07: garage49-tui fixed the four gaps in ddd505d (#679); repinned. The page selections, the name being typed and the status message moved into one root state (`Ui`), so a key on a page and a click on its key hint run the same action (KeyHint::with_action); a Reporter inside App puts the message on the status line. Checked again in tmux: approve by key reports 'approved …', a burst 'demo' arrives whole, the Hosts hints switch to enter/esc while naming. 24 tests, clippy clean.
 - 2026-10-07: garage49-tui 6997c5a changed page assembly (#688): pages re-assembled as an Intro (Waiting only) and titled Sections; Hosts adds a 'Name of the selected host' section with a Form; Status shows the client facts as a List, the adoc program in its own section and the machine's servers as a Table (long values had pushed List labels out). Checked every page in the 110×32 tmux pane.
 - 2026-10-07: rebuilt on the published garage49-tui-iocraft 0.1.0 (crates.io) instead of the git pin (Owner's instruction, herdr-ranch #701/#706); compared with the gallery in a 110×32 tmux pane (same sidebar, title, section, status line and key hint columns; adoc-hub uses the sidebar-only layout); installed on mldev only for the Owner's review.
+- 2026-10-07: the Owner approved the review build (herdr-ranch #718); released as v0.2.1 (with the #661 re-exec fix).

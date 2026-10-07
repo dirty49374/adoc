@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc-plugin-kanban",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "0BSD",
   "type": "module",
   "description": "The KANBAN plugin of adoc: one board of about ten cards in columns.",

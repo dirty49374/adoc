@@ -1,6 +1,6 @@
 [package]
 name = "adoc-hub"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "herdr-ranch plugin: every adoc on the ranch network in one browser"
 license = "0BSD"

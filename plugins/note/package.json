@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc-plugin-note",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "0BSD",
   "type": "module",
   "description": "The NOTE plugin of adoc: free-form shared notes for ideas, open questions and decisions.",

@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "0BSD",
   "type": "module",
   "description": "adoc workspace, plugins, documents, messages, transports and server.",

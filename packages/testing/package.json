@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc-testing",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "0BSD",
   "private": true,
   "type": "module",

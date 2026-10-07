@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "0BSD",
   "type": "module",
   "description": "adoc: the command line and MCP tool for a user and an agent working on plugin-defined documents.",

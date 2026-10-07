@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc-plugin-todo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "0BSD",
   "type": "module",
   "description": "The TODO plugin of adoc: lists of one-line things to do, as Markdown task lists.",
