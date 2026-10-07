@@ -122,146 +122,162 @@ fn send(d: Datagram) {
     }
 }
 
+/// What the person chose on the screen, kept by the root so that a key on a page and a click on its key hint run the
+/// same action: the selected row of each table, the name being typed, and the last message for the status line.
+#[derive(Clone, Default, PartialEq)]
+struct Ui {
+    waiting: Option<String>,
+    hosts: Option<String>,
+    browsers: Option<String>,
+    naming: Option<String>,
+    message: Option<(u64, String)>,
+}
+
+fn update(ui: State<Ui>, f: impl FnOnce(&mut Ui)) {
+    let mut next = ui.read().clone();
+    f(&mut next);
+    let mut ui = ui;
+    ui.set(next);
+}
+
+fn report(ui: State<Ui>, text: String) { update(ui, |u| u.message = Some((u.message.as_ref().map_or(0, |m| m.0) + 1, text))); }
+
+/// The actions of the pages, for keys and key hints alike.
+mod act {
+    use super::*;
+
+    pub fn decide(ui: State<Ui>, s: &Snapshot, approve: bool) {
+        let Some(code) = current(&ui.read().waiting, &pending_rows(s)) else { return };
+        send(Datagram::Decide { code: code.clone(), approve });
+        report(ui, format!("{} {}", if approve { "approved" } else { "rejected" }, spaced(&code)));
+    }
+
+    pub fn revoke(ui: State<Ui>, s: &Snapshot) {
+        let Some(id) = current(&ui.read().browsers, &browser_rows(s)) else { return };
+        send(Datagram::Revoke { id });
+        report(ui, "browser revoked".into());
+    }
+
+    fn selected_host(ui: State<Ui>, s: &Snapshot) -> Option<HostView> {
+        let id = current(&ui.read().hosts, &host_rows(s))?;
+        s.hosts.iter().find(|h| h.address == id).cloned()
+    }
+
+    pub fn start_naming(ui: State<Ui>, s: &Snapshot) {
+        let Some(h) = selected_host(ui, s) else { return };
+        update(ui, |u| u.naming = Some(h.name.unwrap_or_default()));
+    }
+
+    pub fn submit_name(ui: State<Ui>, s: &Snapshot) {
+        let Some(h) = selected_host(ui, s) else { return };
+        let text = ui.read().naming.clone().unwrap_or_default();
+        send(Datagram::Name { machine: Some(h.machine.clone()), workspace: h.workspace.clone(), name: (!text.is_empty()).then_some(text.clone()) });
+        update(ui, |u| u.naming = None);
+        report(ui, if text.is_empty() { format!("name of {} removed", h.address) } else { format!("{} named {text}", h.address) });
+    }
+
+    pub fn cancel_name(ui: State<Ui>) { update(ui, |u| u.naming = None); }
+
+    /// Moves the selection of a table by `delta` rows.
+    pub fn step(ui: State<Ui>, rows: &[Row], pick: fn(&mut Ui) -> &mut Option<String>, delta: i32) {
+        let mut probe = ui.read().clone();
+        let id = current(pick(&mut probe), rows);
+        let next = moved(rows, &id, delta);
+        update(ui, |u| *pick(u) = next);
+    }
+}
+
 #[derive(Default, Props)]
 struct PageProps {
     snapshot: Snapshot,
+    ui: Option<State<Ui>>,
 }
 
-/// A table page: the cursor moves with ↑↓/jk, extra bindings act on the selected row.
-fn table_keys(hooks: &mut Hooks, active: bool, rows: &[Row], selected: State<Option<String>>, mut extra: Vec<Binding>) {
-    let id = current(&selected.read(), rows);
-    let step = |delta: i32| {
-        let (rows, id) = (rows.to_vec(), id.clone());
-        move || {
-            let mut selected = selected;
-            selected.set(moved(&rows, &id, delta));
-        }
-    };
-    extra.push(Binding::new(&["up", "k"], step(-1)));
-    extra.push(Binding::new(&["down", "j"], step(1)));
+/// ↑↓/jk move the table's cursor; `extra` act on the selected row.
+fn table_keys(hooks: &mut Hooks, active: bool, ui: State<Ui>, rows: Vec<Row>, pick: fn(&mut Ui) -> &mut Option<String>, mut extra: Vec<Binding>) {
+    let (up, down) = (rows.clone(), rows);
+    extra.push(Binding::new(&["up", "k"], move || act::step(ui, &up, pick, -1)));
+    extra.push(Binding::new(&["down", "j"], move || act::step(ui, &down, pick, 1)));
     hooks.use_keys(active, extra, None);
 }
 
+fn select_on(ui: State<Ui>, pick: fn(&mut Ui) -> &mut Option<String>) -> impl FnMut(Row) + Send + Sync + 'static { move |row: Row| update(ui, |u| *pick(u) = Some(row.id)) }
+
+fn waiting_of(u: &mut Ui) -> &mut Option<String> { &mut u.waiting }
+fn hosts_of(u: &mut Ui) -> &mut Option<String> { &mut u.hosts }
+fn browsers_of(u: &mut Ui) -> &mut Option<String> { &mut u.browsers }
+
 #[component]
 fn WaitingPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
+    let Some(ui) = props.ui else { return element!(View).into_any() };
     let active = hooks.use_context::<MainFocus>().0 && !hooks.use_context::<TypingState>().typing();
-    let status = hooks.use_status();
-    let selected = hooks.use_state(|| None::<String>);
     let rows = pending_rows(&props.snapshot);
-    let id = current(&selected.read(), &rows);
-    let decide = |approve: bool| {
-        let id = id.clone();
-        move || {
-            if let Some(code) = &id {
-                send(Datagram::Decide { code: code.clone(), approve });
-                status.report(&format!("{} {}", if approve { "approved" } else { "rejected" }, spaced(code)));
-            }
-        }
-    };
-    table_keys(&mut hooks, active, &rows, selected, vec![Binding::new(&["a"], decide(true)), Binding::new(&["r"], decide(false))]);
+    let id = current(&ui.read().waiting, &rows);
+    let (s1, s2) = (props.snapshot.clone(), props.snapshot.clone());
+    table_keys(&mut hooks, active, ui, rows.clone(), waiting_of, vec![Binding::new(&["a"], move || act::decide(ui, &s1, true)), Binding::new(&["r"], move || act::decide(ui, &s2, false))]);
     let columns = vec![Column::new("Code", 9), Column::new("Asked", 12), Column::new("Left", 6).right(), Column::new("Browser", 60)];
-    let pick = move |row: Row| {
-        let mut selected = selected;
-        selected.set(Some(row.id));
-    };
     element! {
         View(flex_direction: FlexDirection::Column) {
             #(if rows.is_empty() {
                 element!(Label(content: "No browser is waiting. A browser at the hub's address shows a code; it appears here.", variant: LabelVariant::Muted)).into_any()
             } else {
-                element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: pick, on_select: pick)).into_any()
+                element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: select_on(ui, waiting_of), on_select: select_on(ui, waiting_of))).into_any()
             })
         }
     }
+    .into_any()
 }
 
 #[component]
 fn HostsPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
+    let Some(ui) = props.ui else { return element!(View).into_any() };
     let focused = hooks.use_context::<MainFocus>().0;
     let typing = hooks.use_context::<TypingState>().typing();
-    let status = hooks.use_status();
-    let selected = hooks.use_state(|| None::<String>);
-    let naming = hooks.use_state(|| None::<String>);
     let rows = host_rows(&props.snapshot);
-    let id = current(&selected.read(), &rows);
-    let host = props.snapshot.hosts.iter().find(|h| Some(&h.address) == id.as_ref()).cloned();
-    let start = {
-        let name = host.as_ref().and_then(|h| h.name.clone()).unwrap_or_default();
-        move || {
-            let mut naming = naming;
-            naming.set(Some(name.clone()));
-        }
-    };
-    table_keys(&mut hooks, focused && !typing && naming.read().is_none(), &rows, selected, vec![Binding::new(&["n"], start)]);
-    let submit = move || {
-        let Some(h) = &host else { return };
-        let text = naming.read().clone().unwrap_or_default();
-        send(Datagram::Name { machine: Some(h.machine.clone()), workspace: h.workspace.clone(), name: (!text.is_empty()).then_some(text.clone()) });
-        status.report(&if text.is_empty() { format!("name of {} removed", h.address) } else { format!("{} named {text}", h.address) });
-        let mut naming = naming;
-        naming.set(None);
-    };
-    let cancel = move || {
-        let mut naming = naming;
-        naming.set(None);
-    };
-    hooks.use_keys(focused && naming.read().is_some(), vec![Binding::new(&["enter"], submit), Binding::new(&["esc"], cancel)], None);
-    let columns = vec![Column::new("", 1), Column::new("Address", 16), Column::new("Name", 12), Column::new("Status", 11), Column::new("Agent", 20), Column::new("Workspace", 40)];
-    let pick = move |row: Row| {
-        let mut selected = selected;
-        selected.set(Some(row.id));
-    };
-    // The name field stays while the page is shown and takes the keys only while naming, so that its editing state is
-    // always given back (a text field removed while editing would leave the app typing).
-    let editing = naming.read().clone();
-    let shown = editing.clone().unwrap_or_else(|| props.snapshot.hosts.iter().find(|h| Some(&h.address) == id.as_ref()).and_then(|h| h.name.clone()).unwrap_or_default());
+    let id = current(&ui.read().hosts, &rows);
+    let editing = ui.read().naming.clone();
     let is_editing = editing.is_some();
+    let (s1, s2) = (props.snapshot.clone(), props.snapshot.clone());
+    table_keys(&mut hooks, focused && !typing && !is_editing, ui, rows.clone(), hosts_of, vec![Binding::new(&["n"], move || act::start_naming(ui, &s1))]);
+    hooks.use_keys(focused && is_editing, vec![Binding::new(&["enter"], move || act::submit_name(ui, &s2)), Binding::new(&["esc"], move || act::cancel_name(ui))], None);
+    let columns = vec![Column::new("", 1), Column::new("Address", 16), Column::new("Name", 12), Column::new("Status", 11), Column::new("Agent", 20), Column::new("Workspace", 40)];
+    // The name field stays while the page is shown and takes the keys only while naming.
+    let shown = editing.unwrap_or_else(|| props.snapshot.hosts.iter().find(|h| Some(&h.address) == id.as_ref()).and_then(|h| h.name.clone()).unwrap_or_default());
     element! {
         View(flex_direction: FlexDirection::Column) {
             #(if rows.is_empty() {
                 element!(Label(content: "No adoc host is known yet.", variant: LabelVariant::Muted)).into_any()
             } else {
-                element!(Table(columns: columns, rows: rows, selected_id: id, focused: focused && !is_editing, on_click: pick, on_select: pick)).into_any()
+                element!(Table(columns: columns, rows: rows, selected_id: id, focused: focused && !is_editing, on_click: select_on(ui, hosts_of), on_select: select_on(ui, hosts_of))).into_any()
             })
             View(margin_top: 1) {
                 TextField(label: "Name", value: shown, placeholder: (if is_editing { "lowercase letters, digits, - · empty removes" } else { "n names the selected host" }).to_string(), focused: focused && is_editing,
-                    on_change: move |v: String| { let mut naming = naming; naming.set(Some(v.chars().filter(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c == '-').collect())) })
+                    on_change: move |v: String| update(ui, |u| u.naming = Some(v.chars().filter(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c == '-').collect())))
             }
         }
     }
+    .into_any()
 }
 
 #[component]
 fn BrowsersPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
+    let Some(ui) = props.ui else { return element!(View).into_any() };
     let active = hooks.use_context::<MainFocus>().0 && !hooks.use_context::<TypingState>().typing();
-    let status = hooks.use_status();
-    let selected = hooks.use_state(|| None::<String>);
     let rows = browser_rows(&props.snapshot);
-    let id = current(&selected.read(), &rows);
-    let revoke = {
-        let id = id.clone();
-        move || {
-            if let Some(id) = &id {
-                send(Datagram::Revoke { id: id.clone() });
-                status.report("browser revoked");
-            }
-        }
-    };
-    table_keys(&mut hooks, active, &rows, selected, vec![Binding::new(&["x"], revoke)]);
+    let id = current(&ui.read().browsers, &rows);
+    let s1 = props.snapshot.clone();
+    table_keys(&mut hooks, active, ui, rows.clone(), browsers_of, vec![Binding::new(&["x"], move || act::revoke(ui, &s1))]);
     let columns = vec![Column::new("Approved", 12), Column::new("Last seen", 12), Column::new("Browser", 70)];
-    let pick = move |row: Row| {
-        let mut selected = selected;
-        selected.set(Some(row.id));
-    };
     element! {
         View(flex_direction: FlexDirection::Column) {
             #(if rows.is_empty() {
                 element!(Label(content: "No browser is approved.", variant: LabelVariant::Muted)).into_any()
             } else {
-                element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: pick, on_select: pick)).into_any()
+                element!(Table(columns: columns, rows: rows, selected_id: id, focused: active, on_click: select_on(ui, browsers_of), on_select: select_on(ui, browsers_of))).into_any()
             })
         }
     }
+    .into_any()
 }
 
 #[component]
@@ -287,6 +303,26 @@ fn LogPage(props: &PageProps, mut hooks: Hooks) -> impl Into<AnyElement<'static>
     element! {
         LogView(entries: entries, offset: offset.get(), rows: rows.saturating_sub(7), on_scroll: move |o: u32| { let mut offset = offset; offset.set(o) })
     }
+}
+
+/// Puts the screen's last message on the status line (inside App, where the status hook works).
+#[derive(Default, Props)]
+struct ReporterProps {
+    message: Option<(u64, String)>,
+}
+
+#[component]
+fn Reporter(props: &ReporterProps, mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
+    let status = hooks.use_status();
+    let shown = hooks.use_state(|| 0u64);
+    if let Some((n, text)) = &props.message
+        && *n != shown.get()
+    {
+        status.report(text);
+        let mut shown = shown;
+        shown.set(*n);
+    }
+    element!(View)
 }
 
 struct Page {
@@ -329,11 +365,14 @@ fn sidebar_items(s: &Snapshot) -> Vec<ListItem> {
         .collect()
 }
 
-fn page_hints(page: &str) -> Vec<KeyHint> {
+/// The page's keys as clickable hints: a click runs the same action as the key.
+fn page_hints(page: &str, ui: State<Ui>, s: &Snapshot) -> Vec<KeyHint> {
+    let (s1, s2) = (s.clone(), s.clone());
     match page {
-        "waiting" => vec![KeyHint::new("a", "approve"), KeyHint::new("r", "reject")],
-        "hosts" => vec![KeyHint::new("n", "name")],
-        "browsers" => vec![KeyHint::new("x", "revoke")],
+        "waiting" => vec![KeyHint::new("a", "approve").with_action(move || act::decide(ui, &s1, true)), KeyHint::new("r", "reject").with_action(move || act::decide(ui, &s2, false))],
+        "hosts" if ui.read().naming.is_some() => vec![KeyHint::new("enter", "set name").with_action(move || act::submit_name(ui, &s1)), KeyHint::new("esc", "cancel").with_action(move || act::cancel_name(ui))],
+        "hosts" => vec![KeyHint::new("n", "name").with_action(move || act::start_naming(ui, &s1))],
+        "browsers" => vec![KeyHint::new("x", "revoke").with_action(move || act::revoke(ui, &s1))],
         _ => vec![],
     }
 }
@@ -347,11 +386,13 @@ fn status_segments(s: &Snapshot) -> Vec<StatusSegment> {
     out
 }
 
-/// The root: App and nothing else (the library's hooks work only in App's children). It polls the board.
+/// The root: App and nothing else (the library's hooks work only in App's children). It polls the board and keeps the
+/// screen's choices.
 #[component]
 fn HubScreen(mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
     let page = hooks.use_state(|| "waiting".to_string());
     let snap = hooks.use_state(Snapshot::default);
+    let ui = hooks.use_state(Ui::default);
     hooks.use_future(async move {
         loop {
             if let Some(link) = LINK.get()
@@ -371,20 +412,23 @@ fn HubScreen(mut hooks: Hooks) -> impl Into<AnyElement<'static>> {
     let page_id = page.read().clone();
     let current = PAGES.iter().find(|p| p.id == page_id).unwrap_or(&PAGES[0]);
     let body = match current.id {
-        "hosts" => element!(HostsPage(snapshot: s.clone())).into_any(),
-        "browsers" => element!(BrowsersPage(snapshot: s.clone())).into_any(),
+        "hosts" => element!(HostsPage(snapshot: s.clone(), ui: Some(ui))).into_any(),
+        "browsers" => element!(BrowsersPage(snapshot: s.clone(), ui: Some(ui))).into_any(),
         "status" => element!(StatusPage(snapshot: s.clone())).into_any(),
         "log" => element!(LogPage(snapshot: s.clone())).into_any(),
-        _ => element!(WaitingPage(snapshot: s.clone())).into_any(),
+        _ => element!(WaitingPage(snapshot: s.clone(), ui: Some(ui))).into_any(),
     };
     let context = format!("adoc-hub {} · {} on {}", crate::product::VERSION, s.session, if s.machine.is_empty() { "?" } else { &s.machine });
+    let message = ui.read().message.clone();
     let mut page_state = page;
     element! {
-        App(context: context, status: status_segments(&s), hints: page_hints(current.id),
-            quit_message: "End the adoc-hub client?".to_string()) {
+        App(context: context, status: status_segments(&s), hints: page_hints(current.id, ui, &s), quit_message: "End the adoc-hub client?".to_string()) {
             Content {
                 Sidebar(items: sidebar_items(&s), selected_id: page_id.clone(), on_select: move |item: ListItem| page_state.set(item.id))
-                Main(title: current.title.to_string()) { #(std::iter::once(body)) }
+                Main(title: current.title.to_string()) {
+                    Reporter(message: message)
+                    #(std::iter::once(body))
+                }
             }
         }
     }
