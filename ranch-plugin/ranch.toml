@@ -1,5 +1,5 @@
 # adoc-hub as a ranch plugin (herdr-ranch docs/PLUGINS.md). Installed on the ranch server with
-#   herdr-ranch install garage49/adoc/ranch-plugin@adoc-hub-vX.Y.Z
+#   herdr-ranch install garage49/adoc/ranch-plugin@vX.Y.Z
 # The plugin server serves browsers on the exposed port `web`, whose address is in the Ranch
 # Server's server.toml ([exposed_ports.adoc-hub] web = "0.0.0.0:10954"); clients reach its tunnel
 # port through ranch's forward. Spec: spec/adoc_hub.trm in the adoc repository.

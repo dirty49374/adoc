@@ -32,7 +32,7 @@ src/
   tui.rs         the status pane
   ranch.rs       the Ranch Api client (vendored from herdr-connect)
 web/             the approval page, the host list, the "host unavailable" page
-scripts/         fetch-or-build.sh (herdr's build step), release.sh, fake-ranch.mjs (local runs)
+scripts/         fetch-or-build.sh (herdr's build step), fake-ranch.mjs (local runs)
 ```
 
 ## Develop
@@ -50,10 +50,6 @@ To run it without a ranch network:
 
 ## Release
 
-From the `master` worktree, run `scripts/release.sh`.
+adoc-hub has adoc's version: the tag `vX.Y.Z` on `main` releases the npm packages and adoc-hub together, through the shared garage49 build (see CONTRIBUTING.md). The build runs `cargo test` and `cargo build --release --locked` here and publishes `adoc-hub-linux-x86_64` (it must run on Debian bookworm, glibc 2.36: the Ranch Server's pod), `adoc-hub-macos-aarch64` and `adoc-hub-macos-x86_64`, each with `<asset>.sha256`, which ranch's install and `scripts/fetch-or-build.sh` read. The tags `adoc-hub-v0.1.0` and `adoc-hub-v0.1.1` are history.
 
-1. The script tags `adoc-hub-vX.Y.Z` once `Cargo.toml` and `herdr-plugin.toml` agree.
-2. It builds the Linux asset in the Dockerfile (Debian bookworm, glibc 2.36, the Ranch Server's pod) and creates the GitHub release. The release is not marked latest.
-3. `.github/workflows/adoc-hub-release.yml` adds the macOS assets.
-
-Install with `herdr-ranch install garage49/adoc/ranch-plugin@adoc-hub-vX.Y.Z`, always with the tag.
+Install with `herdr-ranch install garage49/adoc/ranch-plugin@vX.Y.Z`, always with the tag.

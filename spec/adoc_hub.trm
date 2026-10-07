@@ -15,6 +15,7 @@ concept _Adoc_Hub_ in hub = {
   has_part _Hub_Client_
   serves _Hub_Host_
 .contract
+  - The _Adoc_Hub_ must carry the version of adoc and be released with it: one tag `vX.Y.Z` releases adoc's npm packages and the _Adoc_Hub_.
   - The _Adoc_Hub_ must follow the plugin contract of herdr-ranch: a `herdr-plugin.toml` and a `ranch.toml`, GitHub releases with a `.sha256` per asset, a server built for the central machine (Linux x86_64, glibc 2.36 or static), and a persistent client that re-executes itself on `plugin_updated`.
   - The _Adoc_Hub_ must learn agents, their status and the clients of each session from the ranch Directory, never by finding them itself.
 .remarks

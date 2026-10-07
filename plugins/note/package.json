@@ -1,6 +1,6 @@
 {
   "name": "@garage49/adoc-plugin-note",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "license": "0BSD",
   "type": "module",
   "description": "The NOTE plugin of adoc: free-form shared notes for ideas, open questions and decisions.",
@@ -31,7 +31,7 @@
     "prepack": "node ../../tooling/package-files.mjs"
   },
   "peerDependencies": {
-    "@garage49/adoc-plugin-kit": "^0.1.0"
+    "@garage49/adoc-plugin-kit": "^0.2.0"
   },
   "devDependencies": {
     "@garage49/adoc-plugin-kit": "workspace:*",

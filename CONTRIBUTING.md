@@ -50,7 +50,7 @@ adoc skill view adoc-plugin-authoring   # how to write a plugin
 ```
 ~/work/adoc/
   .bare/          the repository (bare); .git points to it
-  master/         worktree of master: what is released
+  main/           worktree of main: what is released
   dev/            worktree of dev: daily work
   <feature>/      worktree of a feature branch, when a piece of work needs one
 ```
@@ -58,7 +58,7 @@ adoc skill view adoc-plugin-authoring   # how to write a plugin
 - Work happens on `dev`. A larger piece of work gets a feature branch in its own worktree:
   `git worktree add ../<feature> -b <feature> dev`, merged back into `dev` when done, then
   `git worktree remove ../<feature>`.
-- A release merges `dev` into `master` and is packed and published from the `master` worktree.
+- A release merges `dev` into `main`; the tag `vX.Y.Z` on `main` releases it (see Release).
 - Each worktree has its own `node_modules` and builds: run `pnpm install && pnpm build` in a new one.
 - `.adoc/claim.yaml` is per worktree and per machine: claim again with `adoc agent claim` in the
   worktree whose server runs.
@@ -82,7 +82,9 @@ pnpm check     # type-check every package, its tests, and plugins/
 
 ## Release
 
-All packages share one version and move together; `0.1.0` is the first.
+One version line for the whole repository, by the garage49 build rules (`garage49/.github` RULES.md): every package, adoc-hub (`ranch-plugin/Cargo.toml`, `herdr-plugin.toml`) and the release tag carry the version of the root `package.json`; `pnpm check` runs `tooling/versions.mjs`, which fails when a file disagrees. A release is a tag `vX.Y.Z` on `main` equal to that version, built by the shared garage49 build (`.github/workflows/build.yml`, maintained by sdfj_kr): it publishes the npm packages and the adoc-hub assets. Every other build is a snapshot.
+
+What the build runs, for reference:
 
 ```sh
 pnpm build                                   # also collects the licenses of the bundled browser code
