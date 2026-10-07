@@ -18,7 +18,7 @@
     "adoc": "node packages/cli/dist/entry.js"
   },
   "dependencies": {
-    "@agent-workshop/adoc-plugin-kit": "workspace:*"
+    "@garage49/adoc-plugin-kit": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "24.13.3",

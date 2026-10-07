@@ -1,5 +1,5 @@
 {
-  "name": "@agent-workshop/adoc-core",
+  "name": "@garage49/adoc-core",
   "version": "0.1.3",
   "license": "0BSD",
   "type": "module",
@@ -29,13 +29,13 @@
     }
   },
   "dependencies": {
-    "@agent-workshop/adoc-plugin-kanban": "workspace:*",
-    "@agent-workshop/adoc-plugin-kit": "workspace:*",
-    "@agent-workshop/adoc-plugin-note": "workspace:*",
-    "@agent-workshop/adoc-plugin-sketch": "workspace:*",
-    "@agent-workshop/adoc-plugin-task": "workspace:*",
-    "@agent-workshop/adoc-plugin-todo": "workspace:*",
-    "@agent-workshop/adoc-webapp": "workspace:*",
+    "@garage49/adoc-plugin-kanban": "workspace:*",
+    "@garage49/adoc-plugin-kit": "workspace:*",
+    "@garage49/adoc-plugin-note": "workspace:*",
+    "@garage49/adoc-plugin-sketch": "workspace:*",
+    "@garage49/adoc-plugin-task": "workspace:*",
+    "@garage49/adoc-plugin-todo": "workspace:*",
+    "@garage49/adoc-webapp": "workspace:*",
     "semver": "7.8.5",
     "ws": "8.21.3",
     "yaml": "2.9.0",
@@ -48,7 +48,7 @@
     "prepack": "node ../../tooling/package-files.mjs"
   },
   "devDependencies": {
-    "@agent-workshop/adoc-testing": "workspace:*",
+    "@garage49/adoc-testing": "workspace:*",
     "@types/semver": "7.8.0",
     "@types/ws": "8.18.1"
   }

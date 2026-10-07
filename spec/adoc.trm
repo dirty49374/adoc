@@ -67,7 +67,7 @@ concept _Adoc_Config_ in workspace = {
   - An _Adoc_Config_ may declare the default colour scheme of the _Web_UI_Theme_ as `ui.theme`: dark, light or system; dark when it is not declared.
 .remarks
   - Chosen: the _Adoc_Config_ assigns the _Plugin_Key_, so one plugin package may serve two keys in one workspace.
-  - Example: `plugins: {TODO: npm:@agent-workshop/adoc-plugin-todo, TASK: ./plugins/task}`, `watch: [../docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`, `ui: {tabs: [TODO, TASK], theme: dark}`.
+  - Example: `plugins: {TODO: npm:@garage49/adoc-plugin-todo, TASK: ./plugins/task}`, `watch: [../docs]`, `agent: {name: adoc-dev, transport: {kind: herdr}}`, `server: {host: 0.0.0.0, port: 7700}`, `ui: {tabs: [TODO, TASK], theme: dark}`.
   - Chosen: the plugins are a map and the tab order a separate list, so that what a workspace uses and how it shows it are declared apart.
   - Chosen: paths are taken from the file, as in tsconfig and ESLint, because a _User_Config_ has no workspace to start from.
   - Chosen: the herdr kind needs no target in the _Adoc_Config_; the target comes from the _Agent_Claim_.
@@ -235,7 +235,7 @@ concept _Plugin_Interface_ in plugin = {
 }
 
 concept _Plugin_Kit_ in plugin = {
-  The package `@agent-workshop/adoc-plugin-kit`, the only package a _Plugin_ imports, which provides `definePlugin`, the `html` template, Markdown rendering with references and source positions, and helpers that write the _Anchor_Markup_Convention_.
+  The package `@garage49/adoc-plugin-kit`, the only package a _Plugin_ imports, which provides `definePlugin`, the `html` template, Markdown rendering with references and source positions, and helpers that write the _Anchor_Markup_Convention_.
 .relations
   used by _Plugin_
   defines _Plugin_Interface_
@@ -270,11 +270,13 @@ concept _Plugin_Source_ in plugin = {
   - A GitHub _Plugin_Source_ must be loaded from the folder `<plugin key in lowercase>/` of the _Plugin_Directory_ next to the config file that declares it; `adoc plugin install` fetches the ones not fetched yet, and `adoc plugin update` fetches them again.
   - A directory _Plugin_Source_ must be loaded from that directory, taken from the folder of the config file that declares it.
   - A _Plugin_ has the scope of the place it is loaded from: project when it is inside the _Adoc_Workspace_, user otherwise; its _Agent_Skill_ is installed in the same scope.
-  - A _Plugin_ imports `@agent-workshop/adoc-plugin-kit` of the running adoc wherever its folder is; when its `package.json` declares a range of `@agent-workshop/adoc-plugin-kit` in `peerDependencies` that the running one does not satisfy, it must fail to load with an error that names both versions.
+  - A _Plugin_ imports `@garage49/adoc-plugin-kit` of the running adoc wherever its folder is; when its `package.json` declares a range of `@garage49/adoc-plugin-kit` in `peerDependencies` that the running one does not satisfy, it must fail to load with an error that names both versions.
+  - For one transition period after the rename of adoc's npm scope, a _Plugin_Source_ `npm:@agent-workshop/<name>` must be read as `npm:@garage49/<name>`, and a _Plugin_ that imports or declares `@agent-workshop/adoc-plugin-kit` must be treated as one that imports or declares `@garage49/adoc-plugin-kit`.
 .remarks
   - Chosen: the notation of npm and Deno for `npm:`, of npm for `github:`, and the `owner/repo/folder` shorthand of herdr plugins and the `skills` CLI.
-  - Chosen: the five plugins of adoc are npm packages `@agent-workshop/adoc-plugin-<name>` that adoc depends on, so they come with adoc and a workspace may install a newer one of them for itself.
-  - Example: a project installs `npm i -D @agent-workshop/adoc-plugin-todo@latest`; `npm:@agent-workshop/adoc-plugin-todo` then resolves to that one before the one that came with adoc.
+  - Chosen by the Owner (2026-10-07): adoc's packages moved from `@agent-workshop` to `@garage49`, the scope of every garage49 package; the old names are deprecated on npm.
+  - Chosen: the five plugins of adoc are npm packages `@garage49/adoc-plugin-<name>` that adoc depends on, so they come with adoc and a workspace may install a newer one of them for itself.
+  - Example: a project installs `npm i -D @garage49/adoc-plugin-todo@latest`; `npm:@garage49/adoc-plugin-todo` then resolves to that one before the one that came with adoc.
   - Example: the user installs a plugin for every workspace with `npm i --prefix ~/.config/adoc <package>` and declares it in the _User_Config_.
 }
 
@@ -961,6 +963,7 @@ procedure _Adoc_Check_Command_ in runtime = {
   runs _Broken_Document_Reference_Warning_
   reports parse errors of _Document_
   reports load errors of _Plugin_
+  reports former names in _Plugin_Source_
   reports names under _Watch_Path_
   compares with _Plugin_Key_
   output repeated by _Adoc_Server_
@@ -968,6 +971,7 @@ procedure _Adoc_Check_Command_ in runtime = {
   - _Adoc_Check_Command_ must report duplicate document keys, broken document references, documents that fail to parse and plugins that fail to load.
   - _Adoc_Check_Command_ must report a file under a _Watch_Path_ whose name looks like a document key but whose prefix is not a declared _Plugin_Key_.
   - _Adoc_Check_Command_ must report a warning when the _Adoc_Workspace_ is not inside a git repository.
+  - _Adoc_Check_Command_ must report a warning for every _Plugin_Source_ that still names adoc's former npm scope `@agent-workshop`, giving the new name to write.
   - _Adoc_Check_Command_ must exit with a nonzero status when it reports an error.
   - An _Adoc_Server_ must print the same report when it starts.
 .remarks

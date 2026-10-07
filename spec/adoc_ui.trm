@@ -393,6 +393,7 @@ input _Comment_Composer_ in comment = {
   contains _Draft_Chip_List_
   sends _Draft_Chip_List_
   sends to _adoc:Adoc_Server_
+  references _Terminal_Panel_
   placed in _App_Shell_
 .contract
   - _Comment_Composer_ must take its target from the route: the shown _adoc:Document_ at `/p/:plugin/:document`, the shown _adoc:Agent_Skill_ at `/p/:plugin/skill` and `/skills/:name`, the _adoc:Plugin_ at `/p/:plugin`, and the workspace at `/`.

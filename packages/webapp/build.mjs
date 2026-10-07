@@ -2,7 +2,7 @@ import { cp, mkdir, rm } from 'node:fs/promises';
 import { build } from 'esbuild';
 import { metafileInputs, writeLicenses } from '../../tooling/licenses.mjs';
 
-// Bundles the web UI into dist/, which @agent-workshop/adoc-core serves: index.html for every client route, files under assets/.
+// Bundles the web UI into dist/, which @garage49/adoc-core serves: index.html for every client route, files under assets/.
 const out = new URL('./dist/', import.meta.url).pathname;
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });

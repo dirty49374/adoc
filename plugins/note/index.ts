@@ -1,5 +1,5 @@
-import { anchor, definePlugin, frontmatter, html, markdown, ref, slug, source } from '@agent-workshop/adoc-plugin-kit';
-import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
+import { anchor, definePlugin, frontmatter, html, markdown, ref, slug, source } from '@garage49/adoc-plugin-kit';
+import type { PluginDocument } from '@garage49/adoc-plugin-kit';
 
 interface Section {
   heading: string;

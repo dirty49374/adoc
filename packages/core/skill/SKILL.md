@@ -38,7 +38,7 @@ A plugin is a folder:
 
 Installing a plugin and using it are two steps. **Use** it by declaring it in `.adoc/adoc.yaml` under `plugins`, as `KEY: <source>`:
 
-- `npm:<package>`, such as `npm:@agent-workshop/adoc-plugin-todo`: found from the folder of the config file upwards (`.adoc/node_modules`, `<project>/node_modules`), then in adoc's own installation. **Install** it with npm; a version installed in the project comes before the one that came with adoc.
+- `npm:<package>`, such as `npm:@garage49/adoc-plugin-todo`: found from the folder of the config file upwards (`.adoc/node_modules`, `<project>/node_modules`), then in adoc's own installation. **Install** it with npm; a version installed in the project comes before the one that came with adoc.
 - `github:<owner>/<repo>/<folder>#<ref>`: **install** it with `adoc plugin install`, which fetches it into `.adoc/plugins/<key in lowercase>/` and records the commit in `.adoc/plugins/plugins-lock.json`; `adoc plugin update` fetches it again. Never edit a fetched folder: copy it to another folder and declare that path.
 - a path starting with `./`, `../` or `/`, taken from the folder of the config file: `./plugins/x` is `.adoc/plugins/x`, the place for a plugin of this project.
 - `off` leaves out a plugin that the user config declares.
@@ -51,7 +51,7 @@ Installing a plugin and using it are two steps. **Use** it by declaring it in `.
 
 ```yaml
 plugins:                    # plugin key (uppercase letters; documents are named NOTE-<local id>): source
-  NOTE: npm:@agent-workshop/adoc-plugin-note
+  NOTE: npm:@garage49/adoc-plugin-note
   TASK: ./plugins/task      # .adoc/plugins/task
   MIND: github:someone/adoc-plugins/mindmap#v1.0
   BUG: off                  # declared in the user config, not wanted here
@@ -125,7 +125,7 @@ How a plugin is meant to be used, what its files look like, what an anchor means
 
 ### Setting up a new project
 
-adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings). `adoc init` declares them as `npm:@agent-workshop/adoc-plugin-<name>`.
+adoc comes with five plugins: NOTE (shared notes), TODO (task lists), TASK (work orders), KANBAN (a board) and SKETCH (drawings). `adoc init` declares them as `npm:@garage49/adoc-plugin-<name>`.
 
 1. **Talk first.** Before any work, take time with the user to decide how this project will use them: which documents to keep, what goes where, how detailed.
 2. **Agree on the way of working, and record it** in the project's agent instructions file (`AGENTS.md`; `CLAUDE.md` when the project has only that): whether the project commits, whether you do the work yourself or hand it to a subagent or a herdr development agent, and the procedure. A sample procedure:

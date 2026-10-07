@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, relative, resolve, sep } from 'node:path';
-import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
+import type { PluginDocument } from '@garage49/adoc-plugin-kit';
 import { KEY_PREFIX_PATTERN, LOCAL_ID_PATTERN } from './names.js';
 import type { LoadedPlugin } from './plugins.js';
 

@@ -48,7 +48,7 @@ export function userConfigPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(env.XDG_CONFIG_HOME || join(env.HOME || homedir(), '.config'), 'adoc', 'adoc.yaml');
 }
 
-const FORMAT_HINT = 'plugins:\n  TODO: npm:@agent-workshop/adoc-plugin-todo\n  TASK: ./plugins/task';
+const FORMAT_HINT = 'plugins:\n  TODO: npm:@garage49/adoc-plugin-todo\n  TASK: ./plugins/task';
 
 async function readFileConfig(path: string, required: boolean): Promise<ConfigFile> {
   let text: string;
@@ -114,11 +114,11 @@ export async function readConfig(home: AdocHome, env: NodeJS.ProcessEnv = proces
 
 export const CONFIG_TEMPLATE = `# adoc workspace configuration, laid over ~/.config/adoc/adoc.yaml. Paths are relative to this file.
 plugins:                        # plugin key: npm:<package>, github:<owner>/<repo>/<folder>, a path such as ./plugins/x, or off
-  NOTE: npm:@agent-workshop/adoc-plugin-note
-  TODO: npm:@agent-workshop/adoc-plugin-todo
-  SKETCH: npm:@agent-workshop/adoc-plugin-sketch
-  TASK: npm:@agent-workshop/adoc-plugin-task
-  KANBAN: npm:@agent-workshop/adoc-plugin-kanban
+  NOTE: npm:@garage49/adoc-plugin-note
+  TODO: npm:@garage49/adoc-plugin-todo
+  SKETCH: npm:@garage49/adoc-plugin-sketch
+  TASK: npm:@garage49/adoc-plugin-task
+  KANBAN: npm:@garage49/adoc-plugin-kanban
 watch:
   - ../docs
 agent:

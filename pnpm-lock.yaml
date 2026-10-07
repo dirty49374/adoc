@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@agent-workshop/adoc-plugin-kit':
+      '@garage49/adoc-plugin-kit':
         specifier: workspace:*
         version: link:packages/plugin-kit
     devDependencies:
@@ -24,7 +24,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@agent-workshop/adoc-core':
+      '@garage49/adoc-core':
         specifier: workspace:*
         version: link:../core
       '@modelcontextprotocol/sdk':
@@ -43,7 +43,7 @@ importers:
         specifier: 4.5.4
         version: 4.5.4
     devDependencies:
-      '@agent-workshop/adoc-testing':
+      '@garage49/adoc-testing':
         specifier: workspace:*
         version: link:../testing
       '@types/shell-quote':
@@ -52,25 +52,25 @@ importers:
 
   packages/core:
     dependencies:
-      '@agent-workshop/adoc-plugin-kanban':
+      '@garage49/adoc-plugin-kanban':
         specifier: workspace:*
         version: link:../../plugins/kanban
-      '@agent-workshop/adoc-plugin-kit':
+      '@garage49/adoc-plugin-kit':
         specifier: workspace:*
         version: link:../plugin-kit
-      '@agent-workshop/adoc-plugin-note':
+      '@garage49/adoc-plugin-note':
         specifier: workspace:*
         version: link:../../plugins/note
-      '@agent-workshop/adoc-plugin-sketch':
+      '@garage49/adoc-plugin-sketch':
         specifier: workspace:*
         version: link:../../plugins/sketch
-      '@agent-workshop/adoc-plugin-task':
+      '@garage49/adoc-plugin-task':
         specifier: workspace:*
         version: link:../../plugins/task
-      '@agent-workshop/adoc-plugin-todo':
+      '@garage49/adoc-plugin-todo':
         specifier: workspace:*
         version: link:../../plugins/todo
-      '@agent-workshop/adoc-webapp':
+      '@garage49/adoc-webapp':
         specifier: workspace:*
         version: link:../webapp
       semver:
@@ -86,7 +86,7 @@ importers:
         specifier: 4.5.4
         version: 4.5.4
     devDependencies:
-      '@agent-workshop/adoc-testing':
+      '@garage49/adoc-testing':
         specifier: workspace:*
         version: link:../testing
       '@types/semver':
@@ -151,7 +151,7 @@ importers:
 
   plugins/kanban:
     devDependencies:
-      '@agent-workshop/adoc-plugin-kit':
+      '@garage49/adoc-plugin-kit':
         specifier: workspace:*
         version: link:../../packages/plugin-kit
       esbuild:
@@ -160,7 +160,7 @@ importers:
 
   plugins/note:
     devDependencies:
-      '@agent-workshop/adoc-plugin-kit':
+      '@garage49/adoc-plugin-kit':
         specifier: workspace:*
         version: link:../../packages/plugin-kit
       esbuild:
@@ -169,12 +169,12 @@ importers:
 
   plugins/sketch:
     devDependencies:
-      '@agent-workshop/adoc-plugin-kit':
-        specifier: workspace:*
-        version: link:../../packages/plugin-kit
       '@excalidraw/excalidraw':
         specifier: 0.18.1
         version: 0.18.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@garage49/adoc-plugin-kit':
+        specifier: workspace:*
+        version: link:../../packages/plugin-kit
       '@types/react':
         specifier: 19.2.2
         version: 19.2.2
@@ -193,7 +193,7 @@ importers:
 
   plugins/task:
     devDependencies:
-      '@agent-workshop/adoc-plugin-kit':
+      '@garage49/adoc-plugin-kit':
         specifier: workspace:*
         version: link:../../packages/plugin-kit
       esbuild:
@@ -202,7 +202,7 @@ importers:
 
   plugins/todo:
     devDependencies:
-      '@agent-workshop/adoc-plugin-kit':
+      '@garage49/adoc-plugin-kit':
         specifier: workspace:*
         version: link:../../packages/plugin-kit
       esbuild:

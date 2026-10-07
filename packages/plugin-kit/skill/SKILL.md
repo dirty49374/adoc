@@ -30,7 +30,7 @@ adoc plugin list      # shows the plugin, or its load error
 adoc check            # runs summarize and render on every document; exits 1 on errors (warnings do not fail it)
 ```
 
-**Publishing.** To share a plugin, publish its folder as an npm package or put it in a GitHub repository (see "Installing plugins" in the adoc skill). Ship it ready to run, since adoc never builds or installs what it fetches: JavaScript `index.js` for npm (Node does not strip types inside `node_modules`; build `index.ts` with esbuild or tsc), the built `client/`, and `skill/`. Declare the plugin-kit range it needs as `"peerDependencies": { "@agent-workshop/adoc-plugin-kit": "^0.1.0" }`: adoc refuses to load it with a plugin-kit outside that range.
+**Publishing.** To share a plugin, publish its folder as an npm package or put it in a GitHub repository (see "Installing plugins" in the adoc skill). Ship it ready to run, since adoc never builds or installs what it fetches: JavaScript `index.js` for npm (Node does not strip types inside `node_modules`; build `index.ts` with esbuild or tsc), the built `client/`, and `skill/`. Declare the plugin-kit range it needs as `"peerDependencies": { "@garage49/adoc-plugin-kit": "^0.1.0" }`: adoc refuses to load it with a plugin-kit outside that range.
 
 Actions run only from the web UI: start `adoc server run`, open a sample document and click, toggle or drag (or use the elements of your client module).
 
@@ -58,7 +58,7 @@ If a function throws, adoc shows the message as the document's error and in `ado
 
 The main file is written by hand, too: the agent edits it directly, and the user can edit the whole main file in the web UI. Parse it leniently (ignore lines you do not understand, give defaults for missing fields) and throw only when the file cannot be read at all.
 
-## Helpers (`import { … } from '@agent-workshop/adoc-plugin-kit'`)
+## Helpers (`import { … } from '@garage49/adoc-plugin-kit'`)
 
 | helper | use |
 |---|---|
@@ -152,9 +152,9 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 
 ## Rules that avoid load errors
 
-- Import types with `import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
+- Import types with `import type { PluginDocument } from '@garage49/adoc-plugin-kit';` (a separate `import type` line). Node strips types; a value import of a type fails.
 - No TypeScript `enum`, `namespace` or parameter properties (`constructor(private x)`): Node cannot strip them.
-- `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@agent-workshop/adoc-plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
+- `index.ts` is the entry. It may import other files of the plugin folder (a server restart picks up changes to them, see above), `@garage49/adoc-plugin-kit` (adoc provides it wherever the plugin folder is), Node built-ins, and npm packages listed in the plugin's own `package.json` and installed with `npm install` in the plugin folder.
 - Action names are lowercase kebab-case: `toggle`, `move`, `add-card`. Never name one `archive` or `unarchive`: the document header sends those, and the agent archives or restores the document.
 
 ## Complete example: a checklist plugin
@@ -162,8 +162,8 @@ Headings, lists, links, tables and code from `markdown()` get the theme's Markdo
 A checklist whose boxes the user ticks; the handler writes the tick itself. (The TODO plugin of adoc instead sends a request, so that the agent does the item.)
 
 ```ts
-import { action, anchor, definePlugin, html, markdown, raw, source } from '@agent-workshop/adoc-plugin-kit';
-import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
+import { action, anchor, definePlugin, html, markdown, raw, source } from '@garage49/adoc-plugin-kit';
+import type { PluginDocument } from '@garage49/adoc-plugin-kit';
 
 const ITEM = /^(\s*)- \[( |x|X)\] (.*)$/;
 

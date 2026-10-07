@@ -7,13 +7,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { readConfig } from '../src/config.js';
 import { fetchGithubPlugins } from '../src/fetch.js';
 import { discoverHome } from '../src/home.js';
-import { fixture, type Fixture } from '@agent-workshop/adoc-testing';
+import { fixture, type Fixture } from '@garage49/adoc-testing';
 
 const DIST = pathToFileURL(resolve(import.meta.dirname, '../dist/index.js')).href;
 
 /**
  * Loads the plugins of a workspace with the built core in a plain Node process: vitest runs dynamic imports through
- * its own module runner, which skips the `@agent-workshop/adoc-plugin-kit` resolve hook that the loader registers in Node.
+ * its own module runner, which skips the `@garage49/adoc-plugin-kit` resolve hook that the loader registers in Node.
  */
 function loadInNode(root: string, xdg: string): Record<string, { error?: string; description?: string; skill?: { name: string; scope: string } }> {
   const script = `const c = await import(${JSON.stringify(DIST)}); const h = await c.discoverHome(${JSON.stringify(root)});
@@ -28,12 +28,12 @@ afterEach(async () => {
   current = undefined;
 });
 
-/** A minimal plugin folder that imports @agent-workshop/adoc-plugin-kit; `skill: false` leaves out skill/SKILL.md. */
-async function writePlugin(folder: string, name: string, skill = true) {
+/** A minimal plugin folder that imports the plugin kit (by `kit`); `skill: false` leaves out skill/SKILL.md. */
+async function writePlugin(folder: string, name: string, skill = true, kit = '@garage49/adoc-plugin-kit') {
   await mkdir(join(folder, 'skill'), { recursive: true });
   await writeFile(
     join(folder, 'index.ts'),
-    `import { definePlugin, html } from '@agent-workshop/adoc-plugin-kit';\nexport default definePlugin({ description: '${name}', layout: { kind: 'file', extension: '.md' }, summarize: (doc) => ({ title: doc.key, status: 'x' }), render: () => html\`<p>x</p>\` });\n`,
+    `import { definePlugin, html } from '${kit}';\nexport default definePlugin({ description: '${name}', layout: { kind: 'file', extension: '.md' }, summarize: (doc) => ({ title: doc.key, status: 'x' }), render: () => html\`<p>x</p>\` });\n`,
   );
   if (skill) await writeFile(join(folder, 'skill/SKILL.md'), `---\nname: adoc-${name}\ndescription: "${name} documents"\n---\n\n# ${name}\n`);
 }
@@ -72,13 +72,32 @@ describe('plugin sources', () => {
     current = await fixture({}, '');
     const xdg = await userConfig(current);
     await writePlugin(join(current.root, '.adoc/plugins/old'), 'old');
-    await writeFile(join(current.root, '.adoc/plugins/old/package.json'), JSON.stringify({ name: 'old', peerDependencies: { '@agent-workshop/adoc-plugin-kit': '^9.0.0' } }));
-    await current.write('.adoc/adoc.yaml', 'plugins:\n  TODO: npm:@agent-workshop/adoc-plugin-todo\n  OLD: ./plugins/old\n  MISSING: npm:adoc-plugin-missing\n');
+    await writeFile(join(current.root, '.adoc/plugins/old/package.json'), JSON.stringify({ name: 'old', peerDependencies: { '@garage49/adoc-plugin-kit': '^9.0.0' } }));
+    await current.write('.adoc/adoc.yaml', 'plugins:\n  TODO: npm:@garage49/adoc-plugin-todo\n  OLD: ./plugins/old\n  MISSING: npm:adoc-plugin-missing\n');
     const plugins = loadInNode(current.root, xdg);
     expect(plugins.TODO).toMatchObject({ skill: { name: 'adoc-todo', scope: 'user' } });
     expect(plugins.TODO?.error).toBeUndefined();
-    expect(plugins.OLD?.error).toMatch(/needs @agent-workshop\/adoc-plugin-kit \^9\.0\.0, but this adoc has 0\./);
+    expect(plugins.OLD?.error).toMatch(/needs @garage49\/adoc-plugin-kit \^9\.0\.0, but this adoc has 0\./);
     expect(plugins.MISSING?.error).toMatch(/no npm package adoc-plugin-missing/);
+  });
+
+  it('reads adoc\'s former npm scope as @garage49 for one transition period, and adoc check reports it', async () => {
+    current = await fixture({}, '');
+    const xdg = await userConfig(current);
+    await writePlugin(join(current.root, '.adoc/plugins/former'), 'former', true, '@agent-workshop/adoc-plugin-kit');
+    await writeFile(join(current.root, '.adoc/plugins/former/package.json'), JSON.stringify({ name: 'former', peerDependencies: { '@agent-workshop/adoc-plugin-kit': '^9.0.0' } }));
+    await writePlugin(join(current.root, '.adoc/plugins/kit'), 'kit', true, '@agent-workshop/adoc-plugin-kit');
+    await current.write('.adoc/adoc.yaml', 'plugins:\n  TODO: npm:@agent-workshop/adoc-plugin-todo\n  KIT: ./plugins/kit\n  FORMER: ./plugins/former\n');
+    const plugins = loadInNode(current.root, xdg);
+    expect(plugins.TODO?.error).toBeUndefined();
+    expect(plugins.TODO).toMatchObject({ skill: { name: 'adoc-todo' } });
+    expect(plugins.KIT?.error, 'a plugin importing the former kit name gets the running kit').toBeUndefined();
+    expect(plugins.FORMER?.error, 'the former name in peerDependencies is checked').toMatch(/needs @garage49\/adoc-plugin-kit \^9\.0\.0/);
+    const script = `const c = await import(${JSON.stringify(DIST)}); const w = await c.Workspace.open(await c.discoverHome(${JSON.stringify(current.root)}), { XDG_CONFIG_HOME: ${JSON.stringify(xdg)} });
+console.log(JSON.stringify(w.check().filter((e) => e.kind === 'renamed-package')));`;
+    const renamed = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' })) as { message: string }[];
+    expect(renamed).toHaveLength(1);
+    expect(renamed[0]?.message).toMatch(/write npm:@garage49\/adoc-plugin-todo instead of npm:@agent-workshop\/adoc-plugin-todo/);
   });
 });
 

@@ -15,12 +15,12 @@ Run `aterm corpus check` to validate it.
 ```
 spec/                 aterm corpus (adoc.trm, adoc_ui.trm); .aterm/ is its Home
 packages/             every folder is a package: package.json, src/, test/, tsconfig.json, its own build
-  plugin-kit/           @agent-workshop/adoc-plugin-kit: the package every plugin imports; skill/ = how to write a plugin
+  plugin-kit/           @garage49/adoc-plugin-kit: the package every plugin imports; skill/ = how to write a plugin
   core/                 workspace, plugins, documents, messages, transports, server; skill/ = the agent's workflow
   cli/                  the adoc command line and the MCP tool
   webapp/               React 19 + react-router web UI, bundled into its dist/ for core to serve
-  testing/              @agent-workshop/adoc-testing (private): test helpers every package's tests share (temporary workspaces, free ports)
-plugins/              every folder is a plugin and a package @agent-workshop/adoc-plugin-<name>: index.ts + skill/SKILL.md,
+  testing/              @garage49/adoc-testing (private): test helpers every package's tests share (temporary workspaces, free ports)
+plugins/              every folder is a plugin and a package @garage49/adoc-plugin-<name>: index.ts + skill/SKILL.md,
                         built into dist/index.js for npm; SKETCH also has web/, built into client/ (its browser code)
 tooling/              release helpers: license collection of the bundles, files copied into each package at pack time
 ranch-plugin/         adoc-hub, the herdr-ranch plugin in Rust (spec/adoc_hub.trm); its own README, build and release
@@ -86,7 +86,7 @@ All packages share one version and move together; `0.1.0` is the first.
 
 ```sh
 pnpm build                                   # also collects the licenses of the bundled browser code
-pnpm -r --filter './packages/*' --filter './plugins/*' --filter '!@agent-workshop/adoc-testing' pack --pack-destination dist
+pnpm -r --filter './packages/*' --filter './plugins/*' --filter '!@garage49/adoc-testing' pack --pack-destination dist
 ```
 
 - `pnpm pack` replaces `workspace:*` with the version and runs each package's `prepack`, which copies `LICENSE` and `THIRD_PARTY_NOTICES.md` into it, and for the CLI also `README.md` with its relative links made absolute for npm (`tooling/package-files.mjs`).

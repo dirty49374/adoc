@@ -1,6 +1,6 @@
 // A test plugin whose action writes the file itself, so that tests cover applied writes and stale-version refusals
 // independently of how the repository's plugins choose to handle their actions.
-import { action, definePlugin, html, raw } from '@agent-workshop/adoc-plugin-kit';
+import { action, definePlugin, html, raw } from '@garage49/adoc-plugin-kit';
 
 const ITEM = /^- \[( |x)\] (.*)$/;
 

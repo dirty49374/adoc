@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { afterEach, describe, expect, it } from 'vitest';
-import { fixture, freePort, type Fixture } from '@agent-workshop/adoc-testing';
+import { fixture, freePort, type Fixture } from '@garage49/adoc-testing';
 import { runCommand } from '../src/program.js';
 
 const ENTRY = resolve(import.meta.dirname, '../dist/entry.js');
@@ -52,7 +52,7 @@ describe('adoc CLI', () => {
     const plugins = JSON.parse((await run(['plugin', 'list', '--output', 'json'], root)).stdout) as { key: string; error?: string; source: string }[];
     expect(plugins.map((p) => p.key)).toEqual(['NOTE', 'TODO', 'SKETCH', 'TASK', 'KANBAN']);
     expect(plugins.filter((p) => p.error)).toEqual([]);
-    expect(plugins[1]?.source).toBe('npm:@agent-workshop/adoc-plugin-todo');
+    expect(plugins[1]?.source).toBe('npm:@garage49/adoc-plugin-todo');
   });
 
   it('installs skills through the skills CLI and warns about missing or outdated skills on every command', async () => {

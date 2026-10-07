@@ -2,7 +2,7 @@ import { access, readFile } from 'node:fs/promises';
 import { createRequire, registerHooks } from 'node:module';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { PluginDefinition } from '@agent-workshop/adoc-plugin-kit';
+import type { PluginDefinition } from '@garage49/adoc-plugin-kit';
 import semver from 'semver';
 import { parse } from 'yaml';
 import type { AdocConfig, DeclaredPlugin } from './config.js';
@@ -33,13 +33,27 @@ export interface LoadedPlugin {
   readonly error?: string;
 }
 
-const KIT = '@agent-workshop/adoc-plugin-kit';
+const KIT = '@garage49/adoc-plugin-kit';
+/**
+ * adoc's npm scope before the Owner moved every garage49 package to `@garage49` (2026-10-07). For one transition period a
+ * name in it means the same name in `@garage49`: in npm plugin sources, in plugin imports of the kit, and in their
+ * `peerDependencies`; `adoc check` reports such sources (_Plugin_Source_, _Adoc_Check_Command_).
+ */
+export const FORMER_SCOPE = '@agent-workshop/';
+const SCOPE = '@garage49/';
+const FORMER_KIT = KIT.replace(SCOPE, FORMER_SCOPE);
 
-// A plugin imports `@agent-workshop/adoc-plugin-kit` of the running adoc wherever its folder is, also outside any node_modules tree
-// that has the kit (for example in the user _Plugin_Directory_).
+/** A package name in adoc's former scope as its name in `@garage49`; any other name as it is. */
+export function currentName(name: string): string {
+  return name.startsWith(FORMER_SCOPE) ? SCOPE + name.slice(FORMER_SCOPE.length) : name;
+}
+
+// A plugin imports `@garage49/adoc-plugin-kit` of the running adoc wherever its folder is, also outside any node_modules tree
+// that has the kit (for example in the user _Plugin_Directory_); the kit's former name leads to the same kit.
 registerHooks({
   resolve(specifier, context, next) {
-    if (specifier === KIT || specifier.startsWith(`${KIT}/`)) return next(specifier, { ...context, parentURL: import.meta.url });
+    const named = specifier === FORMER_KIT || specifier.startsWith(`${FORMER_KIT}/`) ? KIT + specifier.slice(FORMER_KIT.length) : specifier;
+    if (named === KIT || named.startsWith(`${KIT}/`)) return next(named, { ...context, parentURL: import.meta.url });
     return next(specifier, context);
   },
 });
@@ -91,8 +105,9 @@ async function locate(plugin: DeclaredPlugin): Promise<{ directory: string; entr
   const { source, base } = plugin;
   if (source.startsWith('npm:')) {
     const spec = source.slice(4);
-    const name = spec.startsWith('@') ? `@${spec.slice(1).split('@')[0]}` : spec.split('@')[0]!;
-    const range = spec.slice(name.length + 1) || undefined;
+    const written = spec.startsWith('@') ? `@${spec.slice(1).split('@')[0]}` : spec.split('@')[0]!;
+    const range = spec.slice(written.length + 1) || undefined;
+    const name = currentName(written);
     // As Node resolves it from the declaring file's folder upwards, then from the running adoc's installation.
     for (const from of [join(base, 'adoc.yaml'), import.meta.url]) {
       let manifest: string;
@@ -134,7 +149,7 @@ async function checkKit(directory: string): Promise<void> {
   } catch {
     return;
   }
-  const range = manifest.peerDependencies?.[KIT];
+  const range = manifest.peerDependencies?.[KIT] ?? manifest.peerDependencies?.[FORMER_KIT];
   if (!range) return;
   const { version } = JSON.parse(await readFile(createRequire(import.meta.url).resolve(`${KIT}/package.json`), 'utf8')) as { version: string };
   if (!semver.satisfies(version, range, { includePrerelease: true })) throw new Error(`the plugin needs ${KIT} ${range}, but this adoc has ${version}; update adoc or the plugin`);

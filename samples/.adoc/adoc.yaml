@@ -1,10 +1,10 @@
 # A sample workspace for the screenshots in the README: a team building a todo app with an agent.
 plugins:
-  NOTE: npm:@agent-workshop/adoc-plugin-note
-  TODO: npm:@agent-workshop/adoc-plugin-todo
-  SKETCH: npm:@agent-workshop/adoc-plugin-sketch
-  TASK: npm:@agent-workshop/adoc-plugin-task
-  KANBAN: npm:@agent-workshop/adoc-plugin-kanban
+  NOTE: npm:@garage49/adoc-plugin-note
+  TODO: npm:@garage49/adoc-plugin-todo
+  SKETCH: npm:@garage49/adoc-plugin-sketch
+  TASK: npm:@garage49/adoc-plugin-task
+  KANBAN: npm:@garage49/adoc-plugin-kanban
 watch:
   - ../docs
 agent:

@@ -44,7 +44,7 @@ The screenshots come from [`samples/`](samples/), a todo app team's workspace wi
 ## Install
 
 ```sh
-npm install -g @agent-workshop/adoc
+npm install -g @garage49/adoc
 ```
 
 This installs the `adoc` command, the web UI and the five plugins of adoc: NOTE (shared notes), TODO (task lists), TASK
@@ -72,7 +72,7 @@ The agent learns the rest from its skills: `adoc skill view adoc` shows what it 
 
 ```yaml
 plugins:
-  NOTE: npm:@agent-workshop/adoc-plugin-note     # an npm package (the five come with adoc)
+  NOTE: npm:@garage49/adoc-plugin-note     # an npm package (the five come with adoc)
   TASK: ./plugins/task                           # a folder, here .adoc/plugins/task
   MIND: github:someone/adoc-plugins/mindmap#v1   # fetched by `adoc plugin install`
 watch:

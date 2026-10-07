@@ -1,9 +1,9 @@
 {
-  "name": "@agent-workshop/adoc-webapp",
+  "name": "@garage49/adoc-webapp",
   "version": "0.1.3",
   "license": "0BSD",
   "type": "module",
-  "description": "The adoc web UI: React 19 + react-router, bundled into dist/ for @agent-workshop/adoc-core to serve.",
+  "description": "The adoc web UI: React 19 + react-router, bundled into dist/ for @garage49/adoc-core to serve.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/garage49/adoc.git",

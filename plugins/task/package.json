@@ -1,5 +1,5 @@
 {
-  "name": "@agent-workshop/adoc-plugin-task",
+  "name": "@garage49/adoc-plugin-task",
   "version": "0.1.3",
   "license": "0BSD",
   "type": "module",
@@ -31,10 +31,10 @@
     "prepack": "node ../../tooling/package-files.mjs"
   },
   "peerDependencies": {
-    "@agent-workshop/adoc-plugin-kit": "^0.1.0"
+    "@garage49/adoc-plugin-kit": "^0.1.0"
   },
   "devDependencies": {
-    "@agent-workshop/adoc-plugin-kit": "workspace:*",
+    "@garage49/adoc-plugin-kit": "workspace:*",
     "esbuild": "0.28.2"
   }
 }

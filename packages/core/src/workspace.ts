@@ -12,13 +12,13 @@ import {
   type FileContent,
   type PluginDefinition,
   type PluginDocument,
-} from '@agent-workshop/adoc-plugin-kit';
+} from '@garage49/adoc-plugin-kit';
 import { readConfig, type AdocConfig } from './config.js';
 import { AdocError, errorMessage } from './errors.js';
 import type { AdocHome } from './home.js';
 import { isGitRepository } from './git.js';
 import { parseDocumentTarget } from './names.js';
-import { loadPlugins, type LoadedPlugin, type Scope } from './plugins.js';
+import { FORMER_SCOPE, currentName, loadPlugins, type LoadedPlugin, type Scope } from './plugins.js';
 import { readDocument, scanDocuments, type DocumentRecord, type ScanProblem } from './scan.js';
 import type { ActionMessageInput } from './messages.js';
 
@@ -66,7 +66,7 @@ export interface StoredVersion {
 /** One entry of the report of _Adoc_Check_Command_. */
 export interface CheckEntry {
   level: 'error' | 'warning';
-  kind: ScanProblem['kind'] | 'plugin-load' | 'parse-error' | 'broken-reference' | 'no-git' | 'skill-missing' | 'skill-outdated';
+  kind: ScanProblem['kind'] | 'plugin-load' | 'parse-error' | 'broken-reference' | 'no-git' | 'skill-missing' | 'skill-outdated' | 'renamed-package';
   message: string;
   path?: string;
   key?: string;
@@ -383,6 +383,9 @@ export class Workspace {
     if (!this.git) entries.push({ level: 'warning', kind: 'no-git', message: `${this.root} is not in a git repository; the agent cannot commit document changes.` });
     for (const plugin of this.plugins.values()) {
       if (plugin.error) entries.push({ level: 'error', kind: 'plugin-load', message: `plugin ${plugin.key} (${plugin.source}) failed to load: ${plugin.error}` });
+      if (plugin.source.startsWith(`npm:${FORMER_SCOPE}`)) {
+        entries.push({ level: 'warning', kind: 'renamed-package', message: `plugin ${plugin.key}: adoc's packages moved to @garage49; write npm:${currentName(plugin.source.slice(4))} instead of ${plugin.source}.` });
+      }
     }
     for (const problem of this.problems) {
       const entry: CheckEntry = { level: problem.kind === 'duplicate-key' || problem.kind === 'invalid-local-id' ? 'error' : 'warning', kind: problem.kind, message: problem.message, path: problem.path };

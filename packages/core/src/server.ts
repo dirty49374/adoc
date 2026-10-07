@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve } from 'node:path';
-import { frontmatter, markdown } from '@agent-workshop/adoc-plugin-kit';
+import { frontmatter, markdown } from '@garage49/adoc-plugin-kit';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { z } from 'zod';
 import { AdocError, errorMessage } from './errors.js';
@@ -145,7 +145,7 @@ export class AdocServer {
   private readonly host: string;
   private readonly port: number;
   private readonly log: (line: string) => void;
-  private readonly webappDirectory = join(dirname(createRequire(import.meta.url).resolve('@agent-workshop/adoc-webapp/package.json')), 'dist');
+  private readonly webappDirectory = join(dirname(createRequire(import.meta.url).resolve('@garage49/adoc-webapp/package.json')), 'dist');
 
   constructor(
     readonly workspace: Workspace,

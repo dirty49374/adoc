@@ -7,10 +7,10 @@ licenses of third-party components, and no third-party component is relicensed b
 
 Two packages carry bundled browser code:
 
-- `@agent-workshop/adoc-webapp`: the web UI in `dist/`. Its build records the packages actually bundled in
+- `@garage49/adoc-webapp`: the web UI in `dist/`. Its build records the packages actually bundled in
   `dist/licenses/packages.json` and copies their upstream LICENSE, COPYING, COPYRIGHT and NOTICE files beneath
   `dist/licenses/`.
-- `@agent-workshop/adoc-plugin-sketch`: the drawing board in `client/`, with its inventory and license files in
+- `@garage49/adoc-plugin-sketch`: the drawing board in `client/`, with its inventory and license files in
   `client/licenses/`.
 
 Keep these files when redistributing the built browser assets.

@@ -1,5 +1,5 @@
-import { definePlugin, html } from '@agent-workshop/adoc-plugin-kit';
-import type { PluginDocument } from '@agent-workshop/adoc-plugin-kit';
+import { definePlugin, html } from '@garage49/adoc-plugin-kit';
+import type { PluginDocument } from '@garage49/adoc-plugin-kit';
 
 /** The parts of an Excalidraw file that the summary needs. */
 interface Scene {
