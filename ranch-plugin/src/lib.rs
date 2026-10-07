@@ -38,8 +38,6 @@ enum Cmd {
         #[arg(long, conflicts_with = "name")]
         clear: bool,
     },
-    /// what this session's client sees: ranch, the adoc program and the adoc servers of this machine
-    Status,
 }
 
 #[derive(Subcommand)]
@@ -54,7 +52,6 @@ pub async fn entry() {
         Cmd::Server => server::run().await,
         Cmd::Client { cmd: ClientCmd::Run } => client::run().await,
         Cmd::Name { name, clear } => client::name_command(if clear { None } else { name }, clear).await,
-        Cmd::Status => client::status_command().await,
     };
     if let Err(e) = result {
         eprintln!("adoc-hub: {e:#}");

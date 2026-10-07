@@ -187,9 +187,11 @@ concept _Browser_Approval_ in hub = {
 }
 
 concept _Hub_Status_Screen_ in hub = {
-  The screen that a _Hub_Client_ draws in the plugin pane that ranch keeps open in every herdr session: the hosts with their state, the names to give them, the browsers waiting for approval and the approved browsers.
+  The screen that a _Hub_Client_ draws in the plugin pane that ranch keeps open in every herdr session: the hosts with their state, the names to give them, the browsers waiting for approval and the approved browsers, and the state of this session's client.
 .relations
   references _adoc_hub:Hub_Host_
+  references _adoc_hub:Local_Discovery_
+  references _adoc_hub:Routing_Client_
   drawn by _Hub_Client_
   decides _Browser_Approval_
   sets _Hub_Host_Name_
@@ -198,8 +200,12 @@ concept _Hub_Status_Screen_ in hub = {
   - The _Hub_Status_Screen_ must show each waiting _Browser_Approval_ with its code in large type, the time it was asked and the browser's user agent, and must let the person approve or reject it with single keys.
   - The _Hub_Status_Screen_ must list every approved browser with its user agent, approval time and last-seen time, and must let the person revoke it with a single key.
   - The _Hub_Status_Screen_ must let the person give, change or remove the _Hub_Host_Name_ of a host.
+  - The _Hub_Status_Screen_ must show the state of its own _Hub_Client_: the ranch connection, whether it is the _Routing_Client_ and its tunnel, the `adoc` program _Local_Discovery_ uses, the adoc servers of its machine, and a log of what happened.
+  - The _Hub_Status_Screen_ must be built with the garage49 TUI design system, as every plugin's own interface; ranch runs no program of the plugin to show its state.
 .remarks
   - Chosen: no settings screen; the hub has nothing to configure.
+  - Chosen by the Owner (2026-10-07): each plugin provides its own interface with the garage49 TUI design system (`garage49-tui-iocraft` for Rust); ranch's console shows only what ranch knows of the plugin and its `status_command` is gone.
+  - Chosen: the sidebar layout, pages Waiting, Hosts and Browsers for the hub, Status and Log for this session.
 }
 
 procedure _Hub_Name_Command_ in hub = {

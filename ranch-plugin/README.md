@@ -12,9 +12,8 @@ A herdr-ranch plugin that shows every adoc on the ranch network in one browser. 
 | where | what |
 |---|---|
 | browser | `http://adoc.hubbartt.arpa/` lists the hosts; `/<host>/` is a host's web UI, where `<host>` is `<machine>_<port>` or a given name |
-| `adoc-hub` pane | `Tab` moves between lists, `↑`/`↓` select; `a` approves and `r` rejects the waiting browser; `n` names the selected host; `x` revokes the selected browser; `Ctrl-C` ends the client |
+| `adoc-hub` pane | built with the garage49 TUI design system: the sidebar has Waiting, Hosts and Browsers (the hub) and Status and Log (this session's client: ranch, routing and tunnel, the `adoc` program, this machine's adoc servers); `enter` moves into a page, `esc` back; `↑`/`↓` select; `a` approves and `r` rejects the waiting browser; `n` names the selected host (`enter` sets, empty removes, `esc` cancels); `x` revokes the selected browser; `q` (confirmed) or `ctrl+c` ends the client |
 | shell, in an adoc workspace | `adoc-hub name <name>` names its host; `adoc-hub name --clear` removes the name |
-| shell | `adoc-hub status` shows ranch, the `adoc` program and the adoc servers of this machine |
 
 The client finds `adoc` through `ADOC_BIN`, then `PATH`, then the user's login shell (`$SHELL -lic 'command -v adoc'`).
 
@@ -29,7 +28,7 @@ src/
   auth.rs        codes, cookies (hash only), rate limit, revocation
   proto.rs       datagrams and tunnel frames
   discovery.rs   adoc server list and /api/workspace
-  tui.rs         the status pane
+  tui.rs         the status pane (garage49-tui-iocraft)
   ranch.rs       the Ranch Api client (vendored from herdr-connect)
 web/             the approval page, the host list, the "host unavailable" page
 scripts/         fetch-or-build.sh (herdr's build step), fake-ranch.mjs (local runs)

@@ -78,7 +78,7 @@ pub async fn run() -> Result<()> {
     match ended {
         Some(r) => r.map_err(|e| anyhow!(e))?.and_then(|()| Err(anyhow!("the ranch connection ended"))),
         None => {
-            println!("adoc-hub client: ended by Ctrl-C");
+            println!("adoc-hub client: ended");
             Ok(())
         }
     }
@@ -351,29 +351,4 @@ pub async fn name_command(name: Option<String>, clear: bool) -> Result<()> {
         Ok(Err(e)) => Err(e),
         Err(_) => Err(anyhow!("the hub did not answer within 15 s; is adoc-hub installed on the ranch server?")),
     }
-}
-
-/// `adoc-hub status`: ranch's `status_command`, also for people.
-pub async fn status_command() -> Result<()> {
-    let session = session::name();
-    match (ranch::is_on(&session), ranch::discover(&session)) {
-        (true, Some(url)) => println!("ranch is on for session {session} ({url})"),
-        (true, None) => println!("ranch is on for session {session}, but its client is not up"),
-        (false, _) => println!("ranch is off for session {session}; adoc-hub runs only under ranch"),
-    }
-    let Some(adoc) = discovery::find_adoc().await else {
-        println!("adoc: not found (ADOC_BIN, PATH, login shell)");
-        return Ok(());
-    };
-    println!("adoc: {}", adoc.display());
-    match discovery::discover(&adoc, &reqwest::Client::new()).await {
-        Ok(hosts) if hosts.is_empty() => println!("no adoc server on this machine"),
-        Ok(hosts) => {
-            for h in hosts {
-                println!("  {:<7} {:<6} {}{}", h.status, h.port, h.workspace, h.title.map(|t| format!("  ({t})")).unwrap_or_default());
-            }
-        }
-        Err(e) => println!("adoc server list failed: {e:#}"),
-    }
-    Ok(())
 }
